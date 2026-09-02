@@ -103,40 +103,52 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   // 1. TOP AREA (WHITE BACKGROUND)
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.fastOutSlowIn,
                     color: AppColors.backgroundWhite,
+                    constraints: BoxConstraints(
+                      minHeight: isKeyboardOpen ? 0 : (availableHeight * 0.55),
+                    ),
+                    alignment: Alignment.center,
                     padding: EdgeInsets.only(
-                      top: isKeyboardOpen ? 16.0 : 36.0,
-                      bottom: isKeyboardOpen ? 12.0 : 28.0,
+                      top: isKeyboardOpen ? 16.0 : 44.0,
+                      bottom: isKeyboardOpen ? 12.0 : 24.0,
                       left: 24.0,
                       right: 24.0,
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Shield Crest BANDELL Logo
-                        Image.asset(
-                          'assets/images/logo bandell 1.png',
+                        // Shield Crest BANDELL Logo with smooth AnimatedContainer sizing
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.fastOutSlowIn,
                           width: isKeyboardOpen ? 60 : 90,
                           height: isKeyboardOpen ? 60 : 90,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: isKeyboardOpen ? 60 : 90,
-                              height: isKeyboardOpen ? 60 : 90,
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.shield_outlined,
-                                color: Colors.white,
-                                size: isKeyboardOpen ? 34 : 48,
-                              ),
-                            );
-                          },
+                          child: Image.asset(
+                            'assets/images/logo bandell 1.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.shield_outlined,
+                                  color: Colors.white,
+                                  size: isKeyboardOpen ? 34 : 48,
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                        SizedBox(height: isKeyboardOpen ? 8 : 14),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.fastOutSlowIn,
+                          height: isKeyboardOpen ? 8 : 14,
+                        ),
 
                         // BANDELL Title Text
                         const Text(
@@ -165,12 +177,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
 
                   // 2. BOTTOM AREA (BLUE BANDELL BACKGROUND FORM)
-                                    Container(
-                    constraints: BoxConstraints(
-                      minHeight: isKeyboardOpen
-                          ? 0
-                          : mediaQuery.size.height * 0.62,
-                    ),
+                  Expanded(
+                    child: Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -188,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
                       padding: EdgeInsets.only(
                         left: 24.0,
                         right: 24.0,
-                        top: 20.0,
+                        top: 32.0,
                         bottom: 32.0 + mediaQuery.padding.bottom,
                       ),
                       child: Column(

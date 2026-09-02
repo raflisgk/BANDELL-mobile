@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../utils/app_colors.dart';
+import 'form_pendataan_page.dart';
 import 'manual_page.dart';
 
 class ScanBarcodePage extends StatefulWidget {
@@ -9,29 +11,56 @@ class ScanBarcodePage extends StatefulWidget {
   State<ScanBarcodePage> createState() => _ScanBarcodePageState();
 }
 
-class _ScanBarcodePageState extends State<ScanBarcodePage> {
+class _ScanBarcodePageState extends State<ScanBarcodePage>
+    with SingleTickerProviderStateMixin {
+  final MobileScannerController _cameraController = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    returnImage: false,
+  );
+
+  late AnimationController _spinController;
+
+  bool _isScanned = false;
+  bool _isTorchOn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _spinController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _spinController.dispose();
+    _cameraController.dispose();
+    super.dispose();
+  }
+
   void _handleBack() {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     }
   }
 
-  void _handleFlashlight() {
-    debugPrint('Flashlight clicked');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Flashlight (Simulasi UI)'),
-        backgroundColor: AppColors.scanCardDark,
-        duration: Duration(seconds: 1),
-      ),
-    );
+  Future<void> _handleFlashlight() async {
+    try {
+      await _cameraController.toggleTorch();
+      setState(() {
+        _isTorchOn = !_isTorchOn;
+      });
+    } catch (e) {
+      debugPrint('Error toggling flashlight: $e');
+    }
   }
 
   void _handleGallery() {
     debugPrint('Gallery clicked');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Gallery (Simulasi UI)'),
+        content: Text('Pilih foto dari galeri (Fitur mendatang)'),
         backgroundColor: AppColors.scanCardDark,
         duration: Duration(seconds: 1),
       ),
@@ -46,6 +75,37 @@ class _ScanBarcodePageState extends State<ScanBarcodePage> {
         builder: (context) => const ManualPage(),
       ),
     );
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_isScanned) return;
+
+    final List<Barcode> barcodes = capture.barcodes;
+    for (final barcode in barcodes) {
+      final String? value = barcode.rawValue ?? barcode.displayValue;
+      if (value != null && value.trim().isNotEmpty) {
+        setState(() {
+          _isScanned = true;
+        });
+        _spinController.stop();
+        _cameraController.stop();
+
+        // Tampilkan centang sejenak sebelum pindah ke Form Pendataan
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FormPendataanPage(
+                  scannedCode: value.trim(),
+                ),
+              ),
+            );
+          }
+        });
+        break;
+      }
+    }
   }
 
   @override
@@ -105,7 +165,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage> {
 
                 const SizedBox(height: 36),
 
-                // Scanner Frame with Glowing Corners
+                // Scanner Frame with Real Camera
                 _buildScannerFrame(),
 
                 const SizedBox(height: 32),
@@ -151,16 +211,22 @@ class _ScanBarcodePageState extends State<ScanBarcodePage> {
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: AppColors.scanCardDark,
+                          color: _isTorchOn
+                              ? AppColors.scanCyan
+                              : AppColors.scanCardDark,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppColors.scanIconDark,
+                            color: _isTorchOn
+                                ? AppColors.scanCyan
+                                : AppColors.scanIconDark,
                             width: 1,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.flashlight_on_rounded,
-                          color: Colors.white,
+                        child: Icon(
+                          _isTorchOn
+                              ? Icons.flashlight_on_rounded
+                              : Icons.flashlight_off_rounded,
+                          color: _isTorchOn ? Colors.black : Colors.white,
                           size: 22,
                         ),
                       ),
@@ -168,50 +234,8 @@ class _ScanBarcodePageState extends State<ScanBarcodePage> {
 
                     const SizedBox(width: 32),
 
-                    // Center SCANNING... Indicator
-                    Column(
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: AppColors.scanCardDark,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.scanCyan,
-                              width: 3,
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: AppColors.scanCyanLight,
-                                blurRadius: 12,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 42,
-                              height: 42,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF1E293B),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'SCANNING...',
-                          style: TextStyle(
-                            color: AppColors.scanCyan,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
+                    // Center SCANNING... Indicator with continuous rotation and automatic checkmark
+                    _buildCenterScanningButton(),
 
                     const SizedBox(width: 32),
 
@@ -273,6 +297,95 @@ class _ScanBarcodePageState extends State<ScanBarcodePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCenterScanningButton() {
+    return Column(
+      children: [
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _isScanned
+              ? Container(
+                  key: const ValueKey('scanned_check'),
+                  width: 64,
+                  height: 64,
+                  decoration: const BoxDecoration(
+                    color: AppColors.scanCyan,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.scanCyanLight,
+                        blurRadius: 18,
+                        spreadRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                  ),
+                )
+              : RotationTransition(
+                  key: const ValueKey('scanning_spinner'),
+                  turns: _spinController,
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: SweepGradient(
+                        colors: [
+                          Colors.transparent,
+                          Color(0x3338BDF8),
+                          AppColors.scanCyan,
+                        ],
+                        stops: [0.0, 0.6, 1.0],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.scanCyanLight,
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.scanCardDark,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF1E293B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _isScanned ? 'TERDETEKSI' : 'SCANNING...',
+          style: const TextStyle(
+            color: AppColors.scanCyan,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
     );
   }
 
@@ -363,23 +476,48 @@ class _ScanBarcodePageState extends State<ScanBarcodePage> {
           ),
         ),
 
-        // Inner dark scanner box
+        // Inner live camera scanner box
         Container(
           width: 246,
           height: 246,
           decoration: BoxDecoration(
-            color: AppColors.scanCardDark,
+            color: Colors.black,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: AppColors.scanIconDark,
               width: 1,
             ),
           ),
-          child: const Center(
-            child: Icon(
-              Icons.qr_code_2_rounded,
-              color: AppColors.scanIconDark,
-              size: 88,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(11),
+            child: MobileScanner(
+              controller: _cameraController,
+              onDetect: _onDetect,
+              errorBuilder: (context, error, child) {
+                return Container(
+                  color: AppColors.scanCardDark,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        Icons.videocam_off_rounded,
+                        color: Colors.white54,
+                        size: 40,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Izin kamera diperlukan untuk memindai barcode.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ),

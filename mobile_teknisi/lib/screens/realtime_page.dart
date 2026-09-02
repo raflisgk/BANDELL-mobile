@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../utils/app_colors.dart';
 import 'scan_barcode_page.dart';
 
@@ -19,6 +20,8 @@ class _RealtimePageState extends State<RealtimePage> {
   final FocusNode _latitudeFocusNode = FocusNode();
   final FocusNode _addressFocusNode = FocusNode();
   final FocusNode _lampTypeFocusNode = FocusNode();
+
+  bool _isLoadingLocation = false;
 
   @override
   void initState() {
@@ -68,20 +71,90 @@ class _RealtimePageState extends State<RealtimePage> {
     );
   }
 
-  void _handleGetLocation() {
-    debugPrint('Get Location clicked');
+  Future<void> _handleGetLocation() async {
+    if (_isLoadingLocation) return;
     setState(() {
-      _longitudeController.text = '106.8456';
-      _latitudeController.text = '-6.2088';
-      _addressController.text = 'Jl. Sudirman No. 10, Jakarta';
+      _isLoadingLocation = true;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Koordinat & Alamat Otomatis Berhasil Diambil (Simulasi UI)'),
-        backgroundColor: AppColors.realtimeGreen,
-        duration: Duration(seconds: 1),
-      ),
-    );
+
+    try {
+      final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Layanan lokasi (GPS) nonaktif. Harap aktifkan GPS Anda di Pengaturan.'),
+            backgroundColor: AppColors.realtimeGreen,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Izin lokasi diperlukan untuk mengambil koordinat lampu.'),
+              backgroundColor: AppColors.realtimeGreen,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Izin lokasi ditolak permanen. Buka pengaturan aplikasi untuk mengaktifkannya.'),
+            backgroundColor: AppColors.realtimeGreen,
+            duration: Duration(seconds: 4),
+          ),
+        );
+        return;
+      }
+
+      final Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _latitudeController.text = position.latitude.toStringAsFixed(6);
+        _longitudeController.text = position.longitude.toStringAsFixed(6);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lokasi GPS berhasil diambil: Lat ${position.latitude.toStringAsFixed(4)}, Long ${position.longitude.toStringAsFixed(4)}'),
+          backgroundColor: AppColors.realtimeGreen,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengambil lokasi GPS: $e'),
+          backgroundColor: AppColors.realtimeGreen,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingLocation = false;
+        });
+      }
+    }
   }
 
   void _handleTambahFoto() {
@@ -206,49 +279,73 @@ class _RealtimePageState extends State<RealtimePage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _handleGetLocation,
+                  onPressed: _isLoadingLocation ? null : _handleGetLocation,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.realtimeGreen,
                     foregroundColor: AppColors.buttonText,
+                    disabledBackgroundColor: AppColors.realtimeGreen.withValues(alpha: 0.7),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.my_location_rounded,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Get Location',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                  child: _isLoadingLocation
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Ambil koordinat dan alamat otomatis dari GPS',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.cardTextSubtle,
-                          fontWeight: FontWeight.w400,
+                            SizedBox(width: 10),
+                            Text(
+                              'Mengambil lokasi...',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.my_location_rounded,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Get Location',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Ambil koordinat dan alamat otomatis dari GPS',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.cardTextSubtle,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
 
