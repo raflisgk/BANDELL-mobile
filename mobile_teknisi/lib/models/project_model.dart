@@ -1,6 +1,7 @@
 class Project {
   final int idProject;
   final String projectName;
+  final String? location;
   final DateTime? startDate;
   final DateTime? endDate;
   final String status;
@@ -8,30 +9,37 @@ class Project {
   Project({
     required this.idProject,
     required this.projectName,
+    this.location,
     this.startDate,
     this.endDate,
-    required this.status,
+    this.status = 'active',
   });
 
   factory Project.fromJson(Map<String, dynamic> json) {
     return Project(
-      idProject: int.parse(
-        json['id_project'].toString(),
-      ),
-      projectName:
-          json['project_name']?.toString() ?? '',
+      idProject: json['id_project'] is int
+          ? json['id_project']
+          : int.tryParse(json['id_project']?.toString() ?? '0') ?? 0,
+      projectName: json['project_name'] ?? json['name'] ?? '',
+      location: json['location'] ?? json['lokasi'],
       startDate: json['start_date'] != null
-          ? DateTime.tryParse(
-              json['start_date'].toString(),
-            )
+          ? DateTime.tryParse(json['start_date'].toString())
           : null,
       endDate: json['end_date'] != null
-          ? DateTime.tryParse(
-              json['end_date'].toString(),
-            )
+          ? DateTime.tryParse(json['end_date'].toString())
           : null,
-      status:
-          json['status']?.toString() ?? '',
+      status: json['status'] ?? 'active',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id_project': idProject,
+      'project_name': projectName,
+      'location': location,
+      'start_date': startDate?.toIso8601String(),
+      'end_date': endDate?.toIso8601String(),
+      'status': status,
+    };
   }
 }

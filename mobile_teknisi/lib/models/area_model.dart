@@ -1,34 +1,35 @@
-class OperationalArea {
-  final int idOperationalArea;
+class AreaModel {
+  final int idArea;
   final int idProject;
   final String areaName;
-  final String location;
-  final String status;
+  final int totalLamps;
 
-  OperationalArea({
-    required this.idOperationalArea,
+  AreaModel({
+    required this.idArea,
     required this.idProject,
     required this.areaName,
-    required this.location,
-    required this.status,
+    this.totalLamps = 0,
   });
 
-  factory OperationalArea.fromJson(
-    Map<String, dynamic> json,
-  ) {
-    return OperationalArea(
-      idOperationalArea: int.parse(
-        json['id_operational_area'].toString(),
-      ),
-      idProject: int.parse(
-        json['id_project'].toString(),
-      ),
-      areaName:
-          json['area_name']?.toString() ?? '',
-      location:
-          json['location']?.toString() ?? '',
-      status:
-          json['status']?.toString() ?? '',
+  factory AreaModel.fromJson(Map<String, dynamic> json) {
+    return AreaModel(
+      idArea: json['id_area'] is int
+          ? json['id_area']
+          : int.tryParse(json['id_area']?.toString() ?? '0') ?? 0,
+      idProject: json['id_project'] is int
+          ? json['id_project']
+          : int.tryParse(json['id_project']?.toString() ?? '0') ?? 0,
+      areaName: json['area_name'] ?? json['name'] ?? '',
+      totalLamps: json['total_lamps'] ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id_area': idArea,
+      'id_project': idProject,
+      'area_name': areaName,
+      'total_lamps': totalLamps,
+    };
   }
 }

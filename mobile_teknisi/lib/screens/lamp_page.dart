@@ -1,763 +1,555 @@
 import 'package:flutter/material.dart';
-
-import '../models/installation_model.dart';
 import '../utils/app_colors.dart';
+import 'detail_lampu_page.dart';
+import 'metode_pendataan_page.dart';
+
+class LampItem {
+  final int id;
+  final String code;
+  final String type;
+  final String location;
+  final String coordinates;
+  final String status;
+  final String photoText;
+  final String updatedAt;
+
+  const LampItem({
+    required this.id,
+    required this.code,
+    required this.type,
+    required this.location,
+    required this.coordinates,
+    required this.status,
+    required this.photoText,
+    required this.updatedAt,
+  });
+}
 
 class LampPage extends StatefulWidget {
-  final int idOperationalArea;
+  final int? idArea;
+  final String? areaName;
 
-  const LampPage({
-    super.key,
-    required this.idOperationalArea,
-  });
+  const LampPage({super.key, this.idArea, this.areaName});
 
   @override
   State<LampPage> createState() => _LampPageState();
 }
 
 class _LampPageState extends State<LampPage> {
-  final TextEditingController searchController =
-      TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
-  int selectedFilter = 0;
+  String _searchQuery = '';
+  String _selectedFilter = 'Semua';
 
-  final List<Installation> installations = [
-    Installation(
-      idInstallations: 1,
-      idProject: 1,
-      idUser: 1,
-      controllerCode: 'JKT-001',
-      inputMethod: 'Manual',
-      idLampType: 1,
-      latitude: -6.2088,
-      longitude: 106.8456,
-      address: 'Jl. Sudirman No. 10, Jakarta',
+  final List<LampItem> _dummyLamps = const [
+    LampItem(
+      id: 1,
+      code: 'JKT-001',
+      type: 'LED Street Light 100W',
+      location: 'Jl. Sudirman No. 10, Jakarta',
+      coordinates: '-6.2088, 106.8456',
+      status: 'Tersimpan',
+      photoText: '3 Foto',
+      updatedAt: '20 Mei 2025, 14:30',
     ),
-    Installation(
-      idInstallations: 2,
-      idProject: 1,
-      idUser: 1,
-      controllerCode: 'JKT-002',
-      inputMethod: 'Manual',
-      idLampType: 2,
-      latitude: -6.2146,
-      longitude: 106.8451,
-      address: 'Jl. Gatot Subroto, Jakarta',
+    LampItem(
+      id: 2,
+      code: 'JKT-002',
+      type: 'LED Street Light 150W',
+      location: 'Jl. Gatot Subroto, Jakarta',
+      coordinates: '-6.2146, 106.8451',
+      status: 'Tersimpan',
+      photoText: '2 Foto',
+      updatedAt: '19 Mei 2025, 16:20',
     ),
-    Installation(
-      idInstallations: 3,
-      idProject: 1,
-      idUser: 1,
-      controllerCode: 'JKT-003',
-      inputMethod: 'Manual',
-      idLampType: 1,
-      latitude: -6.2012,
-      longitude: 106.8270,
-      address: 'Jl. Thamrin, Jakarta',
+    LampItem(
+      id: 3,
+      code: 'JKT-003',
+      type: 'LED Street Light 80W',
+      location: 'Jl. Thamrin, Jakarta',
+      coordinates: '-6.2012, 106.8270',
+      status: 'Belum Lengkap',
+      photoText: 'Belum ada foto',
+      updatedAt: '18 Mei 2025, 11:45',
     ),
   ];
-
-  List<Installation> get filteredInstallations {
-    final keyword =
-        searchController.text.trim().toLowerCase();
-
-    List<Installation> result =
-        installations.where((installation) {
-      final matchesSearch =
-          installation.controllerCode
-                  .toLowerCase()
-                  .contains(keyword) ||
-              installation.address
-                  .toLowerCase()
-                  .contains(keyword);
-
-      if (!matchesSearch) {
-        return false;
-      }
-
-      if (selectedFilter == 1) {
-        return installation.idInstallations != 3;
-      }
-
-      if (selectedFilter == 2) {
-        return installation.idInstallations == 3;
-      }
-
-      return true;
-    }).toList();
-
-    return result;
-  }
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
 
-    searchController.addListener(() {
-      setState(() {});
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim();
     });
   }
 
   @override
   void dispose() {
-    searchController.dispose();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  List<LampItem> get _filteredLamps {
+    return _dummyLamps.where((lamp) {
+      if (_selectedFilter != 'Semua' && lamp.status != _selectedFilter) {
+        return false;
+      }
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final codeMatch = lamp.code.toLowerCase().contains(query);
+        final locMatch = lamp.location.toLowerCase().contains(query);
+        if (!codeMatch && !locMatch) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
+
+  void _handleLampTap(LampItem lamp) {
+    debugPrint('Lamp selected: ${lamp.code} (ID: ${lamp.id})');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailLampuPage(
+          idLamp: lamp.id,
+          lampCode: lamp.code,
+          lampType: lamp.type,
+          status: lamp.status,
+        ),
+      ),
+    );
+  }
+
+  void _handleAddData() {
+    debugPrint('Tambah Data pressed');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MetodePendataanPage(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final filtered = _filteredLamps;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-
+      backgroundColor: AppColors.backgroundWhite,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _handleAddData,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.buttonText,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        icon: const Icon(Icons.add_rounded, size: 20),
+        label: const Text(
+          'Tambah Data',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // =====================================
-            // HEADER
-            // =====================================
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                16,
-                18,
-                20,
-                0,
-              ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
 
-              child: Align(
+              // Header: Back Arrow Icon
+              Align(
                 alignment: Alignment.centerLeft,
-
                 child: IconButton(
-                  padding: EdgeInsets.zero,
-
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-
+                  onPressed: _handleBack,
                   icon: const Icon(
-                    Icons.arrow_back,
+                    Icons.arrow_back_rounded,
                     color: AppColors.primary,
                     size: 28,
                   ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ),
-            ),
 
-            // =====================================
-            // CONTENT
-            // =====================================
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  20,
-                  20,
-                  25,
-                ),
+              const SizedBox(height: 12),
 
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-
-                  children: [
-                    // =================================
-                    // JUMLAH LAMPU
-                    // =================================
-                    Center(
-                      child: Text(
-                        '${installations.length} Lampu Tercatat',
-                        style: const TextStyle(
-                          color:
-                              AppColors.textPrimary,
-                          fontSize: 15,
-                          fontWeight:
-                              FontWeight.bold,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 17),
-
-                    // =================================
-                    // SEARCH
-                    // =================================
-                    _buildSearch(),
-
-                    const SizedBox(height: 10),
-
-                    // =================================
-                    // FILTER
-                    // =================================
-                    _buildFilters(),
-
-                    const SizedBox(height: 17),
-
-                    // =================================
-                    // TERBARU
-                    // =================================
-                    Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment
-                              .spaceBetween,
-
-                      children: [
-                        const Text(
-                          'Terbaru ↕',
-                          style: TextStyle(
-                            fontSize: 9,
-                            color:
-                                AppColors
-                                    .textSecondary,
-                          ),
-                        ),
-
-                        Text(
-                          '${filteredInstallations.length} Record',
-                          style: const TextStyle(
-                            fontSize: 9,
-                            color:
-                                AppColors
-                                    .textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    const Text(
-                      'Daftar Lampu',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            FontWeight.bold,
-                        color:
-                            AppColors.textPrimary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // =================================
-                    // LIST LAMPU
-                    // =================================
-                    ...filteredInstallations.map(
-                      (installation) {
-                        return Padding(
-                          padding:
-                              const EdgeInsets.only(
-                            bottom: 10,
-                          ),
-
-                          child:
-                              _buildLampCard(
-                            installation,
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // =================================
-                    // TAMBAH DATA
-                    // =================================
-                    Align(
-                      alignment:
-                          Alignment.centerRight,
-
-                      child: SizedBox(
-                        height: 34,
-
-                        child:
-                            ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO:
-                            // Buka form pendataan
-                          },
-
-                          icon: const Icon(
-                            Icons.add,
-                            size: 16,
-                          ),
-
-                          label: const Text(
-                            'Tambah Data',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight:
-                                  FontWeight.w600,
-                            ),
-                          ),
-
-                          style:
-                              ElevatedButton.styleFrom(
-                            backgroundColor:
-                                AppColors.primary,
-
-                            foregroundColor:
-                                AppColors.white,
-
-                            elevation: 3,
-
-                            padding:
-                                const EdgeInsets
-                                    .symmetric(
-                              horizontal: 13,
-                            ),
-
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(7),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+              // Count Header Title
+              const Center(
+                child: Text(
+                  '128 Lampu Tercatat',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  // ===============================================
-  // SEARCH
-  // ===============================================
+              const SizedBox(height: 20),
 
-  Widget _buildSearch() {
-    return SizedBox(
-      height: 39,
+              // Search Bar
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.searchBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.border,
+                    width: 1,
+                  ),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'Cari nomor lampu atau lokasi...',
+                    hintStyle: TextStyle(
+                      color: AppColors.hintColor,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: AppColors.hintColor,
+                      size: 22,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ),
 
-      child: TextField(
-        controller: searchController,
+              const SizedBox(height: 16),
 
-        style: const TextStyle(
-          fontSize: 11,
-          color: AppColors.textPrimary,
-        ),
+              // Filter Chips Row
+              Row(
+                children: [
+                  _buildFilterChip('Semua'),
+                  const SizedBox(width: 10),
+                  _buildFilterChip('Tersimpan'),
+                  const SizedBox(width: 10),
+                  _buildFilterChip('Belum Lengkap'),
+                ],
+              ),
 
-        decoration: InputDecoration(
-          hintText:
-              'Cari nomor lampu atau lokasi...',
+              const SizedBox(height: 20),
 
-          hintStyle: const TextStyle(
-            fontSize: 10,
-            color: AppColors.textHint,
-          ),
+              // Sort & Subtitle Bar
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: const [
+                      Text(
+                        'Terbaru',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(width: 2),
+                      Icon(
+                        Icons.swap_vert_rounded,
+                        color: AppColors.textSecondary,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
 
-          prefixIcon: const Icon(
-            Icons.search,
-            size: 18,
-            color: AppColors.icon,
-          ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text(
+                    'Daftar Lampu',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '128 Record',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
 
-          filled: true,
+              const SizedBox(height: 14),
 
-          fillColor:
-              const Color(0xFFF5F4FC),
-
-          contentPadding:
-              EdgeInsets.zero,
-
-          enabledBorder:
-              OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(7),
-
-            borderSide: const BorderSide(
-              color: AppColors.border,
-            ),
-          ),
-
-          focusedBorder:
-              OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(7),
-
-            borderSide:
-                const BorderSide(
-              color: AppColors.primary,
-            ),
+              // Lamp Cards List Section
+              Expanded(
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 48,
+                              color: AppColors.hintColor,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'Lampu tidak ditemukan',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 80),
+                        itemCount: filtered.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 14),
+                        itemBuilder: (context, index) {
+                          final lamp = filtered[index];
+                          return _buildLampCard(lamp);
+                        },
+                      ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ===============================================
-  // FILTER
-  // ===============================================
-
-  Widget _buildFilters() {
-    return Row(
-      children: [
-        _buildFilterButton(
-          title: 'Semua',
-          index: 0,
-        ),
-
-        const SizedBox(width: 5),
-
-        _buildFilterButton(
-          title: 'Tersimpan',
-          index: 1,
-        ),
-
-        const SizedBox(width: 5),
-
-        _buildFilterButton(
-          title: 'Belum Lengkap',
-          index: 2,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFilterButton({
-    required String title,
-    required int index,
-  }) {
-    final selected =
-        selectedFilter == index;
+  Widget _buildFilterChip(String label) {
+    final isSelected = _selectedFilter == label;
 
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedFilter = index;
+          _selectedFilter = label;
         });
       },
-
-      child: Container(
-        height: 25,
-
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 11,
-        ),
-
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary
-              : const Color(0xFFF8F8FC),
-
-          borderRadius:
-              BorderRadius.circular(15),
-
+          color: isSelected ? AppColors.primary : AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : AppColors.border,
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: 1,
           ),
         ),
-
-        child: Center(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 9,
-
-              fontWeight:
-                  FontWeight.w600,
-
-              color: selected
-                  ? AppColors.white
-                  : AppColors.textSecondary,
-            ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           ),
         ),
       ),
     );
   }
 
-  // ===============================================
-  // LAMP CARD
-  // ===============================================
+  Widget _buildLampCard(LampItem lamp) {
+    final isTersimpan = lamp.status == 'Tersimpan';
 
-  Widget _buildLampCard(
-    Installation installation,
-  ) {
-    final isIncomplete =
-        installation.idInstallations == 3;
-
-    return GestureDetector(
-      onTap: () {
-        debugPrint(
-          'Lamp dipilih: '
-          '${installation.idInstallations}',
-        );
-
-        // TODO:
-        // Navigator ke detail_lampu_page.dart
-      },
-
-      child: Container(
-        width: double.infinity,
-
-        padding:
-            const EdgeInsets.fromLTRB(
-          10,
-          10,
-          10,
-          8,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isTersimpan ? AppColors.border : AppColors.warningBorder,
+          width: isTersimpan ? 1 : 1.5,
         ),
-
-        decoration: BoxDecoration(
-          color: AppColors.background,
-
-          borderRadius:
-              BorderRadius.circular(7),
-
-          border: Border.all(
-            color: isIncomplete
-                ? const Color(0xFFFFC9B8)
-                : AppColors.border,
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 6,
+            offset: Offset(0, 2),
           ),
-        ),
-
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-
-          children: [
-            // =====================================
-            // NAMA + STATUS
-            // =====================================
-            Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _handleLampTap(lamp),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-
-                    children: [
-                      Text(
-                        installation
-                            .controllerCode,
-
-                        style:
-                            const TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                              FontWeight.bold,
-                          color:
-                              AppColors
-                                  .textPrimary,
-                        ),
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      Text(
-                        installation
-                                    .idLampType ==
-                                1
-                            ? 'LED Street Light 100W'
-                            : 'LED Street Light 150W',
-
-                        style:
-                            const TextStyle(
-                          fontSize: 8,
-                          color:
-                              AppColors
-                                  .textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                _buildStatus(
-                  isIncomplete,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 8),
-
-            // =====================================
-            // LOKASI
-            // =====================================
-            Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 12,
-                  color: AppColors.icon,
-                ),
-
-                const SizedBox(width: 3),
-
-                Expanded(
-                  child: Text(
-                    '${installation.address}\n'
-                    '${installation.latitude ?? '-'}, '
-                    '${installation.longitude ?? '-'}',
-
-                    style:
-                        const TextStyle(
-                      fontSize: 8,
-                      color:
-                          AppColors
-                              .textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 7),
-
-            // =====================================
-            // GARIS
-            // =====================================
-            Container(
-              height: 1,
-              color:
-                  const Color(0xFFE8E8EE),
-            ),
-
-            const SizedBox(height: 6),
-
-            // =====================================
-            // FOOTER
-            // =====================================
-            Row(
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceBetween,
-
-              children: [
+                // Top Row: Code & Badge Status
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      isIncomplete
-                          ? Icons
-                              .image_not_supported_outlined
-                          : Icons
-                              .photo_library_outlined,
-
-                      size: 10,
-
-                      color: isIncomplete
-                          ? const Color(
-                              0xFFFF8B52)
-                          : AppColors.link,
-                    ),
-
-                    const SizedBox(width: 3),
-
                     Text(
-                      isIncomplete
-                          ? 'Belum ada foto'
-                          : '${installation.idInstallations == 1 ? 3 : 2} Foto',
+                      lamp.code,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isTersimpan
+                            ? AppColors.successLight
+                            : AppColors.warningLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isTersimpan
+                                ? Icons.check_circle_outline_rounded
+                                : Icons.warning_amber_rounded,
+                            color: isTersimpan
+                                ? AppColors.success
+                                : AppColors.warning,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            lamp.status,
+                            style: TextStyle(
+                              color: isTersimpan
+                                  ? AppColors.success
+                                  : AppColors.warning,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  lamp.type,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 10),
 
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: isIncomplete
-                            ? const Color(
-                                0xFFFF8B52)
-                            : AppColors.link,
-                        fontWeight:
-                            FontWeight.w500,
+                // Location & Coordinates Row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      color: AppColors.iconColor,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            lamp.location,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            lamp.coordinates,
+                            style: const TextStyle(
+                              color: AppColors.hintColor,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
 
-                Text(
-                  isIncomplete
-                      ? 'Diperbarui 18 Mei 2025, 11:45'
-                      : installation.idInstallations ==
-                              1
-                          ? 'Diperbarui 20 Mei 2025, 14:30'
-                          : 'Diperbarui 19 Mei 2025, 16:20',
+                const SizedBox(height: 12),
+                const Divider(color: AppColors.border, height: 1),
+                const SizedBox(height: 12),
 
-                  style: const TextStyle(
-                    fontSize: 7,
-                    color:
-                        AppColors
-                            .textSecondary,
-                  ),
+                // Bottom Row: Photos & Updated At
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          color: isTersimpan
+                              ? AppColors.primary
+                              : AppColors.warning,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          lamp.photoText,
+                          style: TextStyle(
+                            color: isTersimpan
+                                ? AppColors.primary
+                                : AppColors.warning,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'Diperbarui ${lamp.updatedAt}',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  // ===============================================
-  // STATUS
-  // ===============================================
-
-  Widget _buildStatus(
-    bool incomplete,
-  ) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 3,
-      ),
-
-      decoration: BoxDecoration(
-        color: incomplete
-            ? const Color(0xFFFFF1E9)
-            : const Color(0xFFE8FFF3),
-
-        borderRadius:
-            BorderRadius.circular(10),
-      ),
-
-      child: Row(
-        mainAxisSize:
-            MainAxisSize.min,
-
-        children: [
-          Icon(
-            incomplete
-                ? Icons.warning_amber_rounded
-                : Icons.check_circle_outline,
-
-            size: 9,
-
-            color: incomplete
-                ? const Color(0xFFFF8B52)
-                : const Color(0xFF28B878),
-          ),
-
-          const SizedBox(width: 2),
-
-          Text(
-            incomplete
-                ? 'Belum Lengkap'
-                : 'Tersimpan',
-
-            style: TextStyle(
-              fontSize: 7,
-
-              fontWeight:
-                  FontWeight.w600,
-
-              color: incomplete
-                  ? const Color(0xFFFF8B52)
-                  : const Color(0xFF28B878),
-            ),
-          ),
-        ],
       ),
     );
   }

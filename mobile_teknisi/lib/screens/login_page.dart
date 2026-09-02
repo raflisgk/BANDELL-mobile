@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import '../utils/app_colors.dart';
+import 'project_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,432 +10,434 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController usernameController =
-      TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
-  final TextEditingController passwordController =
-      TextEditingController();
+  final FocusNode _usernameFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
 
-  bool rememberMe = false;
-  bool obscurePassword = true;
+  bool _isPasswordVisible = false;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _usernameFocusNode.addListener(_onFocusChange);
+    _passwordFocusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    setState(() {});
+  }
 
   @override
   void dispose() {
-    usernameController.dispose();
-    passwordController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _usernameFocusNode.removeListener(_onFocusChange);
+    _passwordFocusNode.removeListener(_onFocusChange);
+    _usernameFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
+  }
+
+  void _handleLogin() {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    debugPrint('Login attempted: username=$username, password=$password, rememberMe=$_rememberMe');
+
+    // Navigation for UI preview
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProjectPage(),
+      ),
+    );
+  }
+
+  void _handleForgotPassword() {
+    debugPrint('Lupa password clicked');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Lupa password (Aksi UI Sementara)'),
+        backgroundColor: AppColors.primary,
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _handleContactAdmin() {
+    debugPrint('Hubungi Admin clicked');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Hubungi Admin (Aksi UI Sementara)'),
+        backgroundColor: AppColors.primary,
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
+    final availableHeight = mediaQuery.size.height - mediaQuery.padding.top;
+
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.backgroundWhite,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final keyboardOpen =
-                MediaQuery.of(context).viewInsets.bottom > 0;
-
-            return Stack(
-              children: [
-                // ==========================================
-                // BAGIAN ATAS
-                // ==========================================
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOut,
-
-                  top: keyboardOpen ? 20 : 70,
-                  left: 0,
-                  right: 0,
-
-                  child: Column(
-                    children: [
-                      // LOGO
-                      Container(
-                        width: 68,
-                        height: 68,
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius:
-                              BorderRadius.circular(14),
-                        ),
-                        child: Center(
-                          child: Transform.rotate(
-                            angle: 0.785398,
-                            child: Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
+        bottom: false,
+        child: SingleChildScrollView(
+          physics: isKeyboardOpen
+              ? const BouncingScrollPhysics()
+              : const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: availableHeight > 0 ? availableHeight : 600,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. TOP AREA (WHITE BACKGROUND)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    color: AppColors.backgroundWhite,
+                    padding: EdgeInsets.only(
+                      top: isKeyboardOpen ? 16.0 : 36.0,
+                      bottom: isKeyboardOpen ? 12.0 : 28.0,
+                      left: 24.0,
+                      right: 24.0,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Shield Crest BANDELL Logo
+                        Image.asset(
+                          'assets/images/logo bandell 1.png',
+                          width: isKeyboardOpen ? 60 : 90,
+                          height: isKeyboardOpen ? 60 : 90,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: isKeyboardOpen ? 60 : 90,
+                              height: isKeyboardOpen ? 60 : 90,
+                              decoration: const BoxDecoration(
                                 color: AppColors.primary,
-                                borderRadius:
-                                    BorderRadius.circular(7),
+                                shape: BoxShape.circle,
                               ),
-                              child: Transform.rotate(
-                                angle: -0.785398,
-                                child: const Center(
-                                  child: Text(
-                                    'B',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 19,
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+                              child: Icon(
+                                Icons.shield_outlined,
+                                color: Colors.white,
+                                size: isKeyboardOpen ? 34 : 48,
                               ),
-                            ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: isKeyboardOpen ? 8 : 14),
+
+                        // BANDELL Title Text
+                        const Text(
+                          'BANDELL',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
 
-                      const SizedBox(height: 12),
-
-                      const Text(
-                        'BANDELL',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                        // Subtitle Text
+                        const Text(
+                          'Silakan login untuk melanjutkan',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-
-                      const SizedBox(height: 3),
-
-                      const Text(
-                        'Silakan login untuk melanjutkan',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
 
-                // ==========================================
-                // FORM LOGIN
-                // ==========================================
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOut,
-
-                  top: keyboardOpen ? 145 : 257,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(
-                      20,
-                      48,
-                      20,
-                      20,
+                  // 2. BOTTOM AREA (BLUE BANDELL BACKGROUND FORM)
+                                    Container(
+                    constraints: BoxConstraints(
+                      minHeight: isKeyboardOpen
+                          ? 0
+                          : mediaQuery.size.height * 0.62,
                     ),
-
-                    decoration: const BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(40),
-                        topRight: Radius.circular(40),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppColors.loginBlueGradientStart,
+                            AppColors.loginBlueGradientEnd,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          topRight: Radius.circular(32),
+                        ),
                       ),
-                    ),
-
-                    child: SingleChildScrollView(
-                      physics:
-                          const BouncingScrollPhysics(),
-
+                      padding: EdgeInsets.only(
+                        left: 24.0,
+                        right: 24.0,
+                        top: 20.0,
+                        bottom: 32.0 + mediaQuery.padding.bottom,
+                      ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // ==================================
-                          // USERNAME
-                          // ==================================
-                          _buildTextField(
-                            controller:
-                                usernameController,
+                          const SizedBox(height: 8),
+
+                          // Username Field Container
+                          _buildInputFieldContainer(
+                            icon: Icons.person_outline_rounded,
                             label: 'Username',
                             hint: 'Masukkan username',
-                            prefixIcon:
-                                Icons.person_outline,
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // ==================================
-                          // PASSWORD
-                          // ==================================
-                          _buildTextField(
-                            controller:
-                                passwordController,
-                            label: 'Password',
-                            hint: 'Masukkan password',
-                            prefixIcon:
-                                Icons.lock_outline,
-                            obscureText:
-                                obscurePassword,
-                            suffixIcon: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  obscurePassword =
-                                      !obscurePassword;
-                                });
-                              },
-                              icon: Icon(
-                                obscurePassword
-                                    ? Icons
-                                        .visibility_outlined
-                                    : Icons
-                                        .visibility_off_outlined,
-                                color:
-                                    AppColors.icon,
-                                size: 20,
-                              ),
-                            ),
+                            controller: _usernameController,
+                            focusNode: _usernameFocusNode,
                           ),
 
                           const SizedBox(height: 16),
 
-                          // ==================================
-                          // INGAT SAYA + LUPA PASSWORD
-                          // ==================================
+                          // Password Field Container
+                          _buildInputFieldContainer(
+                            icon: Icons.lock_outline_rounded,
+                            label: 'Password',
+                            hint: 'Masukkan password',
+                            controller: _passwordController,
+                            focusNode: _passwordFocusNode,
+                            isPassword: true,
+                            isPasswordVisible: _isPasswordVisible,
+                            onTogglePasswordVisibility: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          // Remember Me & Forgot Password Row
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: Checkbox(
-                                  value: rememberMe,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      rememberMe =
-                                          value ?? false;
-                                    });
-                                  },
-                                  activeColor:
-                                      AppColors.primary,
-                                  side:
-                                      const BorderSide(
-                                    color:
-                                        AppColors.border,
+                              // Remember Me Checkbox
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: Checkbox(
+                                      value: _rememberMe,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _rememberMe = value ?? false;
+                                        });
+                                      },
+                                      activeColor: Colors.white,
+                                      checkColor: AppColors.primary,
+                                      side: const BorderSide(
+                                        color: Colors.white,
+                                        width: 1.5,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
                                   ),
-                                  shape:
-                                      RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(
-                                            4),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Ingat saya',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
 
-                              const SizedBox(width: 5),
-
-                              const Text(
-                                'Ingat saya',
-                                style: TextStyle(
-                                  color: AppColors
-                                      .textSecondary,
-                                  fontSize: 13,
-                                ),
-                              ),
-
-                              const Spacer(),
-
+                              // Forgot Password Link
                               GestureDetector(
-                                onTap: () {
-                                  // TODO:
-                                  // Halaman lupa password
-                                },
+                                onTap: _handleForgotPassword,
                                 child: const Text(
                                   'Lupa password?',
                                   style: TextStyle(
-                                    color:
-                                        AppColors.link,
+                                    color: AppColors.loginLinkCyan,
                                     fontSize: 13,
-                                    fontWeight:
-                                        FontWeight.w600,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ],
                           ),
 
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 24),
 
-                          // ==================================
-                          // BUTTON LOGIN
-                          // ==================================
+                          // Login Button (White Background)
                           SizedBox(
-                            width: double.infinity,
-                            height: 43,
+                            height: 50,
                             child: ElevatedButton(
-                              onPressed: () {
-                                FocusScope.of(context)
-                                    .unfocus();
-
-                                final username =
-                                    usernameController
-                                        .text
-                                        .trim();
-
-                                final password =
-                                    passwordController
-                                        .text
-                                        .trim();
-
-                                debugPrint(
-                                  'Username: $username',
-                                );
-
-                                debugPrint(
-                                  'Password: $password',
-                                );
-
-                                // TODO:
-                                // Hubungkan ke API
-                              },
-                              style:
-                                  ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    AppColors.primary,
-                                foregroundColor:
-                                    AppColors.white,
-                                elevation: 0,
-                                shape:
-                                    RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(6),
+                              onPressed: _handleLogin,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppColors.primary,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: const Text(
                                 'Login',
                                 style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight:
-                                      FontWeight.w500,
+                                  color: AppColors.primary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ),
 
-                          const SizedBox(height: 27),
+                          const SizedBox(height: 24),
 
-                          // ==================================
-                          // HUBUNGI ADMIN
-                          // ==================================
-                          RichText(
-                            text: const TextSpan(
-                              text: 'Belum punya akun? ',
-                              style: TextStyle(
-                                color:
-                                    AppColors.textSecondary,
-                                fontSize: 12,
-                                fontStyle:
-                                    FontStyle.italic,
-                              ),
-                              children: [
+                          // Hubungi Admin Footer Link
+                          GestureDetector(
+                            onTap: _handleContactAdmin,
+                            child: Center(
+                              child: Text.rich(
                                 TextSpan(
-                                  text: 'Hubungi Admin',
-                                  style: TextStyle(
-                                    color:
-                                        AppColors.link,
-                                    fontWeight:
-                                        FontWeight.w600,
+                                  text: 'Belum punya akun? ',
+                                  style: const TextStyle(
+                                    color: Color(0xD9FFFFFF),
+                                    fontSize: 12.5,
+                                    fontStyle: FontStyle.italic,
                                   ),
+                                  children: const [
+                                    TextSpan(
+                                      text: 'Hubungi Admin',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.bold,
+                                        fontStyle: FontStyle.normal,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
+
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  // ========================================================
-  // TEXT FIELD
-  // ========================================================
-
-  Widget _buildTextField({
-    required TextEditingController controller,
+  Widget _buildInputFieldContainer({
+    required IconData icon,
     required String label,
     required String hint,
-    required IconData prefixIcon,
-    bool obscureText = false,
-    Widget? suffixIcon,
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    bool isPassword = false,
+    bool isPasswordVisible = false,
+    VoidCallback? onTogglePasswordVisibility,
   }) {
-    return SizedBox(
-      height: 50,
+    final isFocused = focusNode.hasFocus;
 
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isFocused ? AppColors.primary : AppColors.border,
+          width: isFocused ? 1.5 : 1.0,
         ),
-
-        decoration: InputDecoration(
-          prefixIcon: Icon(
-            prefixIcon,
-            color: AppColors.icon,
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: AppColors.hintColor,
             size: 20,
           ),
-
-          suffixIcon: suffixIcon,
-
-          labelText: label,
-
-          labelStyle: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-
-          floatingLabelBehavior:
-              FloatingLabelBehavior.always,
-
-          hintText: hint,
-
-          hintStyle: const TextStyle(
-            color: AppColors.textHint,
-            fontSize: 14,
-          ),
-
-          contentPadding:
-              const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-
-          enabledBorder: OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(7),
-            borderSide: const BorderSide(
-              color: AppColors.border,
-              width: 1,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  obscureText: isPassword && !isPasswordVisible,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: const TextStyle(
+                      color: AppColors.hintColor,
+                      fontSize: 14,
+                    ),
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                  ),
+                ),
+              ],
             ),
           ),
-
-          focusedBorder: OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(7),
-            borderSide: const BorderSide(
-              color: AppColors.primary,
-              width: 1.3,
+          if (isPassword && onTogglePasswordVisibility != null)
+            IconButton(
+              onPressed: onTogglePasswordVisibility,
+              icon: Icon(
+                isPasswordVisible
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: AppColors.hintColor,
+                size: 20,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
             ),
-          ),
-        ),
+        ],
       ),
     );
   }

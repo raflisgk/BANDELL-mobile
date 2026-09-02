@@ -1,0 +1,345 @@
+import 'package:flutter/material.dart';
+import '../utils/app_colors.dart';
+
+class NotificationItem {
+  final int id;
+  final String title;
+  final String time;
+  final String content;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackgroundColor;
+  bool isUnread;
+  final String section;
+  final String? boldText;
+
+  NotificationItem({
+    required this.id,
+    required this.title,
+    required this.time,
+    required this.content,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackgroundColor,
+    this.isUnread = false,
+    required this.section,
+    this.boldText,
+  });
+}
+
+class NotificationPage extends StatefulWidget {
+  const NotificationPage({super.key});
+
+  @override
+  State<NotificationPage> createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+  late List<NotificationItem> _notifications;
+
+  @override
+  void initState() {
+    super.initState();
+    _notifications = [
+      NotificationItem(
+        id: 1,
+        title: 'Penugasan Baru Diterima',
+        time: 'Baru saja',
+        content:
+            'Anda telah ditugaskan untuk proyek Pemeliharaan Lampu Jalan Tol Sesi 4 di Area Cikarang Blok B.',
+        icon: Icons.assignment_rounded,
+        iconColor: AppColors.primary,
+        iconBackgroundColor: AppColors.primaryLight,
+        isUnread: true,
+        section: 'TERBARU',
+        boldText: 'Cikarang Blok B',
+      ),
+      NotificationItem(
+        id: 2,
+        title: 'Laporan Terkirim',
+        time: 'Baru saja',
+        content:
+            'Laporan penugasan untuk Jakarta Smart City P1 telah berhasil dikirimkan.',
+        icon: Icons.assignment_turned_in_rounded,
+        iconColor: AppColors.primary,
+        iconBackgroundColor: AppColors.primaryLight,
+        isUnread: true,
+        section: 'TERBARU',
+        boldText: 'Jakarta Smart City P1',
+      ),
+      NotificationItem(
+        id: 3,
+        title: 'Laporan Menunggu\nVerifikasi',
+        time: '2 jam yang\nlalu',
+        content:
+            'Laporan penugasan JKT-002 sedang dalam proses verifikasi oleh supervisor.',
+        icon: Icons.pending_actions_rounded,
+        iconColor: AppColors.textSecondary,
+        iconBackgroundColor: AppColors.searchBackground,
+        isUnread: false,
+        section: 'SEBELUMNYA',
+        boldText: 'JKT-002',
+      ),
+      NotificationItem(
+        id: 4,
+        title: 'Laporan Disetujui',
+        time: 'Kemarin',
+        content: 'Laporan penugasan Bekasi Timur Revamp telah disetujui.',
+        icon: Icons.verified_user_rounded,
+        iconColor: AppColors.success,
+        iconBackgroundColor: AppColors.successLight,
+        isUnread: false,
+        section: 'SEBELUMNYA',
+        boldText: 'Bekasi Timur Revamp',
+      ),
+    ];
+  }
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
+
+  void _handleNotificationTap(NotificationItem item) {
+    debugPrint('Notification selected: ${item.title}');
+    setState(() {
+      item.isUnread = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final terbaruList =
+        _notifications.where((n) => n.section == 'TERBARU').toList();
+    final sebelumnyaList =
+        _notifications.where((n) => n.section == 'SEBELUMNYA').toList();
+
+    return Scaffold(
+      backgroundColor: AppColors.backgroundWhite,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: Colors.white,
+            size: 26,
+          ),
+          onPressed: _handleBack,
+        ),
+        title: const Text(
+          'Notifikasi',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(2),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.45,
+              height: 3,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // SECTION 1: TERBARU
+              if (terbaruList.isNotEmpty) ...[
+                const Text(
+                  'TERBARU',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...terbaruList.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: _buildNotificationCard(item),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // SECTION 2: SEBELUMNYA
+              if (sebelumnyaList.isNotEmpty) ...[
+                const Text(
+                  'SEBELUMNYA',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...sebelumnyaList.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: _buildNotificationCard(item),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(NotificationItem item) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _handleNotificationTap(item),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left Icon Pill
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: item.iconBackgroundColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    item.icon,
+                    color: item.iconColor,
+                    size: 22,
+                  ),
+                ),
+
+                const SizedBox(width: 14),
+
+                // Content Section
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top Row: Title & Time / Unread Badge
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.title,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                item.time,
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              if (item.isUnread) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      // Description Text (with bold target keyword if specified)
+                      _buildContentText(item.content, item.boldText),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentText(String content, String? boldText) {
+    if (boldText == null || !content.contains(boldText)) {
+      return Text(
+        content,
+        style: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 12,
+          height: 1.4,
+        ),
+      );
+    }
+
+    final parts = content.split(boldText);
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 12,
+          height: 1.4,
+        ),
+        children: [
+          TextSpan(text: parts[0]),
+          TextSpan(
+            text: boldText,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          if (parts.length > 1) TextSpan(text: parts[1]),
+        ],
+      ),
+    );
+  }
+}

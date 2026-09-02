@@ -1,517 +1,312 @@
 import 'package:flutter/material.dart';
-
-import '../models/area_model.dart';
-import '../services/api_service.dart';
 import '../utils/app_colors.dart';
+import 'lamp_page.dart';
+
+class AreaItem {
+  final int id;
+  final String name;
+  final String location;
+
+  const AreaItem({
+    required this.id,
+    required this.name,
+    required this.location,
+  });
+}
 
 class AreaPage extends StatefulWidget {
-  final int idProject;
+  final int? idProject;
 
-  const AreaPage({
-    super.key,
-    required this.idProject,
-  });
+  const AreaPage({super.key, this.idProject});
 
   @override
   State<AreaPage> createState() => _AreaPageState();
 }
 
 class _AreaPageState extends State<AreaPage> {
-  final ApiService apiService = ApiService();
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
-  final TextEditingController searchController =
-      TextEditingController();
+  String _searchQuery = '';
 
-  List<OperationalArea> areas = [];
-  List<OperationalArea> filteredAreas = [];
-
-  bool isLoading = true;
-  String? errorMessage;
+  final List<AreaItem> _dummyAreas = const [
+    AreaItem(
+      id: 1,
+      name: 'Jakarta Selatan',
+      location: 'Jakarta, Indonesia',
+    ),
+    AreaItem(
+      id: 2,
+      name: 'Jakarta Pusat',
+      location: 'Jakarta, Indonesia',
+    ),
+    AreaItem(
+      id: 3,
+      name: 'Jakarta Timur',
+      location: 'Jakarta, Indonesia',
+    ),
+    AreaItem(
+      id: 4,
+      name: 'Kuningan District',
+      location: 'Jakarta, Indonesia',
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
-
-    loadAreas();
-
-    searchController.addListener(
-      filterAreas,
-    );
+    _searchController.addListener(_onSearchChanged);
   }
 
-  Future<void> loadAreas() async {
+  void _onSearchChanged() {
     setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
-
-    try {
-      final result =
-          await apiService.getOperationalAreas(
-        widget.idProject,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        areas = result;
-        filteredAreas = result;
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        isLoading = false;
-        errorMessage =
-            'Gagal mengambil data area.';
-      });
-    }
-  }
-
-  void filterAreas() {
-    final keyword =
-        searchController.text.trim().toLowerCase();
-
-    setState(() {
-      if (keyword.isEmpty) {
-        filteredAreas = areas;
-      } else {
-        filteredAreas = areas.where((area) {
-          return area.areaName
-                  .toLowerCase()
-                  .contains(keyword) ||
-              area.location
-                  .toLowerCase()
-                  .contains(keyword);
-        }).toList();
-      }
+      _searchQuery = _searchController.text.trim();
     });
   }
 
   @override
   void dispose() {
-    searchController.removeListener(
-      filterAreas,
-    );
-
-    searchController.dispose();
-
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  List<AreaItem> get _filteredAreas {
+    if (_searchQuery.isEmpty) {
+      return _dummyAreas;
+    }
+    return _dummyAreas.where((area) {
+      return area.name
+          .toLowerCase()
+          .contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
+
+  void _handleAreaTap(AreaItem area) {
+    debugPrint('Area selected: ${area.name} (ID: ${area.id})');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LampPage(
+          idArea: area.id,
+          areaName: area.name,
+        ),
+      ),
+    );
+  }
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final filtered = _filteredAreas;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-
+      backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: Column(
-          children: [
-            // =========================
-            // HEADER
-            // =========================
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                16,
-                24,
-                0,
-              ),
-
-              child: Align(
-                alignment: Alignment.centerLeft,
-
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: AppColors.primary,
-                    size: 27,
-                  ),
-                ),
-              ),
-            ),
-
-            // =========================
-            // CONTENT
-            // =========================
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: loadAreas,
-
-                child: SingleChildScrollView(
-                  physics:
-                      const AlwaysScrollableScrollPhysics(),
-
-                  padding:
-                      const EdgeInsets.fromLTRB(
-                    30,
-                    15,
-                    30,
-                    25,
-                  ),
-
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-
-                    children: [
-                      // =========================
-                      // TITLE
-                      // =========================
-                      const Text(
-                        'Pilih Area Operasional',
-                        style: TextStyle(
-                          fontSize: 21,
-                          fontWeight:
-                              FontWeight.bold,
-                          color:
-                              AppColors.textPrimary,
-                        ),
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      const Text(
-                        'Berikut area operasional tersedia untuk Anda.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color:
-                              AppColors.textSecondary,
-                        ),
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      // =========================
-                      // SEARCH
-                      // =========================
-                      _buildSearch(),
-
-                      const SizedBox(height: 20),
-
-                      // =========================
-                      // AREA LIST
-                      // =========================
-                      _buildAreaContent(),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearch() {
-    return SizedBox(
-      height: 40,
-
-      child: TextField(
-        controller: searchController,
-
-        style: const TextStyle(
-          fontSize: 13,
-          color: AppColors.textPrimary,
-        ),
-
-        decoration: InputDecoration(
-          hintText: 'Cari area...',
-
-          hintStyle: const TextStyle(
-            fontSize: 13,
-            color: AppColors.textHint,
-          ),
-
-          prefixIcon: const Icon(
-            Icons.search,
-            color: AppColors.icon,
-            size: 21,
-          ),
-
-          filled: true,
-
-          fillColor:
-              const Color(0xFFF3F4FB),
-
-          contentPadding: EdgeInsets.zero,
-
-          enabledBorder:
-              OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(7),
-
-            borderSide: const BorderSide(
-              color: AppColors.border,
-            ),
-          ),
-
-          focusedBorder:
-              OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(7),
-
-            borderSide: const BorderSide(
-              color: AppColors.primary,
-              width: 1.2,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAreaContent() {
-    if (isLoading) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 40),
-
-        child: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-          ),
-        ),
-      );
-    }
-
-    if (errorMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 40),
-
-        child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.cloud_off_outlined,
-                color: AppColors.icon,
-                size: 40,
-              ),
+              const SizedBox(height: 16),
 
-              const SizedBox(height: 10),
-
-              Text(
-                errorMessage!,
-                style: const TextStyle(
-                  color:
-                      AppColors.textSecondary,
-                  fontSize: 13,
+              // Header: Back Arrow Icon
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: _handleBack,
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
 
-              ElevatedButton(
-                onPressed: loadAreas,
-
-                style:
-                    ElevatedButton.styleFrom(
-                  backgroundColor:
-                      AppColors.primary,
+              // Title & Subtitle Section
+              const Text(
+                'Pilih Area Operasional',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Berikut area operasional tersedia untuk Anda.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
 
-                child: const Text(
-                  'Coba Lagi',
-                  style: TextStyle(
-                    color: AppColors.white,
+              const SizedBox(height: 20),
+
+              // Search Bar
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.searchBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.border,
+                    width: 1,
                   ),
                 ),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'Cari project...',
+                    hintStyle: TextStyle(
+                      color: AppColors.hintColor,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: AppColors.hintColor,
+                      size: 22,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Area Cards List Section
+              Expanded(
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 48,
+                              color: AppColors.hintColor,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'Area tidak ditemukan',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 24),
+                        itemCount: filtered.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 14),
+                        itemBuilder: (context, index) {
+                          final area = filtered[index];
+                          return _buildAreaCard(area);
+                        },
+                      ),
               ),
             ],
           ),
         ),
-      );
-    }
-
-    if (filteredAreas.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 40),
-
-        child: Center(
-          child: Text(
-            'Belum ada area operasional.',
-            style: TextStyle(
-              color:
-                  AppColors.textSecondary,
-              fontSize: 13,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      shrinkWrap: true,
-
-      physics:
-          const NeverScrollableScrollPhysics(),
-
-      itemCount: filteredAreas.length,
-
-      separatorBuilder:
-          (_, __) => const SizedBox(
-        height: 14,
       ),
-
-      itemBuilder: (context, index) {
-        return _buildAreaCard(
-          filteredAreas[index],
-        );
-      },
     );
   }
 
-  Widget _buildAreaCard(
-    OperationalArea area,
-  ) {
-    return Material(
-      color: AppColors.primary,
-
-      borderRadius:
-          BorderRadius.circular(9),
-
-      child: InkWell(
-        borderRadius:
-            BorderRadius.circular(9),
-
-        onTap: () {
-          debugPrint(
-            'Area dipilih: '
-            '${area.idOperationalArea}',
-          );
-
-          // Nanti lanjut ke lamp_page.dart
-        },
-
-        child: Container(
-          width: double.infinity,
-          height: 102,
-
-          padding:
-              const EdgeInsets.fromLTRB(
-            14,
-            13,
-            12,
-            12,
+  Widget _buildAreaCard(AreaItem area) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 6,
+            offset: Offset(0, 3),
           ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _handleAreaTap(area),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Area Name
+                Text(
+                  area.name,
+                  style: const TextStyle(
+                    color: AppColors.cardTextWhite,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
 
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-
-            borderRadius:
-                BorderRadius.circular(9),
-
-            boxShadow: const [
-              BoxShadow(
-                offset: Offset(0, 3),
-                blurRadius: 5,
-                color: Color(0x22000000),
-              ),
-            ],
-          ),
-
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-
-                children: [
-                  // NAMA AREA
-                  Text(
-                    area.areaName,
-
-                    maxLines: 1,
-
-                    overflow:
-                        TextOverflow.ellipsis,
-
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 14,
-                      fontWeight:
-                          FontWeight.bold,
+                // Location Row
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      color: AppColors.cardTextSubtle,
+                      size: 15,
                     ),
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  // LOKASI
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        color:
-                            AppColors.white,
-                        size: 14,
+                    const SizedBox(width: 4),
+                    Text(
+                      area.location,
+                      style: const TextStyle(
+                        color: AppColors.cardTextSubtle,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
                       ),
-
-                      const SizedBox(width: 3),
-
-                      Expanded(
-                        child: Text(
-                          area.location,
-
-                          maxLines: 1,
-
-                          overflow:
-                              TextOverflow.ellipsis,
-
-                          style:
-                              const TextStyle(
-                            color:
-                                AppColors.white,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const Spacer(),
-
-                  // STATUS
-                  Text(
-                    area.status,
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 10,
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-              // =========================
-              // PANAH
-              // =========================
-              Positioned(
-                right: 0,
-                bottom: 0,
-
-                child: Container(
-                  width: 27,
-                  height: 27,
-
-                  decoration:
-                      const BoxDecoration(
-                    color: AppColors.white,
+                // Bottom Left Arrow Circle Button
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: AppColors.cardButtonWhite,
                     shape: BoxShape.circle,
                   ),
-
                   child: const Icon(
-                    Icons.chevron_right,
-                    color:
-                        AppColors.primary,
-                    size: 22,
+                    Icons.chevron_right_rounded,
+                    color: AppColors.primary,
+                    size: 24,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
