@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import '../utils/page_transitions.dart';
 import 'manual_page.dart';
 import 'realtime_page.dart';
 
@@ -14,22 +15,12 @@ class MetodePendataanPage extends StatelessWidget {
 
   void _handleSelectRealtime(BuildContext context) {
     debugPrint('Realtime dipilih');
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const RealtimePage(),
-      ),
-    );
+    AppNavigator.push(context, const RealtimePage());
   }
 
   void _handleSelectManual(BuildContext context) {
     debugPrint('Manual dipilih');
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ManualPage(),
-      ),
-    );
+    AppNavigator.push(context, const ManualPage());
   }
 
   @override

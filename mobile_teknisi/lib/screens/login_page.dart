@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import '../utils/page_transitions.dart';
 import 'area_operasional_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -48,11 +49,9 @@ class _LoginPageState extends State<LoginPage> {
     debugPrint('Login attempted: username=$username, password=$password, rememberMe=$_rememberMe');
 
     // Navigation for UI preview
-    Navigator.pushReplacement(
+    AppNavigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AreaOperasionalPage(),
-      ),
+      const AreaOperasionalPage(),
     );
   }
 

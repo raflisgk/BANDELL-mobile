@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import '../utils/page_transitions.dart';
 import '../widgets/area_operasional_card.dart';
 import '../widgets/bottom_navbar.dart';
+import 'history_page.dart';
 import 'lamp_page.dart';
+import 'profile_page.dart';
 
 class AreaOperasionalPage extends StatefulWidget {
   final int? idProject;
@@ -53,13 +56,11 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
   void _handleCardTap(Map<String, dynamic> area) {
     debugPrint('Area selected: ${area['title']} (ID: ${area['id']})');
-    Navigator.push(
+    AppNavigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => LampPage(
-          idArea: area['id'] as int,
-          areaName: area['title'] as String,
-        ),
+      LampPage(
+        idArea: area['id'] as int,
+        areaName: area['title'] as String,
       ),
     );
   }
@@ -194,9 +195,15 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
             BottomNavbar(
               currentIndex: _currentNavIndex,
               onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
+                if (index == 1) {
+                  AppNavigator.pushTabReplacement(context, const HistoryPage());
+                } else if (index == 2) {
+                  AppNavigator.pushTabReplacement(context, const ProfilePage());
+                } else {
+                  setState(() {
+                    _currentNavIndex = index;
+                  });
+                }
               },
             ),
           ],

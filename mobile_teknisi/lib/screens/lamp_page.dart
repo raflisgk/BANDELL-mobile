@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import '../utils/page_transitions.dart';
 import '../widgets/bottom_navbar.dart';
 import '../widgets/lamp_type_card.dart';
+import 'history_page.dart';
 import 'input_method_page.dart';
+import 'profile_page.dart';
 
 class LampTypeItem {
   final int id;
@@ -119,12 +122,7 @@ class _LampPageState extends State<LampPage> {
 
   void _handleLampTypeTap(LampTypeItem item) {
     debugPrint('Lamp type selected: ${item.name}');
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const InputMethodPage(),
-      ),
-    );
+    AppNavigator.push(context, const InputMethodPage());
   }
 
   @override
@@ -263,9 +261,15 @@ class _LampPageState extends State<LampPage> {
             BottomNavbar(
               currentIndex: _currentNavIndex,
               onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
+                if (index == 1) {
+                  AppNavigator.pushTabReplacement(context, const HistoryPage());
+                } else if (index == 2) {
+                  AppNavigator.pushTabReplacement(context, const ProfilePage());
+                } else {
+                  setState(() {
+                    _currentNavIndex = index;
+                  });
+                }
               },
             ),
           ],

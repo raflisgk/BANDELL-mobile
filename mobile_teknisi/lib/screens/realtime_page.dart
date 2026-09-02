@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../utils/app_colors.dart';
+import '../utils/page_transitions.dart';
+import 'history_page.dart';
 import 'scan_barcode_page.dart';
 
 class RealtimePage extends StatefulWidget {
@@ -203,13 +205,149 @@ class _RealtimePageState extends State<RealtimePage> {
 
   void _handleSimpanData() {
     debugPrint('Simpan Data clicked. Barcode: $_scannedBarcode, Lat: ${_latitudeController.text}, Long: ${_longitudeController.text}, Panel: ${_panelCodeController.text}');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Data Berhasil Disimpan'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 2),
+    _showSuccessDialog();
+  }
+
+  void _showSuccessDialog() {
+    final String lampCode = (_scannedBarcode != null && _scannedBarcode!.isNotEmpty)
+        ? _scannedBarcode!
+        : (_panelCodeController.text.isNotEmpty
+            ? _panelCodeController.text
+            : 'JKT-2025-004');
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Animated Green Checkmark Badge
+              const _AnimatedCheckBadge(),
+
+              const SizedBox(height: 24),
+
+              // Title
+              const Text(
+                'Data Berhasil Disimpan',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.3,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Subtitle / Description with Dynamic Lamp Code
+              Text.rich(
+                TextSpan(
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14.5,
+                    height: 1.45,
+                  ),
+                  children: [
+                    const TextSpan(text: 'Informasi lampu '),
+                    TextSpan(
+                      text: lampCode,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const TextSpan(
+                      text: ' telah\ntersimpan ke dalam database sistem.',
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 28),
+
+              // Button 1: Tambah Data
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    setState(() {
+                      _scannedBarcode = null;
+                      _latitudeController.clear();
+                      _longitudeController.clear();
+                      _panelCodeController.clear();
+                      _photos.clear();
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Form direset. Siap memasukkan data lampu berikutnya.'),
+                        backgroundColor: AppColors.primary,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Tambah Data',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Button 2: Lihat Riwayat
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  AppNavigator.pushTabReplacement(
+                    context,
+                    const HistoryPage(),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                ),
+                child: const Text(
+                  'Lihat Riwayat',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    );
+    ),
+  );
   }
 
   @override
@@ -292,14 +430,22 @@ class _RealtimePageState extends State<RealtimePage> {
                 _buildCustomTextField(
                   controller: _latitudeController,
                   focusNode: _latitudeFocusNode,
-                  hint: '-6.2088',
+                  hint: '',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 // Field 2: Longitude
                 _buildCustomTextField(
                   controller: _longitudeController,
                   focusNode: _longitudeFocusNode,
-                  hint: '106.8456',
+                  hint: '',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
                 ),
               ] else ...[
                 // Get Location Button
@@ -321,7 +467,7 @@ class _RealtimePageState extends State<RealtimePage> {
               _buildCustomTextField(
                 controller: _panelCodeController,
                 focusNode: _panelCodeFocusNode,
-                hint: 'PJU-98457847',
+                hint: '',
               ),
 
               const SizedBox(height: 20),
@@ -369,7 +515,7 @@ class _RealtimePageState extends State<RealtimePage> {
       child: Row(
         children: [
           const Icon(
-            Icons.qr_code_2_rounded,
+            Icons.qr_code_scanner,
             color: Colors.white,
             size: 56,
           ),
@@ -410,7 +556,7 @@ class _RealtimePageState extends State<RealtimePage> {
                     ),
                   ),
                   icon: const Icon(
-                    Icons.tune_rounded,
+                    Icons.qr_code_scanner,
                     size: 16,
                     color: AppColors.primary,
                   ),
@@ -434,47 +580,64 @@ class _RealtimePageState extends State<RealtimePage> {
   // Barcode Card Kondisi Teridentifikasi (Light Blue)
   Widget _buildIdentifiedCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: const Color(0xFFC7DBEC),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFA3C7E8),
+          width: 1.2,
+        ),
       ),
       child: Row(
         children: [
           Container(
-            width: 24,
-            height: 24,
-            decoration: const BoxDecoration(
-              color: Color(0xFF10B981),
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFF16A34A),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white,
+                width: 2.5,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ],
             ),
             child: const Icon(
               Icons.check_rounded,
               color: Colors.white,
-              size: 16,
+              size: 18,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
                   'TERIDENTIFIKASI',
                   style: TextStyle(
-                    color: Color(0xFF10B981),
-                    fontSize: 11,
+                    color: Color(0xFF16A34A),
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   _scannedBarcode ?? '',
                   style: const TextStyle(
-                    color: Color(0xFF0F2942),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E2B45),
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ],
@@ -485,24 +648,25 @@ class _RealtimePageState extends State<RealtimePage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: AppColors.primary,
-              elevation: 0,
+              elevation: 2,
+              shadowColor: Colors.black.withValues(alpha: 0.15),
               padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
+                horizontal: 14,
+                vertical: 10,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             icon: const Icon(
-              Icons.tune_rounded,
-              size: 15,
+              Icons.qr_code_scanner_rounded,
+              size: 18,
               color: AppColors.primary,
             ),
             label: const Text(
               'Scan Ulang',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary,
               ),
@@ -794,6 +958,7 @@ class _RealtimePageState extends State<RealtimePage> {
     required TextEditingController controller,
     required FocusNode focusNode,
     required String hint,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     final isFocused = focusNode.hasFocus;
 
@@ -810,6 +975,7 @@ class _RealtimePageState extends State<RealtimePage> {
       child: TextField(
         controller: controller,
         focusNode: focusNode,
+        keyboardType: keyboardType,
         style: const TextStyle(
           color: AppColors.textPrimary,
           fontSize: 14,
@@ -827,6 +993,87 @@ class _RealtimePageState extends State<RealtimePage> {
             vertical: 14,
           ),
           border: InputBorder.none,
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedCheckBadge extends StatefulWidget {
+  const _AnimatedCheckBadge();
+
+  @override
+  State<_AnimatedCheckBadge> createState() => _AnimatedCheckBadgeState();
+}
+
+class _AnimatedCheckBadgeState extends State<_AnimatedCheckBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _checkScaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    );
+
+    _checkScaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.3, 1.0, curve: Curves.easeOutBack),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        width: 68,
+        height: 68,
+        decoration: BoxDecoration(
+          color: const Color(0xFF15803D),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF15803D).withValues(alpha: 0.3),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Center(
+          child: ScaleTransition(
+            scale: _checkScaleAnimation,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Color(0xFF15803D),
+                size: 20,
+              ),
+            ),
+          ),
         ),
       ),
     );
