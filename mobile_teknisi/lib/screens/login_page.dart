@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
-import 'project_page.dart';
+import 'area_operasional_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => const ProjectPage(),
+        builder: (context) => const AreaOperasionalPage(),
       ),
     );
   }

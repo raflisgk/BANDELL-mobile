@@ -90,17 +90,21 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
         _spinController.stop();
         _cameraController.stop();
 
-        // Tampilkan centang sejenak sebelum pindah ke Form Pendataan
+        // Tampilkan centang sejenak sebelum pindah / kembali
         Future.delayed(const Duration(milliseconds: 600), () {
           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FormPendataanPage(
-                  scannedCode: value.trim(),
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context, value.trim());
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FormPendataanPage(
+                    scannedCode: value.trim(),
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           }
         });
         break;

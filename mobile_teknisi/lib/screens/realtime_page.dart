@@ -11,25 +11,31 @@ class RealtimePage extends StatefulWidget {
 }
 
 class _RealtimePageState extends State<RealtimePage> {
-  final TextEditingController _longitudeController = TextEditingController();
   final TextEditingController _latitudeController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _lampTypeController = TextEditingController();
+  final TextEditingController _longitudeController = TextEditingController();
+  final TextEditingController _panelCodeController = TextEditingController();
 
-  final FocusNode _longitudeFocusNode = FocusNode();
   final FocusNode _latitudeFocusNode = FocusNode();
-  final FocusNode _addressFocusNode = FocusNode();
-  final FocusNode _lampTypeFocusNode = FocusNode();
+  final FocusNode _longitudeFocusNode = FocusNode();
+  final FocusNode _panelCodeFocusNode = FocusNode();
 
+  String? _scannedBarcode;
   bool _isLoadingLocation = false;
+  final List<String> _photos = [];
+
+  // Dummy sample photos to demonstrate photo addition if user taps "Tambah Foto"
+  final List<String> _samplePhotoUrls = const [
+    'https://images.unsplash.com/photo-1517646287270-a5a9ca602e5c?auto=format&fit=crop&w=300&q=80',
+    'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=300&q=80',
+    'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=300&q=80',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _longitudeFocusNode.addListener(_onFocusChange);
     _latitudeFocusNode.addListener(_onFocusChange);
-    _addressFocusNode.addListener(_onFocusChange);
-    _lampTypeFocusNode.addListener(_onFocusChange);
+    _longitudeFocusNode.addListener(_onFocusChange);
+    _panelCodeFocusNode.addListener(_onFocusChange);
   }
 
   void _onFocusChange() {
@@ -38,20 +44,17 @@ class _RealtimePageState extends State<RealtimePage> {
 
   @override
   void dispose() {
-    _longitudeController.dispose();
     _latitudeController.dispose();
-    _addressController.dispose();
-    _lampTypeController.dispose();
+    _longitudeController.dispose();
+    _panelCodeController.dispose();
 
-    _longitudeFocusNode.removeListener(_onFocusChange);
     _latitudeFocusNode.removeListener(_onFocusChange);
-    _addressFocusNode.removeListener(_onFocusChange);
-    _lampTypeFocusNode.removeListener(_onFocusChange);
+    _longitudeFocusNode.removeListener(_onFocusChange);
+    _panelCodeFocusNode.removeListener(_onFocusChange);
 
-    _longitudeFocusNode.dispose();
     _latitudeFocusNode.dispose();
-    _addressFocusNode.dispose();
-    _lampTypeFocusNode.dispose();
+    _longitudeFocusNode.dispose();
+    _panelCodeFocusNode.dispose();
     super.dispose();
   }
 
@@ -61,14 +64,29 @@ class _RealtimePageState extends State<RealtimePage> {
     }
   }
 
-  void _handleScanBarcode() {
-    debugPrint('Scan Barcode Disini clicked');
-    Navigator.push(
+  Future<void> _handleScanBarcode() async {
+    debugPrint('Scan Barcode clicked');
+    final String? result = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (context) => const ScanBarcodePage(),
       ),
     );
+
+    if (result != null && result.trim().isNotEmpty) {
+      setState(() {
+        _scannedBarcode = result.trim();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Barcode berhasil discan: $_scannedBarcode'),
+            backgroundColor: AppColors.primary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _handleGetLocation() async {
@@ -83,7 +101,7 @@ class _RealtimePageState extends State<RealtimePage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Layanan lokasi (GPS) nonaktif. Harap aktifkan GPS Anda di Pengaturan.'),
+            content: Text('Layanan lokasi (GPS) nonaktif. Harap aktifkan GPS Anda.'),
             backgroundColor: AppColors.realtimeGreen,
             duration: Duration(seconds: 3),
           ),
@@ -98,7 +116,7 @@ class _RealtimePageState extends State<RealtimePage> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Izin lokasi diperlukan untuk mengambil koordinat lampu.'),
+              content: Text('Izin lokasi diperlukan untuk mengambil koordinat.'),
               backgroundColor: AppColors.realtimeGreen,
               duration: Duration(seconds: 3),
             ),
@@ -111,7 +129,7 @@ class _RealtimePageState extends State<RealtimePage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Izin lokasi ditolak permanen. Buka pengaturan aplikasi untuk mengaktifkannya.'),
+            content: Text('Izin lokasi ditolak permanen. Buka pengaturan untuk mengaktifkan.'),
             backgroundColor: AppColors.realtimeGreen,
             duration: Duration(seconds: 4),
           ),
@@ -128,13 +146,13 @@ class _RealtimePageState extends State<RealtimePage> {
 
       if (!mounted) return;
       setState(() {
-        _latitudeController.text = position.latitude.toStringAsFixed(6);
-        _longitudeController.text = position.longitude.toStringAsFixed(6);
+        _latitudeController.text = position.latitude.toStringAsFixed(4);
+        _longitudeController.text = position.longitude.toStringAsFixed(4);
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lokasi GPS berhasil diambil: Lat ${position.latitude.toStringAsFixed(4)}, Long ${position.longitude.toStringAsFixed(4)}'),
+          content: Text('Lokasi GPS berhasil diambil: Lat ${_latitudeController.text}, Long ${_longitudeController.text}'),
           backgroundColor: AppColors.realtimeGreen,
           duration: const Duration(seconds: 2),
         ),
@@ -158,41 +176,59 @@ class _RealtimePageState extends State<RealtimePage> {
   }
 
   void _handleTambahFoto() {
-    debugPrint('Tambah Foto clicked');
+    if (_photos.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maksimal 5 foto telah tercapai'),
+          backgroundColor: AppColors.primary,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final String nextPhoto = _samplePhotoUrls[_photos.length % _samplePhotoUrls.length];
+    setState(() {
+      _photos.add(nextPhoto);
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tambah Foto (Simulasi UI)'),
+      SnackBar(
+        content: Text('Foto ${_photos.length} ditambahkan'),
         backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 1),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
 
   void _handleSimpanData() {
-    debugPrint('Simpan Data clicked');
+    debugPrint('Simpan Data clicked. Barcode: $_scannedBarcode, Lat: ${_latitudeController.text}, Long: ${_longitudeController.text}, Panel: ${_panelCodeController.text}');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Data Berhasil Disimpan (Simulasi UI)'),
+        content: Text('Data Berhasil Disimpan'),
         backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 1),
+        duration: Duration(seconds: 2),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool hasScanned = _scannedBarcode != null && _scannedBarcode!.isNotEmpty;
+    final bool hasLocation = _latitudeController.text.isNotEmpty;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
 
-              // Header: Back Arrow Icon
+              // Back Button
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -207,16 +243,17 @@ class _RealtimePageState extends State<RealtimePage> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // Centered Title & Subtitle
+              // Title & Subtitle
               const Center(
                 child: Text(
                   'Metode Input Real-time',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),
@@ -227,242 +264,86 @@ class _RealtimePageState extends State<RealtimePage> {
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
 
               const SizedBox(height: 24),
 
-              // 1. Scan Barcode Card (Blue Card)
-              _buildScanBarcodeCard(),
+              // 1. BARCODE CARD (Kondisi Awal / Teridentifikasi)
+              hasScanned ? _buildIdentifiedCard() : _buildInitialScanCard(),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+              const Divider(color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+              const SizedBox(height: 20),
 
-              // 2. Section: Lokasi Koordinat
+              // 2. LOKASI KOORDINAT SECTION
               _buildSectionHeader(
                 icon: Icons.language_rounded,
                 title: 'Lokasi Koordinat',
-                subtitle: 'Masukkan koordinat lampu (Long/Lat)',
-                showInfoIcon: true,
-              ),
-              const SizedBox(height: 12),
-              _buildCustomTextField(
-                controller: _longitudeController,
-                focusNode: _longitudeFocusNode,
-                hint: 'Longitude (X)',
-              ),
-              const SizedBox(height: 12),
-              _buildCustomTextField(
-                controller: _latitudeController,
-                focusNode: _latitudeFocusNode,
-                hint: 'Latitude (Y)',
-              ),
-
-              const SizedBox(height: 24),
-
-              // 3. Section: Alamat Lokasi
-              _buildSectionHeader(
-                icon: Icons.map_outlined,
-                title: 'Alamat Lokasi',
-                subtitle: 'Masukkan alamat sesuai lokasi lampu',
-              ),
-              const SizedBox(height: 12),
-              _buildCustomTextField(
-                controller: _addressController,
-                focusNode: _addressFocusNode,
-                hint: 'Contoh: Jl. Sudirman No. 10, Jakarta',
-                prefixIcon: Icons.location_on_outlined,
+                showRedAsterisk: true,
+                subtitle: 'Masukkan koordinat lampu (Lat/Long)',
               ),
               const SizedBox(height: 14),
 
-              // Get Location Button (Green Button)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoadingLocation ? null : _handleGetLocation,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.realtimeGreen,
-                    foregroundColor: AppColors.buttonText,
-                    disabledBackgroundColor: AppColors.realtimeGreen.withValues(alpha: 0.7),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoadingLocation
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Mengambil lokasi...',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(
-                                  Icons.my_location_rounded,
-                                  size: 18,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Get Location',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'Ambil koordinat dan alamat otomatis dari GPS',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.cardTextSubtle,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
+              if (hasLocation) ...[
+                // Field 1: Latitude
+                _buildCustomTextField(
+                  controller: _latitudeController,
+                  focusNode: _latitudeFocusNode,
+                  hint: '-6.2088',
                 ),
-              ),
+                const SizedBox(height: 12),
+                // Field 2: Longitude
+                _buildCustomTextField(
+                  controller: _longitudeController,
+                  focusNode: _longitudeFocusNode,
+                  hint: '106.8456',
+                ),
+              ] else ...[
+                // Get Location Button
+                _buildGetLocationButton(),
+              ],
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+              const Divider(color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+              const SizedBox(height: 20),
 
-              // 4. Section: Tipe Lampu
+              // 3. KODE PANEL SECTION
               _buildSectionHeader(
-                icon: Icons.lightbulb_outline_rounded,
-                title: 'Tipe Lampu',
-                subtitle: 'Pilih tipe / jenis lampu',
+                icon: Icons.language_rounded,
+                title: 'Kode Panel',
+                optionalText: '(Opsional)',
+                subtitle: 'Masukkan kode lampu',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               _buildCustomTextField(
-                controller: _lampTypeController,
-                focusNode: _lampTypeFocusNode,
-                hint: '',
+                controller: _panelCodeController,
+                focusNode: _panelCodeFocusNode,
+                hint: 'PJU-98457847',
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+              const Divider(color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+              const SizedBox(height: 20),
 
-              // 5. Section: Dokumentasi (opsional)
+              // 4. DOKUMENTASI SECTION
               _buildSectionHeader(
                 icon: Icons.camera_alt_outlined,
-                title: 'Dokumentasi (opsional)',
+                title: 'Dokumentasi',
+                optionalText: '(Opsional)',
                 subtitle: 'Tambahkan foto kondisi lampu (maks. 5 foto)',
               ),
-              const SizedBox(height: 12),
-
-              // Tambah Foto Button (Dashed / Dotted Box)
-              GestureDetector(
-                onTap: _handleTambahFoto,
-                child: Container(
-                  width: 110,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: AppColors.searchBackground,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.border,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(
-                        Icons.add_rounded,
-                        color: AppColors.primary,
-                        size: 28,
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Tambah Foto',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              const SizedBox(height: 14),
+              _buildDocumentationSection(),
 
               const SizedBox(height: 28),
 
-              // 6. Simpan Data Button (Blue Button)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _handleSimpanData,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.buttonText,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.file_upload_outlined,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Simpan Data',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Data akan disimpan ke daftar lampu',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.cardTextSubtle,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // 5. SIMPAN DATA BUTTON
+              _buildSimpanDataButton(),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -470,27 +351,27 @@ class _RealtimePageState extends State<RealtimePage> {
     );
   }
 
-  Widget _buildScanBarcodeCard() {
+  // Barcode Card Kondisi Awal (Blue)
+  Widget _buildInitialScanCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
+            color: Color(0x1A0C5DA5),
+            blurRadius: 8,
             offset: Offset(0, 3),
           ),
         ],
       ),
       child: Row(
         children: [
-          // QR Code Icon
           const Icon(
             Icons.qr_code_2_rounded,
             color: Colors.white,
-            size: 52,
+            size: 56,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -509,11 +390,11 @@ class _RealtimePageState extends State<RealtimePage> {
                 const Text(
                   'Pindai barcode / QR code pada lampu',
                   style: TextStyle(
-                    color: AppColors.cardTextSubtle,
-                    fontSize: 11,
+                    color: Colors.white70,
+                    fontSize: 11.5,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: _handleScanBarcode,
                   style: ElevatedButton.styleFrom(
@@ -525,11 +406,11 @@ class _RealtimePageState extends State<RealtimePage> {
                       vertical: 8,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   icon: const Icon(
-                    Icons.qr_code_scanner_rounded,
+                    Icons.tune_rounded,
                     size: 16,
                     color: AppColors.primary,
                   ),
@@ -550,24 +431,310 @@ class _RealtimePageState extends State<RealtimePage> {
     );
   }
 
+  // Barcode Card Kondisi Teridentifikasi (Light Blue)
+  Widget _buildIdentifiedCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFC7DBEC),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: const BoxDecoration(
+              color: Color(0xFF10B981),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'TERIDENTIFIKASI',
+                  style: TextStyle(
+                    color: Color(0xFF10B981),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _scannedBarcode ?? '',
+                  style: const TextStyle(
+                    color: Color(0xFF0F2942),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: _handleScanBarcode,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primary,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 6,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: const Icon(
+              Icons.tune_rounded,
+              size: 15,
+              color: AppColors.primary,
+            ),
+            label: const Text(
+              'Scan Ulang',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Get Location Button
+  Widget _buildGetLocationButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoadingLocation ? null : _handleGetLocation,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF15803D),
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: const Color(0xFF15803D).withValues(alpha: 0.7),
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: _isLoadingLocation
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Mengambil lokasi...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Get Location',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Ambil koordinat otomatis dari GPS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  // Dokumentasi Section (Photo Thumbnails + Add Photo Box)
+  Widget _buildDocumentationSection() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          ..._photos.map((photoUrl) => Padding(
+                padding: const EdgeInsets.only(right: 10.0),
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border, width: 1),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(7),
+                    child: Image.network(
+                      photoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: const Color(0xFFF1F5F9),
+                          child: const Icon(
+                            Icons.broken_image_rounded,
+                            color: AppColors.hintColor,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              )),
+          if (_photos.length < 5)
+            GestureDetector(
+              onTap: _handleTambahFoto,
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.border,
+                    width: 1.2,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(
+                      Icons.add_rounded,
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Tambah Foto',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Simpan Data Button
+  Widget _buildSimpanDataButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _handleSimpanData,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(
+                  Icons.file_upload_outlined,
+                  size: 18,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Simpan Data',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            const Text(
+              'Data akan disimpan ke daftar lampu',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white70,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionHeader({
     required IconData icon,
     required String title,
+    bool showRedAsterisk = false,
+    String? optionalText,
     required String subtitle,
-    bool showInfoIcon = false,
   }) {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
-            color: AppColors.primaryLight,
-            borderRadius: BorderRadius.circular(10),
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
             color: AppColors.primary,
-            size: 20,
+            size: 18,
           ),
         ),
         const SizedBox(width: 12),
@@ -575,31 +742,50 @@ class _RealtimePageState extends State<RealtimePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (showRedAsterisk)
+                    const Text(
+                      ' *',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  if (optionalText != null) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      optionalText,
+                      style: const TextStyle(
+                        color: AppColors.hintColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
+                  color: AppColors.hintColor,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
           ),
         ),
-        if (showInfoIcon)
-          const Icon(
-            Icons.info_outline_rounded,
-            color: AppColors.hintColor,
-            size: 18,
-          ),
       ],
     );
   }
@@ -608,14 +794,14 @@ class _RealtimePageState extends State<RealtimePage> {
     required TextEditingController controller,
     required FocusNode focusNode,
     required String hint,
-    IconData? prefixIcon,
   }) {
     final isFocused = focusNode.hasFocus;
 
     return Container(
+      height: 48,
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isFocused ? AppColors.borderFocused : AppColors.border,
           width: isFocused ? 1.5 : 1.0,
@@ -627,6 +813,7 @@ class _RealtimePageState extends State<RealtimePage> {
         style: const TextStyle(
           color: AppColors.textPrimary,
           fontSize: 14,
+          fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           hintText: hint,
@@ -634,13 +821,6 @@ class _RealtimePageState extends State<RealtimePage> {
             color: AppColors.hintColor,
             fontSize: 14,
           ),
-          prefixIcon: prefixIcon != null
-              ? Icon(
-                  prefixIcon,
-                  color: AppColors.iconColor,
-                  size: 20,
-                )
-              : null,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
