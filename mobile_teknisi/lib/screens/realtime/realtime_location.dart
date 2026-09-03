@@ -1,30 +1,29 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
+import '../../utils/app_colors.dart';
 
-class LocationGpsSection extends StatelessWidget {
+class RealtimeLocationSection extends StatelessWidget {
   final TextEditingController latitudeController;
   final TextEditingController longitudeController;
   final FocusNode? latitudeFocusNode;
   final FocusNode? longitudeFocusNode;
   final bool isLoadingLocation;
-  final VoidCallback? onGetLocation;
-  final bool showGetLocationButton;
-  final bool isReadOnly;
+  final VoidCallback onGetLocation;
 
-  const LocationGpsSection({
+  const RealtimeLocationSection({
     super.key,
     required this.latitudeController,
     required this.longitudeController,
     this.latitudeFocusNode,
     this.longitudeFocusNode,
-    this.isLoadingLocation = false,
-    this.onGetLocation,
-    this.showGetLocationButton = true,
-    this.isReadOnly = false,
+    required this.isLoadingLocation,
+    required this.onGetLocation,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool hasLocation = latitudeController.text.isNotEmpty ||
+        longitudeController.text.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -45,7 +44,7 @@ class LocationGpsSection extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             const Text(
-              'Lokasi (GPS)',
+              'Lokasi Koordinat',
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
@@ -65,7 +64,7 @@ class LocationGpsSection extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Ambil koordinat posisi saat ini',
+          'Masukkan koordinat lampu (Lat/Long)',
           style: TextStyle(
             color: Color(0xFF64748B),
             fontSize: 12.5,
@@ -74,28 +73,21 @@ class LocationGpsSection extends StatelessWidget {
 
         const SizedBox(height: 14),
 
-        // Latitude TextField
-        _buildInputField(
-          controller: latitudeController,
-          focusNode: latitudeFocusNode,
-          hint: 'Latitude',
-          readOnly: isReadOnly,
-        ),
-
-        const SizedBox(height: 10),
-
-        // Longitude TextField
-        _buildInputField(
-          controller: longitudeController,
-          focusNode: longitudeFocusNode,
-          hint: 'Longitude',
-          readOnly: isReadOnly,
-        ),
-
-        if (showGetLocationButton && onGetLocation != null) ...[
-          const SizedBox(height: 12),
-
-          // Get Location Button
+        // STATE 2: Show Latitude & Longitude TextFields when location is filled
+        if (hasLocation) ...[
+          _buildInputField(
+            controller: latitudeController,
+            focusNode: latitudeFocusNode,
+            hint: 'Latitude',
+          ),
+          const SizedBox(height: 10),
+          _buildInputField(
+            controller: longitudeController,
+            focusNode: longitudeFocusNode,
+            hint: 'Longitude',
+          ),
+        ] else ...[
+          // STATE 1: Show Get Location Button (Green) when location is empty
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -103,7 +95,8 @@ class LocationGpsSection extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF15803D),
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFF15803D).withValues(alpha: 0.7),
+                disabledBackgroundColor:
+                    const Color(0xFF15803D).withValues(alpha: 0.7),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -177,7 +170,6 @@ class LocationGpsSection extends StatelessWidget {
     required TextEditingController controller,
     FocusNode? focusNode,
     required String hint,
-    required bool readOnly,
   }) {
     final bool isFocused = focusNode?.hasFocus ?? false;
 
@@ -193,7 +185,7 @@ class LocationGpsSection extends StatelessWidget {
       child: TextField(
         controller: controller,
         focusNode: focusNode,
-        readOnly: readOnly,
+        readOnly: true,
         keyboardType: const TextInputType.numberWithOptions(
           decimal: true,
           signed: true,

@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 
-class PanelInputSection extends StatelessWidget {
+class KodePanel extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
+  final String? title;
+  final String? subtitle;
+  final bool isOptional;
 
-  const PanelInputSection({
+  const KodePanel({
     super.key,
     required this.controller,
     this.focusNode,
+    this.title,
+    this.subtitle,
+    this.isOptional = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool isFocused = focusNode?.hasFocus ?? false;
+    final String displayTitle = title ?? 'Kode Panel';
+    final String displaySubtitle = subtitle ?? 'Masukkan kode lampu';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,26 +36,37 @@ class PanelInputSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
-                Icons.grid_view_rounded,
+                Icons.electrical_services,
                 color: AppColors.primary,
                 size: 18,
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Kode Panel / Titik',
-              style: TextStyle(
+            Text(
+              displayTitle,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (isOptional && !displayTitle.contains('(Opsional)')) ...[
+              const SizedBox(width: 6),
+              const Text(
+                '(Opsional)',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Masukkan kode panel atau titik lokasi pemasangan',
-          style: TextStyle(
+        Text(
+          displaySubtitle,
+          style: const TextStyle(
             color: Color(0xFF64748B),
             fontSize: 12.5,
           ),

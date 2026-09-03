@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
+import '../../utils/app_colors.dart';
 
 class AreaOperasionalCard extends StatelessWidget {
   final String title;

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../widgets/detail_lampu/barcode_card.dart';
-import '../widgets/detail_lampu/dialog_hapus_lampu.dart';
-import '../widgets/detail_lampu/foto_dokumentasi_card.dart';
-import '../widgets/detail_lampu/informasi_lampu_card.dart';
-import '../widgets/detail_lampu/informasi_record_card.dart';
-import '../widgets/detail_lampu/lampu_header_card.dart';
-import '../widgets/detail_lampu/lokasi_card.dart';
-import 'edit_data_lampu_page.dart';
+import '../../utils/app_colors.dart';
+import '../../widgets/app_top_bar.dart';
+import '../edit_data_lampu/edit_data_lampu_page.dart';
+import 'barcode_card.dart';
+import 'dialog_hapus_lampu.dart';
+import 'foto_dokumentasi_card.dart';
+import 'informasi_lampu_card.dart';
+import 'informasi_record_card.dart';
+import 'lampu_header_card.dart';
+import 'lokasi_card.dart';
 
 class DetailLampuPage extends StatefulWidget {
   final int? idLamp;
@@ -89,30 +90,17 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-
-              // Header: Back Arrow Button
-              Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  onPressed: _handleBack,
-                  icon: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: AppColors.primary,
-                    size: 28,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ),
-
-              const SizedBox(height: 16),
+        child: Column(
+          children: [
+            AppTopBar(onBackPressed: _handleBack),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
 
               // Breadcrumb Row
               Row(
@@ -271,6 +259,9 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           ),
         ),
       ),
+    ],
+  ),
+),
     );
   }
 }

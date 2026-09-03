@@ -2,12 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 
-class DocumentationSection extends StatelessWidget {
+class Dokumentasi extends StatelessWidget {
   final List<String> photos;
   final VoidCallback onAddPhoto;
   final Function(int index) onRemovePhoto;
 
-  const DocumentationSection({
+  const Dokumentasi({
     super.key,
     required this.photos,
     required this.onAddPhoto,
@@ -74,7 +74,8 @@ class DocumentationSection extends StatelessWidget {
               // Render Added Photo Thumbnails
               ...List.generate(photos.length, (index) {
                 final photoItem = photos[index];
-                final bool isNetwork = photoItem.startsWith('http://') || photoItem.startsWith('https://');
+                final bool isNetwork = photoItem.startsWith('http://') ||
+                    photoItem.startsWith('https://');
 
                 return Padding(
                   padding: const EdgeInsets.only(right: 10),

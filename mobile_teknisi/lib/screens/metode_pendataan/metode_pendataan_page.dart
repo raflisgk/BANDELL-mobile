@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../utils/page_transitions.dart';
-import 'manual_page.dart';
-import 'realtime_page.dart';
+import '../../utils/app_colors.dart';
+import '../../utils/page_transitions.dart';
+import '../../widgets/app_top_bar.dart';
+import '../manual/manual_page.dart';
+import '../realtime/realtime_page.dart';
 
 class MetodePendataanPage extends StatelessWidget {
   const MetodePendataanPage({super.key});
-
-  void _handleBack(BuildContext context) {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
-  }
 
   void _handleSelectRealtime(BuildContext context) {
     debugPrint('Realtime dipilih');
@@ -28,30 +23,17 @@ class MetodePendataanPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-
-              // Header: Back Arrow Icon
-              Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  onPressed: () => _handleBack(context),
-                  icon: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: AppColors.primary,
-                    size: 28,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ),
-
-              const SizedBox(height: 24),
+        child: Column(
+          children: [
+            const AppTopBar(),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 16),
 
               // Centered Title & Subtitle
               const Center(
@@ -92,9 +74,12 @@ class MetodePendataanPage extends StatelessWidget {
               // Information / Tips Card
               _buildTipsCard(),
 
-              const SizedBox(height: 24),
-            ],
-          ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../utils/page_transitions.dart';
-import '../widgets/bottom_navbar.dart';
-import '../widgets/profile/editable_profile_item.dart';
-import 'area_operasional_page.dart';
-import 'history_page.dart';
-import 'login_page.dart';
-import 'notification_page.dart';
+import '../../dummy/dummy_data.dart';
+import '../../utils/app_colors.dart';
+import '../../utils/page_transitions.dart';
+import '../../widgets/app_top_bar.dart';
+import '../../widgets/bottom_navbar.dart';
+import '../area_operasional/area_operasional_page.dart';
+import '../history/history_page.dart';
+import '../login/login_page.dart';
+import '../notification/notification_page.dart';
+import 'editable_profile_item.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -33,6 +35,11 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _editController = TextEditingController();
+    if (DummyDataConfig.useDummyData) {
+      _name = DummyData.profileData['name'] ?? _name;
+      _email = DummyData.profileData['email'] ?? _email;
+      _phone = DummyData.profileData['phone'] ?? _phone;
+    }
   }
 
   @override
@@ -248,42 +255,20 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                // Top Bar (Bell Notification Icon)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            children: [
+              AppTopBar(
+                showDropdown: false,
+                onBackPressed: _handleBack,
+                onNotificationPressed: _handleNotification,
+                iconColor: Colors.white,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
                     children: [
-                      if (Navigator.canPop(context))
-                        IconButton(
-                          onPressed: _handleBack,
-                          icon: const Icon(
-                            Icons.arrow_back_rounded,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        )
-                      else
-                        const SizedBox(width: 28),
-                      IconButton(
-                        onPressed: _handleNotification,
-                        icon: const Icon(
-                          Icons.notifications_outlined,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                ),
+                      const SizedBox(height: 12),
 
                 // Header Title & Subtitle
                 const Center(
@@ -491,6 +476,9 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ),
+      ],
+    ),
+  ),
         bottomNavigationBar: BottomNavbar(
           currentIndex: 2,
           onTap: _handleNavTap,

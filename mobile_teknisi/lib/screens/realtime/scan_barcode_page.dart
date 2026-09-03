@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../utils/app_colors.dart';
-import 'edit_data_lampu_page.dart';
-import 'manual_page.dart';
+import '../../utils/app_colors.dart';
+import '../edit_data_lampu/edit_data_lampu_page.dart';
+import '../manual/manual_page.dart';
 
 class ScanBarcodePage extends StatefulWidget {
   const ScanBarcodePage({super.key});

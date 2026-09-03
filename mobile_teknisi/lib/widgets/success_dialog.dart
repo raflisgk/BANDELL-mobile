@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/history_page.dart';
+import '../screens/history/history_page.dart';
 import '../utils/app_colors.dart';
 import '../utils/page_transitions.dart';
 

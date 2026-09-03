@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../utils/page_transitions.dart';
-import '../widgets/bottom_navbar.dart';
-import '../widgets/lamp_type_card.dart';
-import 'history_page.dart';
-import 'metode_pendataan_page.dart';
-import 'profile_page.dart';
+import '../../dummy/dummy_data.dart';
+import '../../utils/app_colors.dart';
+import '../../utils/page_transitions.dart';
+import '../../widgets/app_top_bar.dart';
+import '../../widgets/bottom_navbar.dart';
+import '../history/history_page.dart';
+import '../metode_pendataan/metode_pendataan_page.dart';
+import '../profile/profile_page.dart';
+import 'lamp_type_card.dart';
 
 class LampTypeItem {
   final int id;
@@ -40,7 +42,9 @@ class _LampPageState extends State<LampPage> {
   String _searchQuery = '';
   int _currentNavIndex = 0;
 
-  final List<LampTypeItem> _lampTypes = const [];
+  List<LampTypeItem> get _lampTypes => DummyDataConfig.useDummyData
+      ? DummyData.lampTypes
+      : const [];
 
   @override
   void initState() {
@@ -93,30 +97,17 @@ class _LampPageState extends State<LampPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-
-              // 1. Back Button
-              Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  onPressed: _handleBack,
-                  icon: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: AppColors.primary,
-                    size: 28,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ),
-
-              const SizedBox(height: 20),
+        child: Column(
+          children: [
+            AppTopBar(onBackPressed: _handleBack),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
 
               // 2. Title
               const Text(
@@ -132,7 +123,7 @@ class _LampPageState extends State<LampPage> {
 
               // 3. Subtitle
               const Text(
-                'Pilih jenis lampu yang akan dipasang\natau dipantau di area ini.',
+                'Pilih jenis lampu yang akan dipasang.',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
@@ -230,6 +221,9 @@ class _LampPageState extends State<LampPage> {
           ),
         ),
       ),
+    ],
+  ),
+),
       bottomNavigationBar: BottomNavbar(
         currentIndex: _currentNavIndex,
         onTap: (index) {

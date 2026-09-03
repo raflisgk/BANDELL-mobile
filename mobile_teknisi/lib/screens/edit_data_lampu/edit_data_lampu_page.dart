@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import '../utils/app_colors.dart';
-import '../widgets/edit_data_lampu/edit_lampu_action_buttons.dart';
-import '../widgets/edit_data_lampu/edit_lampu_documentation.dart';
-import '../widgets/edit_data_lampu/edit_lampu_location.dart';
-import '../widgets/edit_data_lampu/edit_lampu_type.dart';
+import '../../utils/app_colors.dart';
+import '../../widgets/app_top_bar.dart';
+import 'edit_lampu_action_buttons.dart';
+import 'edit_lampu_documentation.dart';
+import 'edit_lampu_location.dart';
+import 'edit_lampu_type.dart';
 
 class EditDataLampuPage extends StatefulWidget {
   final bool isEdit;
@@ -246,32 +247,19 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 16),
-
-                // Header Row: Back Arrow
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: _handleBack,
-                    icon: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: AppColors.primary,
-                      size: 28,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
+        child: Column(
+          children: [
+            const AppTopBar(),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 16),
 
                 // Title & Subtitle Header
                 Center(
@@ -392,6 +380,9 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
           ),
         ),
       ),
+    ],
+  ),
+),
     );
   }
 

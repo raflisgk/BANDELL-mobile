@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../utils/page_transitions.dart';
-import '../widgets/bottom_navbar.dart';
-import '../widgets/history_lamp_card.dart';
-import 'area_operasional_page.dart';
-import 'detail_lampu_page.dart';
-import 'profile_page.dart';
+import '../../dummy/dummy_data.dart';
+import '../../utils/app_colors.dart';
+import '../../utils/page_transitions.dart';
+import '../../widgets/app_top_bar.dart';
+import '../../widgets/bottom_navbar.dart';
+import '../area_operasional/area_operasional_page.dart';
+import '../detail_lampu/detail_lampu_page.dart';
+import '../profile/profile_page.dart';
+import 'history_lamp_card.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -21,8 +23,15 @@ class _HistoryPageState extends State<HistoryPage> {
   String _selectedFilter = 'Hari Ini';
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
+  String? _selectedProject = 'Semua Proyek';
 
-  final List<HistoryLampItem> _allHistoryItems = const [];
+  List<String> get _projectOptions => DummyDataConfig.useDummyData
+      ? DummyData.projectOptions
+      : const [];
+
+  List<HistoryLampItem> get _allHistoryItems => DummyDataConfig.useDummyData
+      ? DummyData.historyItems
+      : const [];
 
   @override
   void dispose() {
@@ -81,6 +90,9 @@ class _HistoryPageState extends State<HistoryPage> {
       context,
       DetailLampuPage(
         lampCode: item.kode,
+        lampType: item.jenis,
+        status: item.status,
+        wattage: '120W',
       ),
     );
   }
@@ -100,31 +112,27 @@ class _HistoryPageState extends State<HistoryPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-
-              // Back Arrow Header
-              if (Navigator.canPop(context)) ...[
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: _handleBack,
-                    icon: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: AppColors.primary,
-                      size: 28,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
+        child: Column(
+          children: [
+            AppTopBar(
+              showDropdown: true,
+              selectedValue: _selectedProject,
+              dropdownItems: _projectOptions,
+              onDropdownChanged: (val) {
+                setState(() {
+                  _selectedProject = val;
+                });
+              },
+              onBackPressed: _handleBack,
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
 
               // Header Title & Subtitle
               const Text(
@@ -314,6 +322,9 @@ class _HistoryPageState extends State<HistoryPage> {
           ),
         ),
       ),
+    ],
+  ),
+),
       bottomNavigationBar: BottomNavbar(
         currentIndex: 1,
         onTap: _handleNavTap,
