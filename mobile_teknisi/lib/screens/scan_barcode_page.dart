@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../utils/app_colors.dart';
-import 'form_pendataan_page.dart';
+import 'edit_data_lampu_page.dart';
 import 'manual_page.dart';
 
 class ScanBarcodePage extends StatefulWidget {
@@ -99,7 +99,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => FormPendataanPage(
+                  builder: (context) => EditDataLampuPage(
                     scannedCode: value.trim(),
                   ),
                 ),

@@ -21,6 +21,7 @@ class AppColors {
   static const Color iconColor = Color(0xFF9CA3AF);
   static const Color border = Color(0xFFE5E7EB);
   static const Color borderFocused = Color(0xFF0C5DA5);
+  static const Color inputBackground = Color(0xFFF8FAFC);
   static const Color buttonBackground = Color(0xFF0C5DA5);
   static const Color cardBackground = Color(0xFFFFFFFF);
   static const Color error = Color(0xFFEF4444);

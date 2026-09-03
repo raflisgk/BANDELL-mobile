@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../utils/page_transitions.dart';
 import '../widgets/bottom_navbar.dart';
+import '../widgets/profile/editable_profile_item.dart';
 import 'area_operasional_page.dart';
 import 'history_page.dart';
 import 'login_page.dart';
@@ -14,12 +15,105 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
+enum ProfileEditField { none, name, email, phone, location }
+
 class _ProfilePageState extends State<ProfilePage> {
   String _name = 'Devanda Mahesa Putra';
-  String _role = 'Teknisi Lapangan';
+  final String _role = 'Teknisi Lapangan';
   String _email = 'devanda@email.com';
   String _phone = '+62 812 3456 7890';
   String _location = 'Jakarta, Indonesia';
+
+  ProfileEditField _activeEditField = ProfileEditField.none;
+
+  late TextEditingController _editController;
+  final FocusNode _editFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _editController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _editController.dispose();
+    _editFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _startEditing(ProfileEditField field) {
+    String initialText = '';
+    switch (field) {
+      case ProfileEditField.name:
+        initialText = _name;
+        break;
+      case ProfileEditField.email:
+        initialText = _email;
+        break;
+      case ProfileEditField.phone:
+        initialText = _phone;
+        break;
+      case ProfileEditField.location:
+        initialText = _location;
+        break;
+      case ProfileEditField.none:
+        break;
+    }
+
+    setState(() {
+      _editController.text = initialText;
+      _activeEditField = field;
+    });
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _editFocusNode.requestFocus();
+    });
+  }
+
+  void _saveActiveField() {
+    final newValue = _editController.text.trim();
+    if (newValue.isEmpty) return;
+
+    String fieldLabel = '';
+    setState(() {
+      switch (_activeEditField) {
+        case ProfileEditField.name:
+          _name = newValue;
+          fieldLabel = 'Nama';
+          break;
+        case ProfileEditField.email:
+          _email = newValue;
+          fieldLabel = 'Email';
+          break;
+        case ProfileEditField.phone:
+          _phone = newValue;
+          fieldLabel = 'Nomor Telepon';
+          break;
+        case ProfileEditField.location:
+          _location = newValue;
+          fieldLabel = 'Lokasi';
+          break;
+        case ProfileEditField.none:
+          break;
+      }
+      _activeEditField = ProfileEditField.none;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$fieldLabel berhasil disimpan'),
+        backgroundColor: AppColors.primary,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _activeEditField = ProfileEditField.none;
+    });
+  }
 
   void _handleBack() {
     if (Navigator.canPop(context)) {
@@ -37,60 +131,6 @@ class _ProfilePageState extends State<ProfilePage> {
     } else if (index == 1) {
       AppNavigator.pushTabReplacement(context, const HistoryPage());
     }
-  }
-
-  void _showEditDialog({
-    required String title,
-    required String currentValue,
-    required ValueChanged<String> onSave,
-  }) {
-    final controller = TextEditingController(text: currentValue);
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Edit $title',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: 'Masukkan $title baru',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                onSave(controller.text.trim());
-              }
-              Navigator.pop(dialogContext);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showLogoutDialog() {
@@ -194,244 +234,266 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0C5DA5), // Header blue background
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // Top Bar (Bell Notification Icon)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (Navigator.canPop(context))
-                    IconButton(
-                      onPressed: _handleBack,
-                      icon: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
-                        size: 26,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF0072CE), // Bright vibrant blue
+            Color(0xFF265C8C), // Muted deeper blue
+          ],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // Top Bar (Bell Notification Icon)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (Navigator.canPop(context))
+                        IconButton(
+                          onPressed: _handleBack,
+                          icon: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        )
+                      else
+                        const SizedBox(width: 28),
+                      IconButton(
+                        onPressed: _handleNotification,
+                        icon: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
-                    )
-                  else
-                    const SizedBox(width: 48),
-                  IconButton(
-                    onPressed: _handleNotification,
-                    icon: const Icon(
-                      Icons.notifications_outlined,
+                    ],
+                  ),
+                ),
+
+                // Header Title & Subtitle
+                const Center(
+                  child: Text(
+                    'Profil Saya',
+                    style: TextStyle(
                       color: Colors.white,
-                      size: 26,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.3,
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            // Header Title & Subtitle
-            const Center(
-              child: Text(
-                'Profil Saya',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
                 ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Center(
-              child: Text(
-                'Kelola informasi akun Anda',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Main White Card Content & Overlapping Avatar
-            Expanded(
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.topCenter,
-                children: [
-                  // White Container Card
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(top: 45),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(32),
-                      ),
+                const SizedBox(height: 2),
+                const Center(
+                  child: Text(
+                    'Kelola informasi akun Anda',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w400,
                     ),
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
-                      child: Column(
-                        children: [
-                          // User Name & Role
-                          Text(
-                            _name,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 19,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          GestureDetector(
-                            onTap: () => _showEditDialog(
-                              title: 'Jabatan',
-                              currentValue: _role,
-                              onSave: (val) => setState(() => _role = val),
-                            ),
-                            child: Text(
-                              _role,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Main White Card Content & Overlapping Avatar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.topCenter,
+                    children: [
+                      // White Container Card with fully rounded corners
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(top: 45, bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                        ),
+                        padding: const EdgeInsets.fromLTRB(20, 56, 20, 18),
+                        child: Column(
+                          children: [
+                            // User Name & Role
+                            Text(
+                              _name,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                color: Color(0xFF64748B),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                                color: AppColors.textPrimary,
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.2,
                               ),
                             ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // Email & Phone Row Info
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.email_outlined,
-                                size: 14,
-                                color: Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _email,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 12.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.phone_outlined,
-                                size: 14,
-                                color: Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _phone,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 12.5,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // 4 Menu Profile Cards
-                          _buildProfileMenuItem(
-                            icon: Icons.person_outline_rounded,
-                            title: 'Nama Lengkap',
-                            value: _name,
-                            onTap: () => _showEditDialog(
-                              title: 'Nama Lengkap',
-                              currentValue: _name,
-                              onSave: (val) => setState(() => _name = val),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildProfileMenuItem(
-                            icon: Icons.email_outlined,
-                            title: 'Email',
-                            value: _email,
-                            onTap: () => _showEditDialog(
-                              title: 'Email',
-                              currentValue: _email,
-                              onSave: (val) => setState(() => _email = val),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildProfileMenuItem(
-                            icon: Icons.phone_outlined,
-                            title: 'Nomor Telepon',
-                            value: _phone,
-                            onTap: () => _showEditDialog(
-                              title: 'Nomor Telepon',
-                              currentValue: _phone,
-                              onSave: (val) => setState(() => _phone = val),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildProfileMenuItem(
-                            icon: Icons.location_on_outlined,
-                            title: 'Lokasi',
-                            value: _location,
-                            onTap: () => _showEditDialog(
-                              title: 'Lokasi',
-                              currentValue: _location,
-                              onSave: (val) => setState(() => _location = val),
-                            ),
-                          ),
-
-                          const SizedBox(height: 28),
-
-                          // Log Out Button
-                          GestureDetector(
-                            onTap: _showLogoutDialog,
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
+                            const SizedBox(height: 3),
+                            GestureDetector(
+                              onTap: () => _startEditing(ProfileEditField.name),
                               child: Text(
-                                'Log Out',
-                                style: TextStyle(
-                                  color: Color(0xFFEF4444),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                _role,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
-                          ),
 
-                          const SizedBox(height: 16),
-                        ],
+                            const SizedBox(height: 8),
+
+                            // Email & Phone Row Info
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.email_outlined,
+                                  size: 14,
+                                  color: Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _email,
+                                  style: const TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.phone_outlined,
+                                  size: 14,
+                                  color: Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _phone,
+                                  style: const TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // 1. NAMA LENGKAP
+                            EditableProfileItem(
+                              icon: Icons.person_outline_rounded,
+                              title: 'Nama Lengkap',
+                              value: _name,
+                              isEditing: _activeEditField == ProfileEditField.name,
+                              controller: _editController,
+                              focusNode: _editFocusNode,
+                              keyboardType: TextInputType.name,
+                              onTap: () => _startEditing(ProfileEditField.name),
+                              onSave: _saveActiveField,
+                              onCancel: _cancelEditing,
+                            ),
+                            const SizedBox(height: 12),
+
+                            // 2. EMAIL
+                            EditableProfileItem(
+                              icon: Icons.email_outlined,
+                              title: 'Email',
+                              value: _email,
+                              isEditing: _activeEditField == ProfileEditField.email,
+                              controller: _editController,
+                              focusNode: _editFocusNode,
+                              keyboardType: TextInputType.emailAddress,
+                              onTap: () => _startEditing(ProfileEditField.email),
+                              onSave: _saveActiveField,
+                              onCancel: _cancelEditing,
+                            ),
+                            const SizedBox(height: 12),
+
+                            // 3. NOMOR TELEPON
+                            EditableProfileItem(
+                              icon: Icons.phone_outlined,
+                              title: 'Nomor Telepon',
+                              value: _phone,
+                              isEditing: _activeEditField == ProfileEditField.phone,
+                              controller: _editController,
+                              focusNode: _editFocusNode,
+                              keyboardType: TextInputType.phone,
+                              onTap: () => _startEditing(ProfileEditField.phone),
+                              onSave: _saveActiveField,
+                              onCancel: _cancelEditing,
+                            ),
+                            const SizedBox(height: 12),
+
+                            // 4. LOKASI
+                            EditableProfileItem(
+                              icon: Icons.location_on_outlined,
+                              title: 'Lokasi',
+                              value: _location,
+                              isEditing: _activeEditField == ProfileEditField.location,
+                              controller: _editController,
+                              focusNode: _editFocusNode,
+                              keyboardType: TextInputType.streetAddress,
+                              onTap: () => _startEditing(ProfileEditField.location),
+                              onSave: _saveActiveField,
+                              onCancel: _cancelEditing,
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Log Out Button
+                            GestureDetector(
+                              onTap: _showLogoutDialog,
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 4),
+                                child: Text(
+                                  'Log Out',
+                                  style: TextStyle(
+                                    color: Color(0xFFEF4444),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 8),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
 
-                  // Avatar Badge Overlapping Header and White Card
-                  Positioned(
-                    top: 0,
-                    child: _buildAvatarBadge(),
+                      // Avatar Badge Overlapping Header and White Card
+                      Positioned(
+                        top: 0,
+                        child: _buildAvatarBadge(),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-
-            // Fixed Bottom Navigation Bar (Tab Profil Aktif)
-            BottomNavbar(
-              currentIndex: 2,
-              onTap: _handleNavTap,
-            ),
-          ],
+          ),
+        ),
+        bottomNavigationBar: BottomNavbar(
+          currentIndex: 2,
+          onTap: _handleNavTap,
         ),
       ),
     );
@@ -470,11 +532,7 @@ class _ProfilePageState extends State<ProfilePage> {
           right: 2,
           bottom: 2,
           child: GestureDetector(
-            onTap: () => _showEditDialog(
-              title: 'Nama Lengkap',
-              currentValue: _name,
-              onSave: (val) => setState(() => _name = val),
-            ),
+            onTap: () => _startEditing(ProfileEditField.name),
             child: Container(
               width: 28,
               height: 28,
@@ -495,90 +553,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildProfileMenuItem({
-    required IconData icon,
-    required String title,
-    required String value,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF084B83),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                // White Rounded Container for Icon
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: const Color(0xFF084B83),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-
-                // Title & Value Column
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        value,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Right Chevron Icon
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

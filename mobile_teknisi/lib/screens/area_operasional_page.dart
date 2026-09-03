@@ -21,38 +21,9 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   int _currentNavIndex = 0;
   final GlobalKey _dropdownKey = GlobalKey();
 
-  final List<String> _projectOptions = const [
-    'Proyek Jakarta',
-    'Proyek Jawa Barat',
-    'Proyek Jawa Tengah',
-  ];
+  final List<String> _projectOptions = const [];
 
-  final List<Map<String, dynamic>> _dummyAreas = const [
-    {
-      'id': 1,
-      'title': 'Jakarta Selatan',
-      'location': 'Jakarta, Indonesia',
-      'dateRange': '20 Mei – 30 Mei 2025',
-    },
-    {
-      'id': 2,
-      'title': 'Jakarta Pusat',
-      'location': 'Jakarta, Indonesia',
-      'dateRange': '22 Mei – 02 Juni 2025',
-    },
-    {
-      'id': 3,
-      'title': 'Jakarta Timur',
-      'location': 'Jakarta, Indonesia',
-      'dateRange': '18 Mei – 28 Mei 2025',
-    },
-    {
-      'id': 4,
-      'title': 'Kuningan District',
-      'location': 'Jakarta, Indonesia',
-      'dateRange': '05 Juni – 15 Juni 2025',
-    },
-  ];
+  final List<Map<String, dynamic>> _areas = const [];
 
   void _handleCardTap(Map<String, dynamic> area) {
     debugPrint('Area selected: ${area['title']} (ID: ${area['id']})');
@@ -133,81 +104,105 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Scrollable Content Area
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 24),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
 
-                    // Header Title
-                    const Text(
-                      'Pilih Area Operasional',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Header Subtitle
-                    const Text(
-                      'Berikut area operasional tersedia untuk Anda.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Dropdown Wilayah Proyek
-                    _buildProjectDropdown(),
-
-                    const SizedBox(height: 20),
-
-                    // Cards List
-                    ..._dummyAreas.map((area) => Padding(
-                          padding: const EdgeInsets.only(bottom: 14.0),
-                          child: AreaOperasionalCard(
-                            title: area['title'] as String,
-                            location: area['location'] as String,
-                            dateRange: area['dateRange'] as String,
-                            onTap: () => _handleCardTap(area),
-                          ),
-                        )),
-
-                    const SizedBox(height: 12),
-                  ],
+              // Header Title
+              const Text(
+                'Pilih Area Operasional',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.3,
                 ),
               ),
-            ),
+              const SizedBox(height: 4),
 
-            // Fixed Bottom Navigation Bar
-            BottomNavbar(
-              currentIndex: _currentNavIndex,
-              onTap: (index) {
-                if (index == 1) {
-                  AppNavigator.pushTabReplacement(context, const HistoryPage());
-                } else if (index == 2) {
-                  AppNavigator.pushTabReplacement(context, const ProfilePage());
-                } else {
-                  setState(() {
-                    _currentNavIndex = index;
-                  });
-                }
-              },
-            ),
-          ],
+              // Header Subtitle
+              const Text(
+                'Berikut area operasional tersedia untuk Anda.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Dropdown Wilayah Proyek
+              _buildProjectDropdown(),
+
+              const SizedBox(height: 20),
+
+              // Cards List
+              if (_areas.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                  child: Column(
+                    children: const [
+                      Icon(
+                        Icons.map_outlined,
+                        size: 48,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Belum Ada Area Operasional',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Data area operasional akan muncul setelah terhubung ke API.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ..._areas.map((area) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14.0),
+                      child: AreaOperasionalCard(
+                        title: area['title'] as String,
+                        location: area['location'] as String,
+                        dateRange: area['dateRange'] as String,
+                        onTap: () => _handleCardTap(area),
+                      ),
+                    )),
+
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
+      ),
+      bottomNavigationBar: BottomNavbar(
+        currentIndex: _currentNavIndex,
+        onTap: (index) {
+          if (index == 1) {
+            AppNavigator.pushTabReplacement(context, const HistoryPage());
+          } else if (index == 2) {
+            AppNavigator.pushTabReplacement(context, const ProfilePage());
+          } else {
+            setState(() {
+              _currentNavIndex = index;
+            });
+          }
+        },
       ),
     );
   }

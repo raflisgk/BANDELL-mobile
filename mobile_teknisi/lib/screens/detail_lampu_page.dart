@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
-import 'form_pendataan_page.dart';
+import '../widgets/detail_lampu/barcode_card.dart';
+import '../widgets/detail_lampu/dialog_hapus_lampu.dart';
+import '../widgets/detail_lampu/foto_dokumentasi_card.dart';
+import '../widgets/detail_lampu/informasi_lampu_card.dart';
+import '../widgets/detail_lampu/informasi_record_card.dart';
+import '../widgets/detail_lampu/lampu_header_card.dart';
+import '../widgets/detail_lampu/lokasi_card.dart';
+import 'edit_data_lampu_page.dart';
 
 class DetailLampuPage extends StatefulWidget {
   final int? idLamp;
@@ -45,184 +52,37 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const FormPendataanPage(
+        builder: (context) => EditDataLampuPage(
           isEdit: true,
-          initialKodeLampu: 'JKT-2025-004',
-          initialLongitude: '-6.2088',
-          initialLatitude: '106.8456',
-          initialAlamat: 'Jl. Sudirman No. 10, Jakarta',
-          initialTipeLampu: 'LED Street Light 100W',
+          initialKodeLampu: widget.lampCode ?? '',
+          initialLongitude: '',
+          initialLatitude: '',
+          initialAlamat: '',
+          initialTipeLampu: widget.lampType ?? '',
         ),
       ),
     );
   }
 
   void _handleHapusData() {
+    final code = widget.lampCode ?? 'JKT-001';
     showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 28),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.shadowColor,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Upper White Section (Icon, Title, Subtitle)
-              Container(
-                color: AppColors.cardBackground,
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                child: Column(
-                  children: [
-                    // Soft Red Circular Icon
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: const BoxDecoration(
-                        color: AppColors.popupRedLight,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.warning_amber_rounded,
-                          color: AppColors.deleteRed,
-                          size: 28,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // Title
-                    const Text(
-                      'Hapus Data Lampu?',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Subtitle with bold "JKT-001"
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12.5,
-                          height: 1.45,
-                        ),
-                        children: [
-                          TextSpan(
-                            text:
-                                'Tindakan ini tidak dapat dibatalkan. Apakah Anda\nyakin ingin menghapus data ',
-                          ),
-                          TextSpan(
-                            text: 'JKT-001',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          TextSpan(text: '?'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Lower Soft Ice/Gray Panel with Buttons
-              Container(
-                color: AppColors.popupPanelBackground,
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    // Button 1: Hapus (Red)
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          debugPrint('Hapus data JKT-001');
-                          Navigator.pop(dialogContext);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.deleteRed,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Hapus',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Button 2: Batal (White)
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.textPrimary,
-                          side: const BorderSide(
-                            color: AppColors.border,
-                            width: 1.2,
-                          ),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Batal',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (dialogContext) => DialogHapusLampu(
+        lampCode: code,
+        onConfirmHapus: () {
+          debugPrint('Hapus data $code');
+          Navigator.pop(dialogContext);
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final code = widget.lampCode ?? 'JKT-001';
-    final type = widget.lampType ?? 'LED Street Light 100W';
+    final code = widget.lampCode ?? '-';
+    final type = widget.lampType ?? '-';
     final currentStatus = widget.status ?? 'Tersimpan';
     final isTersimpan = currentStatus == 'Tersimpan';
 
@@ -287,7 +147,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
               const SizedBox(height: 16),
 
               // Card Informasional Utama (Lamp Header Card)
-              _buildMainHeaderCard(code: code, isTersimpan: isTersimpan),
+              LampuHeaderCard(
+                code: code,
+                isTersimpan: isTersimpan,
+              ),
 
               const SizedBox(height: 24),
 
@@ -301,7 +164,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              _buildLokasiCard(),
+              const LokasiCard(),
 
               const SizedBox(height: 24),
 
@@ -315,17 +178,22 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              _buildInformasiLampuCard(code: code, type: type),
+              InformasiLampuCard(
+                code: code,
+                type: type,
+              ),
 
               const SizedBox(height: 24),
 
               // Section Barcode Card
-              _buildBarcodeCard(),
+              const BarcodeCard(),
 
               const SizedBox(height: 24),
 
               // Section Foto Dokumentasi Card
-              _buildFotoCard(),
+              FotoDokumentasiCard(
+                onLihatSemua: _handleLihatSemua,
+              ),
 
               const SizedBox(height: 24),
 
@@ -339,7 +207,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              _buildInformasiRecordCard(),
+              const InformasiRecordCard(),
 
               const SizedBox(height: 28),
 
@@ -403,622 +271,6 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildMainHeaderCard({
-    required String code,
-    required bool isTersimpan,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.lightbulb_rounded,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        code,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Lamp Record',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              // Status Badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isTersimpan
-                      ? AppColors.successLight
-                      : AppColors.warningLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isTersimpan
-                          ? Icons.check_circle_outline_rounded
-                          : Icons.warning_amber_rounded,
-                      color:
-                          isTersimpan ? AppColors.success : AppColors.warning,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      isTersimpan ? 'Tersimpan' : 'Belum Lengkap',
-                      style: TextStyle(
-                        color: isTersimpan
-                            ? AppColors.success
-                            : AppColors.warning,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-          const Divider(color: AppColors.border, height: 1),
-          const SizedBox(height: 12),
-
-          Row(
-            children: const [
-              Icon(
-                Icons.history_rounded,
-                color: AppColors.textSecondary,
-                size: 16,
-              ),
-              SizedBox(width: 6),
-              Text(
-                'Diperbarui 20 Mei 2025, 14:30',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLokasiCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.explore_outlined,
-                  color: AppColors.primary,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'LONG / LAT',
-                      style: TextStyle(
-                        color: AppColors.hintColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      '-6.2088, 106.8456',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.location_on_outlined,
-                  color: AppColors.primary,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'ADDRESS',
-                      style: TextStyle(
-                        color: AppColors.hintColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Jl. Sudirman No. 10, Jakarta',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInformasiLampuCard({
-    required String code,
-    required String type,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Left Column
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'TIPE LAMPU',
-                  style: TextStyle(
-                    color: AppColors.hintColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  type,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'ID LAMPU',
-                  style: TextStyle(
-                    color: AppColors.hintColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  code,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Right Column
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'STATUS LAMPU',
-                  style: TextStyle(
-                    color: AppColors.hintColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: const [
-                    Icon(
-                      Icons.circle,
-                      color: AppColors.success,
-                      size: 8,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Active',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'METODE INPUT',
-                  style: TextStyle(
-                    color: AppColors.hintColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.successLight,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(
-                        Icons.bolt_rounded,
-                        color: AppColors.success,
-                        size: 13,
-                      ),
-                      SizedBox(width: 2),
-                      Text(
-                        'Realtime',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBarcodeCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.qr_code_2_rounded,
-              color: AppColors.primary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'BARCODE',
-                style: TextStyle(
-                  color: AppColors.hintColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                'JKT-2025-0001',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFotoCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                '3 FOTO DOKUMENTASI',
-                style: TextStyle(
-                  color: AppColors.hintColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              GestureDetector(
-                onTap: _handleLihatSemua,
-                child: const Text(
-                  'Lihat Semua',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // 3 Thumbnail Placeholders
-          Row(
-            children: [
-              _buildPhotoThumbnail(
-                icon: Icons.streetview_rounded,
-                label: 'Foto 1',
-              ),
-              const SizedBox(width: 10),
-              _buildPhotoThumbnail(
-                icon: Icons.camera_alt_rounded,
-                label: 'Foto 2',
-              ),
-              const SizedBox(width: 10),
-              _buildPhotoThumbnail(
-                icon: Icons.lightbulb_rounded,
-                label: 'Foto 3',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhotoThumbnail({
-    required IconData icon,
-    required String label,
-  }) {
-    return Container(
-      width: 72,
-      height: 72,
-      decoration: BoxDecoration(
-        color: AppColors.searchBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.border,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: AppColors.primary,
-            size: 26,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInformasiRecordCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          _buildRecordInfoRow(
-            label: 'Dibuat',
-            value: '20 Mei 2025, 13:42',
-          ),
-          const SizedBox(height: 10),
-          _buildRecordInfoRow(
-            label: 'Terakhir diperbarui',
-            value: '20 Mei 2025, 14:30',
-          ),
-          const SizedBox(height: 10),
-          _buildRecordInfoRow(
-            label: 'Dibuat oleh',
-            value: 'Andi Saputra',
-            isBoldValue: true,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecordInfoRow({
-    required String label,
-    required String value,
-    bool isBoldValue = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 13,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 13,
-            fontWeight: isBoldValue ? FontWeight.bold : FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -40,59 +40,7 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
-    _notifications = [
-      NotificationItem(
-        id: 1,
-        title: 'Penugasan Baru Diterima',
-        time: 'Baru saja',
-        content:
-            'Anda telah ditugaskan untuk proyek Pemeliharaan Lampu Jalan Tol Sesi 4 di Area Cikarang Blok B.',
-        icon: Icons.assignment_rounded,
-        iconColor: AppColors.primary,
-        iconBackgroundColor: AppColors.primaryLight,
-        isUnread: true,
-        section: 'TERBARU',
-        boldText: 'Cikarang Blok B',
-      ),
-      NotificationItem(
-        id: 2,
-        title: 'Laporan Terkirim',
-        time: 'Baru saja',
-        content:
-            'Laporan penugasan untuk Jakarta Smart City P1 telah berhasil dikirimkan.',
-        icon: Icons.assignment_turned_in_rounded,
-        iconColor: AppColors.primary,
-        iconBackgroundColor: AppColors.primaryLight,
-        isUnread: true,
-        section: 'TERBARU',
-        boldText: 'Jakarta Smart City P1',
-      ),
-      NotificationItem(
-        id: 3,
-        title: 'Laporan Menunggu\nVerifikasi',
-        time: '2 jam yang\nlalu',
-        content:
-            'Laporan penugasan JKT-002 sedang dalam proses verifikasi oleh supervisor.',
-        icon: Icons.pending_actions_rounded,
-        iconColor: AppColors.textSecondary,
-        iconBackgroundColor: AppColors.searchBackground,
-        isUnread: false,
-        section: 'SEBELUMNYA',
-        boldText: 'JKT-002',
-      ),
-      NotificationItem(
-        id: 4,
-        title: 'Laporan Disetujui',
-        time: 'Kemarin',
-        content: 'Laporan penugasan Bekasi Timur Revamp telah disetujui.',
-        icon: Icons.verified_user_rounded,
-        iconColor: AppColors.success,
-        iconBackgroundColor: AppColors.successLight,
-        isUnread: false,
-        section: 'SEBELUMNYA',
-        boldText: 'Bekasi Timur Revamp',
-      ),
-    ];
+    _notifications = [];
   }
 
   void _handleBack() {
@@ -156,6 +104,40 @@ class _NotificationPageState extends State<NotificationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // EMPTY STATE
+              if (_notifications.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+                  child: Column(
+                    children: const [
+                      Icon(
+                        Icons.notifications_none_rounded,
+                        size: 54,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(height: 14),
+                      Text(
+                        'Belum Ada Notifikasi',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        'Notifikasi penugasan dan status laporan Anda akan muncul di sini.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               // SECTION 1: TERBARU
               if (terbaruList.isNotEmpty) ...[
                 const Text(
