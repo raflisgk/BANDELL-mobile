@@ -122,12 +122,6 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  void _handleBack() {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
-  }
-
   void _handleNotification() {
     AppNavigator.push(context, const NotificationPage());
   }
@@ -254,231 +248,230 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        resizeToAvoidBottomInset: false,
         body: SafeArea(
           child: Column(
             children: [
               AppTopBar(
                 showDropdown: false,
-                onBackPressed: _handleBack,
+                showBackButton: false,
                 onNotificationPressed: _handleNotification,
                 iconColor: Colors.white,
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
                       const SizedBox(height: 12),
 
-                // Header Title & Subtitle
-                const Center(
-                  child: Text(
-                    'Profil Saya',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Center(
-                  child: Text(
-                    'Kelola informasi akun Anda',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Main White Card Content & Overlapping Avatar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.topCenter,
-                    children: [
-                      // White Container Card with fully rounded corners
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(top: 45, bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(32),
+                      // Header Title & Subtitle
+                      const Center(
+                        child: Text(
+                          'Profil Saya',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.3,
+                          ),
                         ),
-                        padding: const EdgeInsets.fromLTRB(20, 56, 20, 18),
-                        child: Column(
-                          children: [
-                            // User Name & Role
-                            Text(
-                              _name,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 19,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            GestureDetector(
-                              onTap: () => _startEditing(ProfileEditField.name),
-                              child: Text(
-                                _role,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            // Email & Phone Row Info
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.email_outlined,
-                                  size: 14,
-                                  color: Color(0xFF64748B),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _email,
-                                  style: const TextStyle(
-                                    color: Color(0xFF64748B),
-                                    fontSize: 12.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.phone_outlined,
-                                  size: 14,
-                                  color: Color(0xFF64748B),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _phone,
-                                  style: const TextStyle(
-                                    color: Color(0xFF64748B),
-                                    fontSize: 12.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // 1. NAMA LENGKAP
-                            EditableProfileItem(
-                              icon: Icons.person_outline_rounded,
-                              title: 'Nama Lengkap',
-                              value: _name,
-                              isEditing: _activeEditField == ProfileEditField.name,
-                              controller: _editController,
-                              focusNode: _editFocusNode,
-                              keyboardType: TextInputType.name,
-                              onTap: () => _startEditing(ProfileEditField.name),
-                              onSave: _saveActiveField,
-                              onCancel: _cancelEditing,
-                            ),
-                            const SizedBox(height: 12),
-
-                            // 2. EMAIL
-                            EditableProfileItem(
-                              icon: Icons.email_outlined,
-                              title: 'Email',
-                              value: _email,
-                              isEditing: _activeEditField == ProfileEditField.email,
-                              controller: _editController,
-                              focusNode: _editFocusNode,
-                              keyboardType: TextInputType.emailAddress,
-                              onTap: () => _startEditing(ProfileEditField.email),
-                              onSave: _saveActiveField,
-                              onCancel: _cancelEditing,
-                            ),
-                            const SizedBox(height: 12),
-
-                            // 3. NOMOR TELEPON
-                            EditableProfileItem(
-                              icon: Icons.phone_outlined,
-                              title: 'Nomor Telepon',
-                              value: _phone,
-                              isEditing: _activeEditField == ProfileEditField.phone,
-                              controller: _editController,
-                              focusNode: _editFocusNode,
-                              keyboardType: TextInputType.phone,
-                              onTap: () => _startEditing(ProfileEditField.phone),
-                              onSave: _saveActiveField,
-                              onCancel: _cancelEditing,
-                            ),
-                            const SizedBox(height: 12),
-
-                            // 4. LOKASI
-                            EditableProfileItem(
-                              icon: Icons.location_on_outlined,
-                              title: 'Lokasi',
-                              value: _location,
-                              isEditing: _activeEditField == ProfileEditField.location,
-                              controller: _editController,
-                              focusNode: _editFocusNode,
-                              keyboardType: TextInputType.streetAddress,
-                              onTap: () => _startEditing(ProfileEditField.location),
-                              onSave: _saveActiveField,
-                              onCancel: _cancelEditing,
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Log Out Button
-                            GestureDetector(
-                              onTap: _showLogoutDialog,
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 4),
-                                child: Text(
-                                  'Log Out',
-                                  style: TextStyle(
-                                    color: Color(0xFFEF4444),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 8),
-                          ],
+                      ),
+                      const SizedBox(height: 3),
+                      const Center(
+                        child: Text(
+                          'Kelola informasi akun Anda',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
 
-                      // Avatar Badge Overlapping Header and White Card
-                      Positioned(
-                        top: 0,
-                        child: _buildAvatarBadge(),
+                      const SizedBox(height: 16),
+
+                      // Main White Card Content & Overlapping Avatar (Non-scrollable)
+                      Expanded(
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.topCenter,
+                          children: [
+                            // White Container Card with fully rounded corners
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(top: 45, bottom: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                              padding: const EdgeInsets.fromLTRB(20, 60, 20, 14),
+                              child: Column(
+                                children: [
+                                  // User Name & Role
+                                  Text(
+                                    _name,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  GestureDetector(
+                                    onTap: () => _startEditing(ProfileEditField.name),
+                                    child: Text(
+                                      _role,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Color(0xFF64748B),
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 6),
+
+                                  // Email & Phone Row Info
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.email_outlined,
+                                        size: 13,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _email,
+                                        style: const TextStyle(
+                                          color: Color(0xFF64748B),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.phone_outlined,
+                                        size: 13,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _phone,
+                                        style: const TextStyle(
+                                          color: Color(0xFF64748B),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+
+                                  // 1. NAMA LENGKAP
+                                  EditableProfileItem(
+                                    icon: Icons.person_outline_rounded,
+                                    title: 'Nama Lengkap',
+                                    value: _name,
+                                    isEditing: _activeEditField == ProfileEditField.name,
+                                    controller: _editController,
+                                    focusNode: _editFocusNode,
+                                    keyboardType: TextInputType.name,
+                                    onTap: () => _startEditing(ProfileEditField.name),
+                                    onSave: _saveActiveField,
+                                    onCancel: _cancelEditing,
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // 2. EMAIL
+                                  EditableProfileItem(
+                                    icon: Icons.email_outlined,
+                                    title: 'Email',
+                                    value: _email,
+                                    isEditing: _activeEditField == ProfileEditField.email,
+                                    controller: _editController,
+                                    focusNode: _editFocusNode,
+                                    keyboardType: TextInputType.emailAddress,
+                                    onTap: () => _startEditing(ProfileEditField.email),
+                                    onSave: _saveActiveField,
+                                    onCancel: _cancelEditing,
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // 3. NOMOR TELEPON
+                                  EditableProfileItem(
+                                    icon: Icons.phone_outlined,
+                                    title: 'Nomor Telepon',
+                                    value: _phone,
+                                    isEditing: _activeEditField == ProfileEditField.phone,
+                                    controller: _editController,
+                                    focusNode: _editFocusNode,
+                                    keyboardType: TextInputType.phone,
+                                    onTap: () => _startEditing(ProfileEditField.phone),
+                                    onSave: _saveActiveField,
+                                    onCancel: _cancelEditing,
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // 4. LOKASI
+                                   EditableProfileItem(
+                                    icon: Icons.location_on_outlined,
+                                    title: 'Lokasi',
+                                    value: _location,
+                                    isEditing: _activeEditField == ProfileEditField.location,
+                                    controller: _editController,
+                                    focusNode: _editFocusNode,
+                                    keyboardType: TextInputType.streetAddress,
+                                    onTap: () => _startEditing(ProfileEditField.location),
+                                    onSave: _saveActiveField,
+                                    onCancel: _cancelEditing,
+                                  ),
+
+                                  const Spacer(flex: 1),
+
+                                  // Log Out Button
+                                  GestureDetector(
+                                    onTap: _showLogoutDialog,
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 6),
+                                      child: Text(
+                                        'Log Out',
+                                        style: TextStyle(
+                                          color: Color(0xFFEF4444),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  const Spacer(flex: 1),
+                                ],
+                              ),
+                            ),
+
+                            // Avatar Badge Overlapping Header and White Card
+                            Positioned(
+                              top: 0,
+                              child: _buildAvatarBadge(),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      ],
-    ),
-  ),
         bottomNavigationBar: BottomNavbar(
           currentIndex: 2,
           onTap: _handleNavTap,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../dummy/dummy_data.dart';
 import '../screens/notification/notification_page.dart';
 import '../utils/app_colors.dart';
 import '../utils/page_transitions.dart';
@@ -79,9 +80,12 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 4,
       items: dropdownItems!.map((String item) {
         final bool isSelected = item == selectedValue;
+        final proj = DummyData.getProjectByName(item);
+        final bool isActive = proj?.status == 'active' || proj?.status == 'aktif';
+
         return PopupMenuItem<String>(
           value: item,
-          height: 44,
+          height: 46,
           child: SizedBox(
             width: size.width,
             child: Row(
@@ -101,12 +105,36 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                 ),
-                if (isSelected)
+                if (proj != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? const Color(0xFFDCFCE7)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      isActive ? 'Aktif' : 'Selesai',
+                      style: TextStyle(
+                        color: isActive
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFF64748B),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+                if (isSelected) ...[
+                  const SizedBox(width: 6),
                   const Icon(
                     Icons.check_rounded,
                     color: AppColors.primary,
                     size: 18,
                   ),
+                ],
               ],
             ),
           ),
@@ -125,7 +153,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     final bool shouldShowBack = showBackButton ?? canPop;
     final GlobalKey dropdownKey = GlobalKey();
 
-    final String displayText = selectedValue ?? title ?? 'Pilih Project / Area';
+    final String displayText = selectedValue ?? title ?? 'Pilih Project';
     final bool isDropdown =
         showDropdown ?? (dropdownItems != null || selectedValue != null);
     final bool isDropdownInteractive =

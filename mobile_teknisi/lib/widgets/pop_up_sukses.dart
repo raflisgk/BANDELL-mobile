@@ -3,12 +3,12 @@ import '../screens/history/history_page.dart';
 import '../utils/app_colors.dart';
 import '../utils/page_transitions.dart';
 
-class SuccessDialog extends StatelessWidget {
+class PopUpSukses extends StatelessWidget {
   final String lampCode;
   final VoidCallback? onAddData;
   final VoidCallback? onViewHistory;
 
-  const SuccessDialog({
+  const PopUpSukses({
     super.key,
     required this.lampCode,
     this.onAddData,
@@ -27,7 +27,7 @@ class SuccessDialog extends StatelessWidget {
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (dialogContext) => PopScope(
         canPop: false,
-        child: SuccessDialog(
+        child: PopUpSukses(
           lampCode: lampCode,
           onAddData: onAddData != null
               ? () {
@@ -246,3 +246,6 @@ class _AnimatedCheckBadgeState extends State<_AnimatedCheckBadge>
     );
   }
 }
+
+// Backward-compatibility alias
+typedef SuccessDialog = PopUpSukses;

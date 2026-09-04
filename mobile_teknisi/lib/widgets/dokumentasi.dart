@@ -148,7 +148,7 @@ class Dokumentasi extends StatelessWidget {
               }),
 
               // Add Photo Box (Only if less than 5 photos)
-              if (photos.length < 5)
+              if (photos.length < 3)
                 GestureDetector(
                   onTap: onAddPhoto,
                   child: Container(

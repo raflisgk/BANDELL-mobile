@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../dummy/dummy_data.dart';
+import '../../models/project_model.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
@@ -8,6 +9,7 @@ import '../area_operasional/area_operasional_page.dart';
 import '../detail_lampu/detail_lampu_page.dart';
 import '../profile/profile_page.dart';
 import 'history_lamp_card.dart';
+import 'pilih_tanggal.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -20,18 +22,83 @@ class _HistoryPageState extends State<HistoryPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   String _searchQuery = '';
-  String _selectedFilter = 'Hari Ini';
-  DateTime? _selectedStartDate;
-  DateTime? _selectedEndDate;
-  String? _selectedProject = 'Semua Proyek';
+  String _selectedFilter = '1 Bulan';
+  DateTime? _rangeStartDate;
+  DateTime? _rangeEndDate;
+  String? _selectedProject;
 
-  List<String> get _projectOptions => DummyDataConfig.useDummyData
-      ? DummyData.projectOptions
-      : const [];
+  @override
+  void initState() {
+    super.initState();
+    _selectedProject = DummyData.selectedProject?.projectName;
+  }
 
-  List<HistoryLampItem> get _allHistoryItems => DummyDataConfig.useDummyData
-      ? DummyData.historyItems
-      : const [];
+  Project? get _currentProject {
+    if (_selectedProject != null) {
+      return DummyData.getProjectByName(_selectedProject!);
+    }
+    return DummyData.selectedProject;
+  }
+
+  List<HistoryLampItem> get _baseHistoryItems {
+    final proj = _currentProject;
+    if (proj == null) {
+      return const [];
+    }
+    return DummyData.getHistoryByUserAndProject(
+      userId: DummyData.currentUser.idUser,
+      projectId: proj.idProject,
+    );
+  }
+
+  bool _matchesTimeFilter(HistoryLampItem item) {
+    final itemDate = item.tanggal;
+    if (itemDate == null) return true;
+
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+
+    switch (_selectedFilter) {
+      case 'Hari Ini':
+        final itemDay = DateTime(itemDate.year, itemDate.month, itemDate.day);
+        return itemDay.isAtSameMomentAs(todayStart);
+
+      case '7 Hari':
+        // Riwayat dalam 7 hari terakhir (hari ini + 6 hari ke belakang)
+        final sevenDaysAgo = todayStart.subtract(const Duration(days: 6));
+        return !itemDate.isBefore(sevenDaysAgo) && !itemDate.isAfter(todayEnd);
+
+      case '1 Bulan':
+        // Riwayat dalam 1 bulan terakhir (hari ini + 29 hari ke belakang)
+        final oneMonthAgo = todayStart.subtract(const Duration(days: 29));
+        return !itemDate.isBefore(oneMonthAgo) && !itemDate.isAfter(todayEnd);
+
+      case 'Pilih Tanggal':
+        if (_rangeStartDate == null || _rangeEndDate == null) return true;
+        final start = DateTime(
+          _rangeStartDate!.year,
+          _rangeStartDate!.month,
+          _rangeStartDate!.day,
+          0,
+          0,
+          0,
+        );
+        final end = DateTime(
+          _rangeEndDate!.year,
+          _rangeEndDate!.month,
+          _rangeEndDate!.day,
+          23,
+          59,
+          59,
+          999,
+        );
+        return !itemDate.isBefore(start) && !itemDate.isAfter(end);
+
+      default:
+        return true;
+    }
+  }
 
   @override
   void dispose() {
@@ -47,11 +114,14 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   List<HistoryLampItem> get _filteredItems {
+    final baseItems = _baseHistoryItems;
+    final timeFiltered = baseItems.where(_matchesTimeFilter).toList();
+
     if (_searchQuery.trim().isEmpty) {
-      return _allHistoryItems;
+      return timeFiltered;
     }
     final query = _searchQuery.toLowerCase().trim();
-    return _allHistoryItems.where((item) {
+    return timeFiltered.where((item) {
       return item.kode.toLowerCase().contains(query) ||
           item.lokasi.toLowerCase().contains(query) ||
           item.jenis.toLowerCase().contains(query);
@@ -60,22 +130,19 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> _handleFilterTap(String filter) async {
     if (filter == 'Pilih Tanggal') {
-      final Map<String, dynamic>? result =
-          await showModalBottomSheet<Map<String, dynamic>>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => _CustomDatePickerBottomSheet(
-          initialStartDate: _selectedStartDate,
-          initialEndDate: _selectedEndDate,
-        ),
+      final result = await PilihTanggal.show(
+        context,
+        initialStartDate: _rangeStartDate,
+        initialEndDate: _rangeEndDate,
       );
 
-      if (result != null) {
+      if (result != null &&
+          result['startDate'] != null &&
+          result['endDate'] != null) {
         setState(() {
           _selectedFilter = 'Pilih Tanggal';
-          _selectedStartDate = result['startDate'] as DateTime?;
-          _selectedEndDate = result['endDate'] as DateTime?;
+          _rangeStartDate = result['startDate'];
+          _rangeEndDate = result['endDate'];
         });
       }
     } else {
@@ -117,10 +184,12 @@ class _HistoryPageState extends State<HistoryPage> {
             AppTopBar(
               showDropdown: true,
               selectedValue: _selectedProject,
-              dropdownItems: _projectOptions,
+              dropdownItems: DummyData.projectOptions,
               onDropdownChanged: (val) {
                 setState(() {
                   _selectedProject = val;
+                  DummyData.selectedProject =
+                      val != null ? DummyData.getProjectByName(val) : null;
                 });
               },
               onBackPressed: _handleBack,
@@ -271,20 +340,20 @@ class _HistoryPageState extends State<HistoryPage> {
               const SizedBox(height: 14),
 
               // List of History Cards
-              if (filtered.isEmpty)
+              if (_currentProject == null)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                   child: Column(
                     children: const [
                       Icon(
-                        Icons.history_rounded,
+                        Icons.touch_app_outlined,
                         size: 48,
                         color: AppColors.textSecondary,
                       ),
                       SizedBox(height: 12),
                       Text(
-                        'Belum Ada Riwayat Pendataan',
+                        'Pilih Project Terlebih Dahulu',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -293,9 +362,45 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Riwayat pendataan & pemantauan lampu akan tampil di sini.',
+                        'Gunakan dropdown di atas untuk melihat riwayat pada proyek tertentu.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (filtered.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.history_rounded,
+                        size: 48,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Belum Ada Riwayat Pendataan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _selectedFilter == 'Pilih Tanggal' &&
+                                _rangeStartDate != null &&
+                                _rangeEndDate != null
+                            ? 'Tidak ada riwayat dalam rentang ${_rangeStartDate!.day} ${PilihTanggal.monthNames[_rangeStartDate!.month - 1]} ${_rangeStartDate!.year} – ${_rangeEndDate!.day} ${PilihTanggal.monthNames[_rangeEndDate!.month - 1]} ${_rangeEndDate!.year}.'
+                            : 'Tidak ada riwayat untuk filter "$_selectedFilter" pada project "${_currentProject?.projectName}".',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
                         ),
@@ -370,453 +475,3 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 }
 
-class _CustomDatePickerBottomSheet extends StatefulWidget {
-  final DateTime? initialStartDate;
-  final DateTime? initialEndDate;
-
-  const _CustomDatePickerBottomSheet({
-    this.initialStartDate,
-    this.initialEndDate,
-  });
-
-  @override
-  State<_CustomDatePickerBottomSheet> createState() =>
-      _CustomDatePickerBottomSheetState();
-}
-
-class _CustomDatePickerBottomSheetState
-    extends State<_CustomDatePickerBottomSheet> {
-  late DateTime _focusedMonth;
-  DateTime? _startDate;
-  DateTime? _endDate;
-  final DateTime _today = DateTime(2025, 5, 19);
-
-  @override
-  void initState() {
-    super.initState();
-    _startDate = widget.initialStartDate;
-    _endDate = widget.initialEndDate;
-    if (_startDate != null) {
-      _focusedMonth = DateTime(_startDate!.year, _startDate!.month, 1);
-    } else {
-      _focusedMonth = DateTime(2025, 5, 1);
-    }
-  }
-
-  final List<String> _monthNames = const [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember'
-  ];
-
-  void _prevMonth() {
-    setState(() {
-      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1, 1);
-    });
-  }
-
-  void _nextMonth() {
-    setState(() {
-      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 1);
-    });
-  }
-
-  void _onDaySelected(DateTime day) {
-    setState(() {
-      if (_startDate == null || (_startDate != null && _endDate != null)) {
-        _startDate = day;
-        _endDate = null;
-      } else if (_startDate != null && _endDate == null) {
-        if (day.isBefore(_startDate!)) {
-          _startDate = day;
-          _endDate = null;
-        } else if (day.isAfter(_startDate!)) {
-          _endDate = day;
-        } else {
-          _startDate = day;
-          _endDate = null;
-        }
-      }
-    });
-  }
-
-  bool _isSameDay(DateTime? a, DateTime? b) {
-    if (a == null || b == null) return false;
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  bool _isInRange(DateTime day) {
-    if (_startDate == null || _endDate == null) return false;
-    return day.isAfter(_startDate!) && day.isBefore(_endDate!);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final year = _focusedMonth.year;
-    final month = _focusedMonth.month;
-    final firstDayOfMonth = DateTime(year, month, 1);
-    final daysInMonth = DateTime(year, month + 1, 0).day;
-    final leadingDays = firstDayOfMonth.weekday - 1; // Mon = 1
-    final prevMonthDays = DateTime(year, month, 0).day;
-
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Top Drag Handle Bar
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE2E8F0),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
-          // Header Row (Title & Close Button)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Pilih Tanggal',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    color: Color(0xFF64748B),
-                    size: 22,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(color: Color(0xFFF1F5F9), height: 1, thickness: 1),
-
-          // Month Navigation Row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: _prevMonth,
-                  icon: const Icon(
-                    Icons.chevron_left_rounded,
-                    color: AppColors.textPrimary,
-                    size: 24,
-                  ),
-                ),
-                Text(
-                  '${_monthNames[month - 1]} $year',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  onPressed: _nextMonth,
-                  icon: const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.textPrimary,
-                    size: 24,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Weekday Header Row (Sen, Sel, Rab, Kam, Jum, Sab, Min)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                _buildWeekdayHeader('Sen', false),
-                _buildWeekdayHeader('Sel', false),
-                _buildWeekdayHeader('Rab', false),
-                _buildWeekdayHeader('Kam', false),
-                _buildWeekdayHeader('Jum', false),
-                _buildWeekdayHeader('Sab', true),
-                _buildWeekdayHeader('Min', true),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // Days Grid
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildDaysGrid(
-              year: year,
-              month: month,
-              daysInMonth: daysInMonth,
-              leadingDays: leadingDays,
-              prevMonthDays: prevMonthDays,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Action Buttons: Batal & Pilih
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: const Text(
-                    'Batal',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context, {
-                      'startDate': _startDate,
-                      'endDate': _endDate,
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 42,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Pilih',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWeekdayHeader(String label, bool isWeekend) {
-    return Expanded(
-      child: Center(
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isWeekend ? const Color(0xFFDC2626) : const Color(0xFF475569),
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDaysGrid({
-    required int year,
-    required int month,
-    required int daysInMonth,
-    required int leadingDays,
-    required int prevMonthDays,
-  }) {
-    List<Widget> rows = [];
-    List<Widget> currentRow = [];
-
-    int totalCells = leadingDays + daysInMonth;
-    int trailingDays = (7 - (totalCells % 7)) % 7;
-    int totalGridCells = totalCells + trailingDays;
-
-    for (int i = 0; i < totalGridCells; i++) {
-      if (i < leadingDays) {
-        // Previous Month Day
-        final dayNum = prevMonthDays - leadingDays + i + 1;
-        final date = DateTime(year, month - 1, dayNum);
-        currentRow.add(
-          _buildDayCell(
-            dayText: dayNum.toString(),
-            isCurrentMonth: false,
-            isWeekend: false,
-            date: date,
-          ),
-        );
-      } else if (i < leadingDays + daysInMonth) {
-        // Current Month Day
-        final dayNum = i - leadingDays + 1;
-        final date = DateTime(year, month, dayNum);
-        final isWeekend = date.weekday == DateTime.saturday ||
-            date.weekday == DateTime.sunday;
-
-        currentRow.add(
-          _buildDayCell(
-            dayText: dayNum.toString(),
-            isCurrentMonth: true,
-            isWeekend: isWeekend,
-            date: date,
-          ),
-        );
-      } else {
-        // Next Month Day
-        final dayNum = i - (leadingDays + daysInMonth) + 1;
-        final date = DateTime(year, month + 1, dayNum);
-        currentRow.add(
-          _buildDayCell(
-            dayText: dayNum.toString(),
-            isCurrentMonth: false,
-            isWeekend: false,
-            date: date,
-          ),
-        );
-      }
-
-      if (currentRow.length == 7) {
-        rows.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Row(children: List.from(currentRow)),
-          ),
-        );
-        currentRow.clear();
-      }
-    }
-
-    return Column(children: rows);
-  }
-
-  Widget _buildDayCell({
-    required String dayText,
-    required bool isCurrentMonth,
-    required bool isWeekend,
-    required DateTime date,
-  }) {
-    final bool isStart = _isSameDay(date, _startDate);
-    final bool isEnd = _isSameDay(date, _endDate);
-    final bool inRange = _isInRange(date);
-    final bool isToday = _isSameDay(date, _today);
-    final bool isSingleDate = isStart && _endDate == null;
-    final bool isSelected = isStart || isEnd;
-
-    // Range Highlight Styling
-    Decoration? containerDecoration;
-    if (inRange) {
-      containerDecoration = const BoxDecoration(
-        color: Color(0xFFB8D5ED),
-      );
-    } else if (isStart && _endDate != null) {
-      containerDecoration = const BoxDecoration(
-        color: Color(0xFFB8D5ED),
-        borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
-      );
-    } else if (isEnd && _startDate != null) {
-      containerDecoration = const BoxDecoration(
-        color: Color(0xFFB8D5ED),
-        borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
-      );
-    }
-
-    // Inner Circle Styling
-    BoxDecoration? circleDecoration;
-    if (isSelected || isSingleDate) {
-      circleDecoration = const BoxDecoration(
-        color: AppColors.primary,
-        shape: BoxShape.circle,
-      );
-    } else if (isToday && !inRange) {
-      circleDecoration = BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.primary, width: 1.5),
-      );
-    }
-
-    // Text Color
-    Color textColor;
-    if (!isCurrentMonth) {
-      textColor = const Color(0xFFCBD5E1);
-    } else if (isSelected || isSingleDate) {
-      textColor = Colors.white;
-    } else if (isWeekend && !inRange) {
-      textColor = const Color(0xFFDC2626);
-    } else {
-      textColor = const Color(0xFF1E293B);
-    }
-
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _onDaySelected(date),
-        child: Container(
-          height: 44,
-          decoration: containerDecoration,
-          child: Center(
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: circleDecoration,
-              child: Center(
-                child: Text(
-                  dayText,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 13.5,
-                    fontWeight: isSelected || isToday || isSingleDate
-                        ? FontWeight.bold
-                        : FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

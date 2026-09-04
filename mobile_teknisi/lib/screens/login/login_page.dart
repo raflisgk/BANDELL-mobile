@@ -10,7 +10,8 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -20,11 +21,51 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
 
+  late final AnimationController _animController;
+  late final Animation<double> _logoFadeAnimation;
+  late final Animation<double> _logoScaleAnimation;
+  late final Animation<double> _formFadeAnimation;
+  late final Animation<Offset> _formSlideAnimation;
+
   @override
   void initState() {
     super.initState();
     _usernameFocusNode.addListener(_onFocusChange);
     _passwordFocusNode.addListener(_onFocusChange);
+
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    _logoFadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.0, 0.70, curve: Curves.easeOut),
+    );
+
+    _logoScaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animController,
+        curve: const Interval(0.0, 0.70, curve: Curves.easeOut),
+      ),
+    );
+
+    _formFadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.20, 1.0, curve: Curves.easeOut),
+    );
+
+    _formSlideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.08),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animController,
+        curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _animController.forward();
   }
 
   void _onFocusChange() {
@@ -33,6 +74,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    _animController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     _usernameFocusNode.removeListener(_onFocusChange);
@@ -115,70 +157,80 @@ class _LoginPageState extends State<LoginPage> {
                       left: 24.0,
                       right: 24.0,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Shield Crest BANDELL Logo with smooth AnimatedContainer sizing
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.fastOutSlowIn,
-                          width: isKeyboardOpen ? 60 : 90,
-                          height: isKeyboardOpen ? 60 : 90,
-                          child: Image.asset(
-                            'assets/images/logo bandell 1.png',
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.shield_outlined,
-                                  color: Colors.white,
-                                  size: isKeyboardOpen ? 34 : 48,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.fastOutSlowIn,
-                          height: isKeyboardOpen ? 8 : 14,
-                        ),
+                    child: FadeTransition(
+                      opacity: _logoFadeAnimation,
+                      child: ScaleTransition(
+                        scale: _logoScaleAnimation,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Shield Crest BANDELL Logo with smooth AnimatedContainer sizing
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.fastOutSlowIn,
+                              width: isKeyboardOpen ? 60 : 90,
+                              height: isKeyboardOpen ? 60 : 90,
+                              child: Image.asset(
+                                'assets/images/logo bandell 1.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.shield_outlined,
+                                      color: Colors.white,
+                                      size: isKeyboardOpen ? 34 : 48,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.fastOutSlowIn,
+                              height: isKeyboardOpen ? 8 : 14,
+                            ),
 
-                        // BANDELL Title Text
-                        const Text(
-                          'BANDELL',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
+                            // BANDELL Title Text
+                            const Text(
+                              'BANDELL',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
 
-                        // Subtitle Text
-                        const Text(
-                          'Silakan login untuk melanjutkan',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
+                            // Subtitle Text
+                            const Text(
+                              'Silakan login untuk melanjutkan',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
 
                   // 2. BOTTOM AREA (BLUE BANDELL BACKGROUND FORM)
                   Expanded(
-                    child: Container(
-                      decoration: const BoxDecoration(
+                    child: FadeTransition(
+                      opacity: _formFadeAnimation,
+                      child: SlideTransition(
+                        position: _formSlideAnimation,
+                        child: Container(
+                          decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -349,13 +401,15 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildInputFieldContainer({

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../dummy/dummy_data.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
-import '../../widgets/success_dialog.dart';
+import '../../widgets/pop_up_sukses.dart';
 import '../../widgets/tombol_simpan_data.dart';
 
 class ManualPage extends StatefulWidget {
@@ -205,6 +206,20 @@ class _ManualPageState extends State<ManualPage> {
   }
 
   void _handleSimpanData() {
+    final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
+    if (isProjectClosed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak dapat menyimpan data. Project telah Selesai.'),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     final barcode = _barcodeController.text.trim();
     final latitude = _latitudeController.text.trim();
     final longitude = _longitudeController.text.trim();
@@ -258,7 +273,7 @@ class _ManualPageState extends State<ManualPage> {
             ? _panelCodeController.text
             : '');
 
-    SuccessDialog.show(
+    PopUpSukses.show(
       context,
       lampCode: lampCode,
       onAddData: () {

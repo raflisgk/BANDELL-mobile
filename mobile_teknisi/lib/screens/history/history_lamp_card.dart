@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 
 class HistoryLampItem {
+  final int? idHistory;
+  final int userId;
+  final int projectId;
+  final int? areaId;
   final String kode;
   final String jenis;
   final String status;
@@ -10,8 +14,13 @@ class HistoryLampItem {
   final String koordinat;
   final String fotoCount;
   final String waktu;
+  final DateTime? tanggal;
 
   const HistoryLampItem({
+    this.idHistory,
+    required this.userId,
+    required this.projectId,
+    this.areaId,
     required this.kode,
     required this.jenis,
     required this.status,
@@ -20,6 +29,7 @@ class HistoryLampItem {
     required this.koordinat,
     required this.fotoCount,
     required this.waktu,
+    this.tanggal,
   });
 }
 

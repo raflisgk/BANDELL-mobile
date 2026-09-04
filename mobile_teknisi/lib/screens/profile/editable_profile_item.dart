@@ -55,7 +55,7 @@ class EditableProfileItem extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
                 // White Rounded Container for Icon
@@ -116,7 +116,7 @@ class EditableProfileItem extends StatelessWidget {
 
   Widget _buildEditMode() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
@@ -139,11 +139,11 @@ class EditableProfileItem extends StatelessWidget {
             title,
             style: const TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 14,
+              fontSize: 13.5,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // TextField Container with Pencil Icon on Right
           Container(
@@ -164,19 +164,19 @@ class EditableProfileItem extends StatelessWidget {
                     keyboardType: keyboardType,
                     style: const TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 14,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Masukkan $title',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
-                        fontSize: 14,
+                        fontSize: 13.5,
                       ),
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+                        horizontal: 12,
+                        vertical: 10,
                       ),
                       border: InputBorder.none,
                     ),
@@ -187,14 +187,14 @@ class EditableProfileItem extends StatelessWidget {
                   child: Icon(
                     Icons.edit_outlined,
                     color: Color(0xFF084B83),
-                    size: 20,
+                    size: 18,
                   ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // Action Buttons: Batal & Simpan
           Row(
@@ -203,7 +203,7 @@ class EditableProfileItem extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onCancel,
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     side: const BorderSide(color: Color(0xFFCBD5E1)),
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -214,13 +214,13 @@ class EditableProfileItem extends StatelessWidget {
                     'Batal',
                     style: TextStyle(
                       color: Color(0xFF475569),
-                      fontSize: 14,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: onSave,
@@ -228,7 +228,7 @@ class EditableProfileItem extends StatelessWidget {
                     backgroundColor: const Color(0xFF084B83),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

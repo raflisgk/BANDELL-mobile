@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../dummy/dummy_data.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
-import '../../widgets/success_dialog.dart';
+import '../../widgets/pop_up_sukses.dart';
 import '../../widgets/tombol_simpan_data.dart';
 import 'realtime_barcode.dart';
 import 'realtime_location.dart';
@@ -216,6 +217,18 @@ class _RealtimePageState extends State<RealtimePage> {
   }
 
   void _handleSimpanData() {
+    final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
+    if (isProjectClosed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak dapat menyimpan data. Project telah Selesai.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
     if (_scannedBarcode == null || _scannedBarcode!.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -237,7 +250,7 @@ class _RealtimePageState extends State<RealtimePage> {
       return;
     }
 
-    SuccessDialog.show(
+    PopUpSukses.show(
       context,
       lampCode: _scannedBarcode!,
     );

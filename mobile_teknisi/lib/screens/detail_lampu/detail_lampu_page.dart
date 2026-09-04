@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../dummy/dummy_data.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
@@ -49,6 +50,21 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
   }
 
   void _handleEditData() {
+    final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
+    if (isProjectClosed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Project telah Selesai. Pengeditan dinonaktifkan (Read-Only).',
+          ),
+          backgroundColor: Color(0xFF64748B),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     debugPrint('Edit Data');
     Navigator.push(
       context,
@@ -66,6 +82,21 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
   }
 
   void _handleHapusData() {
+    final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
+    if (isProjectClosed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Project telah Selesai. Penghapusan dinonaktifkan (Read-Only).',
+          ),
+          backgroundColor: Color(0xFF64748B),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     final code = widget.lampCode ?? 'JKT-001';
     showDialog(
       context: context,
@@ -199,59 +230,99 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
               const SizedBox(height: 28),
 
-              // Bottom Action Buttons Row: Edit Data & Hapus
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: SizedBox(
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: _handleEditData,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+              // Bottom Action Buttons: Edit Data & Hapus atau Banner Read-Only
+              Builder(
+                builder: (context) {
+                  final isProjectClosed =
+                      DummyData.selectedProject?.status == 'closed' ||
+                          DummyData.selectedProject?.status == 'selesai';
+
+                  if (isProjectClosed) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.lock_outline_rounded,
+                            color: Color(0xFF64748B),
+                            size: 18,
                           ),
-                        ),
-                        child: const Text(
-                          'Edit Data',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
+                          SizedBox(width: 8),
+                          Text(
+                            'Project Selesai — Mode Baca Saja (Read-Only)',
+                            style: TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: _handleEditData,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Edit Data',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 1,
-                    child: SizedBox(
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: _handleHapusData,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.error,
-                          foregroundColor: Colors.white,
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Hapus',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 1,
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: _handleHapusData,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.error,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Hapus',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
 
               const SizedBox(height: 28),

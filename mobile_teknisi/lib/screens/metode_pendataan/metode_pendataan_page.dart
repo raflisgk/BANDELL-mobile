@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../dummy/dummy_data.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
@@ -9,17 +10,48 @@ class MetodePendataanPage extends StatelessWidget {
   const MetodePendataanPage({super.key});
 
   void _handleSelectRealtime(BuildContext context) {
+    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
+    if (isProjectClosed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Project "${DummyData.selectedProject?.projectName}" telah Selesai. Pendataan Realtime dinonaktifkan.',
+          ),
+          backgroundColor: const Color(0xFF64748B),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     debugPrint('Realtime dipilih');
     AppNavigator.push(context, const RealtimePage());
   }
 
   void _handleSelectManual(BuildContext context) {
+    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
+    if (isProjectClosed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Project "${DummyData.selectedProject?.projectName}" telah Selesai. Pendataan Manual dinonaktifkan.',
+          ),
+          backgroundColor: const Color(0xFF64748B),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     debugPrint('Manual dipilih');
     AppNavigator.push(context, const ManualPage());
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
+
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
@@ -34,6 +66,35 @@ class MetodePendataanPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 16),
+
+                    if (isProjectClosed)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.lock_outline_rounded,
+                                color: Color(0xFF64748B), size: 22),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Project ini telah Selesai (Read-Only). Fitur input data Realtime dan Manual dinonaktifkan.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF475569),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
               // Centered Title & Subtitle
               const Center(
@@ -62,12 +123,12 @@ class MetodePendataanPage extends StatelessWidget {
               const SizedBox(height: 28),
 
               // Card 1: Realtime
-              _buildRealtimeCard(context),
+              _buildRealtimeCard(context, isProjectClosed: isProjectClosed),
 
               const SizedBox(height: 20),
 
               // Card 2: Manual
-              _buildManualCard(context),
+              _buildManualCard(context, isProjectClosed: isProjectClosed),
 
               const SizedBox(height: 24),
 
@@ -85,23 +146,25 @@ class MetodePendataanPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRealtimeCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.realtimeBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.realtimeBorder,
-          width: 1.5,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
+  Widget _buildRealtimeCard(BuildContext context, {required bool isProjectClosed}) {
+    return Opacity(
+      opacity: isProjectClosed ? 0.55 : 1.0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.realtimeBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.realtimeBorder,
+            width: 1.5,
           ),
-        ],
-      ),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -202,122 +265,126 @@ class MetodePendataanPage extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 
-  Widget _buildManualCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.manualBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.manualBorder,
-          width: 1.5,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _handleSelectManual(context),
+  Widget _buildManualCard(BuildContext context, {required bool isProjectClosed}) {
+    return Opacity(
+      opacity: isProjectClosed ? 0.55 : 1.0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.manualBackground,
           borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Icon & Title
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundWhite,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.manualBorder,
-                          width: 1,
+          border: Border.all(
+            color: AppColors.manualBorder,
+            width: 1.5,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _handleSelectManual(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Icon & Title
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundWhite,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.manualBorder,
+                            width: 1,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.keyboard_outlined,
+                          color: AppColors.manualOrange,
+                          size: 24,
                         ),
                       ),
-                      child: const Icon(
-                        Icons.keyboard_outlined,
-                        color: AppColors.manualOrange,
-                        size: 24,
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Manual',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Manual',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // Description
-                const Text(
-                  'Masukkan koordinat, alamat, dan informasi lampu secara manual.',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                    height: 1.4,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 14),
+                  const SizedBox(height: 14),
 
-                // Features Checklist
-                _buildCheckFeature(
-                  icon: Icons.bolt_rounded,
-                  label: 'Input Long / Lat',
-                  color: AppColors.manualOrange,
-                ),
-                const SizedBox(height: 6),
-                _buildCheckFeature(
-                  icon: Icons.bolt_rounded,
-                  label: 'Input Address',
-                  color: AppColors.manualOrange,
-                ),
-                const SizedBox(height: 6),
-                _buildCheckFeature(
-                  icon: Icons.bolt_rounded,
-                  label: 'Dokumentasi Manual',
-                  color: AppColors.manualOrange,
-                ),
+                  // Description
+                  const Text(
+                    'Masukkan koordinat, alamat, dan informasi lampu secara manual.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
 
-                const SizedBox(height: 16),
-                const Divider(color: AppColors.manualBorder, height: 1),
-                const SizedBox(height: 14),
+                  // Features Checklist
+                  _buildCheckFeature(
+                    icon: Icons.bolt_rounded,
+                    label: 'Input Long / Lat',
+                    color: AppColors.manualOrange,
+                  ),
+                  const SizedBox(height: 6),
+                  _buildCheckFeature(
+                    icon: Icons.bolt_rounded,
+                    label: 'Input Address',
+                    color: AppColors.manualOrange,
+                  ),
+                  const SizedBox(height: 6),
+                  _buildCheckFeature(
+                    icon: Icons.bolt_rounded,
+                    label: 'Dokumentasi Manual',
+                    color: AppColors.manualOrange,
+                  ),
 
-                // Card Action Footer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'Gunakan Manual',
-                      style: TextStyle(
-                        color: AppColors.manualOrange,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                  const SizedBox(height: 16),
+                  const Divider(color: AppColors.manualBorder, height: 1),
+                  const SizedBox(height: 14),
+
+                  // Card Action Footer
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      Text(
+                        'Gunakan Manual',
+                        style: TextStyle(
+                          color: AppColors.manualOrange,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: AppColors.manualOrange,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ],
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: AppColors.manualOrange,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -82,6 +82,20 @@ class _LampPageState extends State<LampPage> {
   }
 
   void _handleLampTypeTap(LampTypeItem item) {
+    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
+    if (isProjectClosed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Project "${DummyData.selectedProject?.projectName}" telah Selesai. Penambahan data lampu baru tidak tersedia.',
+          ),
+          backgroundColor: const Color(0xFF64748B),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     debugPrint('Lamp type selected: ${item.name}');
     _handleNavigateToInputMethod();
   }
@@ -93,6 +107,8 @@ class _LampPageState extends State<LampPage> {
   @override
   Widget build(BuildContext context) {
     final filteredList = _filteredLampTypes;
+    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
+        DummyData.selectedProject?.status == 'selesai';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -109,7 +125,35 @@ class _LampPageState extends State<LampPage> {
                   children: [
                     const SizedBox(height: 16),
 
-              // 2. Title
+                    if (isProjectClosed)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.lock_outline_rounded,
+                                color: Color(0xFF64748B), size: 20),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Project Selesai (Read-Only): Penambahan data baru tidak tersedia.',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF475569),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // 2. Title
               const Text(
                 'Pilih Jenis Lampu',
                 style: TextStyle(
