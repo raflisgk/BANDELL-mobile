@@ -4,6 +4,7 @@ import '../../utils/app_colors.dart';
 class InformasiLampuCard extends StatelessWidget {
   final String code;
   final String type;
+  final String? panelCode;
   final String? status;
   final String? inputMethod;
 
@@ -11,6 +12,7 @@ class InformasiLampuCard extends StatelessWidget {
     super.key,
     required this.code,
     required this.type,
+    this.panelCode,
     this.status,
     this.inputMethod,
   });
@@ -50,7 +52,7 @@ class InformasiLampuCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  type,
+                  (type.isEmpty || type == '-') ? 'LED Street Light 100W' : type,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 13,
@@ -59,7 +61,7 @@ class InformasiLampuCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'ID LAMPU',
+                  'KODE PANEL',
                   style: TextStyle(
                     color: AppColors.hintColor,
                     fontSize: 10,
@@ -69,7 +71,7 @@ class InformasiLampuCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  code,
+                  panelCode ?? '123456',
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 13,

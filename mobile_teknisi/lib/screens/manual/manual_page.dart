@@ -67,10 +67,10 @@ class _ManualPageState extends State<ManualPage> {
   }
 
   void _handleTambahFoto() {
-    if (_photos.length >= 5) {
+    if (_photos.length >= 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maksimal 5 foto sudah tercapai'),
+          content: Text('Maksimal 4 foto sudah tercapai'),
           backgroundColor: Color(0xFFEF4444),
           duration: Duration(seconds: 1),
         ),

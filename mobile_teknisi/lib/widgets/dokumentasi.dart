@@ -56,7 +56,7 @@ class Dokumentasi extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Tambahkan foto kondisi lampu (maks. 5 foto)',
+          'Tambahkan foto kondisi lampu (maks. 4 foto)',
           style: TextStyle(
             color: Color(0xFF64748B),
             fontSize: 12.5,
@@ -147,8 +147,8 @@ class Dokumentasi extends StatelessWidget {
                 );
               }),
 
-              // Add Photo Box (Only if less than 5 photos)
-              if (photos.length < 3)
+              // Add Photo Box (Only if less than 4 photos)
+              if (photos.length < 4)
                 GestureDetector(
                   onTap: onAddPhoto,
                   child: Container(

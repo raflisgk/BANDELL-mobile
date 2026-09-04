@@ -3,7 +3,6 @@ import '../../dummy/dummy_data.dart';
 import '../../models/project_model.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
-import '../../widgets/app_top_bar.dart';
 import '../../widgets/bottom_navbar.dart';
 import '../area_operasional/area_operasional_page.dart';
 import '../detail_lampu/detail_lampu_page.dart';
@@ -107,12 +106,6 @@ class _HistoryPageState extends State<HistoryPage> {
     super.dispose();
   }
 
-  void _handleBack() {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
-  }
-
   List<HistoryLampItem> get _filteredItems {
     final baseItems = _baseHistoryItems;
     final timeFiltered = baseItems.where(_matchesTimeFilter).toList();
@@ -181,19 +174,6 @@ class _HistoryPageState extends State<HistoryPage> {
       body: SafeArea(
         child: Column(
           children: [
-            AppTopBar(
-              showDropdown: true,
-              selectedValue: _selectedProject,
-              dropdownItems: DummyData.projectOptions,
-              onDropdownChanged: (val) {
-                setState(() {
-                  _selectedProject = val;
-                  DummyData.selectedProject =
-                      val != null ? DummyData.getProjectByName(val) : null;
-                });
-              },
-              onBackPressed: _handleBack,
-            ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),

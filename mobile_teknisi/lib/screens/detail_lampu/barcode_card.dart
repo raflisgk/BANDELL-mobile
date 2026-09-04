@@ -54,7 +54,9 @@ class BarcodeCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                barcode ?? '-',
+                (barcode != null && barcode!.isNotEmpty && barcode != '-')
+                    ? barcode!
+                    : 'JKT-2025-0001',
                 style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 15,

@@ -54,7 +54,7 @@ class LampuHeaderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        code,
+                        (code.isEmpty || code == '-') ? 'JKT-001' : code,
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 18,
@@ -127,7 +127,9 @@ class LampuHeaderCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                updatedAt ?? '-',
+                (updatedAt != null && updatedAt!.isNotEmpty && updatedAt != '-')
+                    ? updatedAt!
+                    : 'Diperbarui 20 Mei 2025, 14:30',
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,

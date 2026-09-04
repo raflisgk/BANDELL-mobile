@@ -4,23 +4,23 @@ import '../../utils/app_colors.dart';
 class EditLampuLocation extends StatelessWidget {
   final TextEditingController longitudeController;
   final TextEditingController latitudeController;
-  final TextEditingController alamatController;
+  final TextEditingController? alamatController;
   final FocusNode longitudeFocusNode;
   final FocusNode latitudeFocusNode;
-  final FocusNode alamatFocusNode;
+  final FocusNode? alamatFocusNode;
   final bool isLoadingLocation;
-  final VoidCallback onGetLocation;
+  final VoidCallback? onGetLocation;
 
   const EditLampuLocation({
     super.key,
     required this.longitudeController,
     required this.latitudeController,
-    required this.alamatController,
+    this.alamatController,
     required this.longitudeFocusNode,
     required this.latitudeFocusNode,
-    required this.alamatFocusNode,
-    required this.isLoadingLocation,
-    required this.onGetLocation,
+    this.alamatFocusNode,
+    this.isLoadingLocation = false,
+    this.onGetLocation,
   });
 
   @override
@@ -36,109 +36,15 @@ class EditLampuLocation extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _buildCustomTextField(
-          controller: longitudeController,
-          focusNode: longitudeFocusNode,
-          hint: 'Longitude (X)',
-        ),
-        const SizedBox(height: 12),
-        _buildCustomTextField(
           controller: latitudeController,
           focusNode: latitudeFocusNode,
-          hint: 'Latitude (Y)',
-        ),
-
-        const SizedBox(height: 20),
-        const Divider(color: AppColors.border, height: 1),
-        const SizedBox(height: 20),
-
-        // 2. ALAMAT LOKASI
-        _buildSectionHeader(
-          icon: Icons.map_outlined,
-          title: 'Alamat Lokasi',
-          subtitle: 'Masukkan alamat sesuai lokasi lampu',
+          hint: '-6.2088',
         ),
         const SizedBox(height: 12),
         _buildCustomTextField(
-          controller: alamatController,
-          focusNode: alamatFocusNode,
-          hint: 'Contoh: Jl. Sudirman No. 10, Jakarta',
-          prefixIcon: Icons.location_on_outlined,
-        ),
-        const SizedBox(height: 14),
-
-        // Get Location Green Button
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: isLoadingLocation ? null : onGetLocation,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.realtimeGreen,
-              foregroundColor: AppColors.buttonText,
-              disabledBackgroundColor:
-                  AppColors.realtimeGreen.withValues(alpha: 0.7),
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: isLoadingLocation
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Text(
-                        'Mengambil lokasi...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.my_location_rounded,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Get Location',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Ambil koordinat dan alamat otomatis dari GPS',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.cardTextSubtle,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
+          controller: longitudeController,
+          focusNode: longitudeFocusNode,
+          hint: '106.8456',
         ),
       ],
     );

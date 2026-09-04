@@ -185,10 +185,10 @@ class _RealtimePageState extends State<RealtimePage> {
   }
 
   Future<void> _handleTambahFoto() async {
-    if (_photos.length >= 5) {
+    if (_photos.length >= 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maksimal 5 foto dokumentasi.'),
+          content: Text('Maksimal 4 foto dokumentasi.'),
           backgroundColor: Color(0xFFDC2626),
         ),
       );

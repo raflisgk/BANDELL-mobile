@@ -113,8 +113,16 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
   @override
   Widget build(BuildContext context) {
-    final code = widget.lampCode ?? '-';
-    final type = widget.lampType ?? '-';
+    final code = (widget.lampCode != null &&
+            widget.lampCode!.isNotEmpty &&
+            widget.lampCode != '-')
+        ? widget.lampCode!
+        : 'JKT-001';
+    final type = (widget.lampType != null &&
+            widget.lampType!.isNotEmpty &&
+            widget.lampType != '-')
+        ? widget.lampType!
+        : 'LED Street Light 100W';
     final currentStatus = widget.status ?? 'Tersimpan';
     final isTersimpan = currentStatus == 'Tersimpan';
 
@@ -123,112 +131,120 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       body: SafeArea(
         child: Column(
           children: [
-            AppTopBar(onBackPressed: _handleBack),
+            AppTopBar(
+              showBackButton: true,
+              showNotification: false,
+              showDropdown: false,
+              onBackPressed: _handleBack,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 12),
+
+                    // Breadcrumb Row
+                    Row(
+                      children: const [
+                        Text(
+                          'Project JKT',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6.0),
+                          child: Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.hintColor,
+                            size: 14,
+                          ),
+                        ),
+                        Text(
+                          'Jakarta, Indonesia',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Card Informasional Utama (Lamp Header Card)
+                    LampuHeaderCard(
+                      code: code,
+                      isTersimpan: isTersimpan,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Section Lokasi
+                    const Text(
+                      'Lokasi',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const LokasiCard(),
+
+                    const SizedBox(height: 20),
+
+                    // Section Informasi Lampu
+                    const Text(
+                      'Informasi Lampu',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    InformasiLampuCard(
+                      code: code,
+                      type: type,
+                      panelCode: '123456',
+                      status: 'Active',
+                      inputMethod: 'Realtime',
+                    ),
+
                     const SizedBox(height: 16),
 
-              // Breadcrumb Row
-              Row(
-                children: const [
-                  Text(
-                    'Project JKT',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
+                    // Section Barcode Card
+                    const BarcodeCard(barcode: 'JKT-2025-0001'),
+
+                    const SizedBox(height: 16),
+
+                    // Section Foto Dokumentasi Card
+                    FotoDokumentasiCard(
+                      onLihatSemua: _handleLihatSemua,
                     ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6.0),
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColors.hintColor,
-                      size: 14,
+
+                    const SizedBox(height: 20),
+
+                    // Section Informasi Record
+                    const Text(
+                      'Informasi Record',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Jakarta, Indonesia',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 10),
+                    const InformasiRecordCard(),
 
-              const SizedBox(height: 16),
-
-              // Card Informasional Utama (Lamp Header Card)
-              LampuHeaderCard(
-                code: code,
-                isTersimpan: isTersimpan,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Section Lokasi
-              const Text(
-                'Lokasi',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const LokasiCard(),
-
-              const SizedBox(height: 24),
-
-              // Section Informasi Lampu
-              const Text(
-                'Informasi Lampu',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              InformasiLampuCard(
-                code: code,
-                type: type,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Section Barcode Card
-              const BarcodeCard(),
-
-              const SizedBox(height: 24),
-
-              // Section Foto Dokumentasi Card
-              FotoDokumentasiCard(
-                onLihatSemua: _handleLihatSemua,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Section Informasi Record
-              const Text(
-                'Informasi Record',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const InformasiRecordCard(),
-
-              const SizedBox(height: 28),
+                    const SizedBox(height: 24),
 
               // Bottom Action Buttons: Edit Data & Hapus atau Banner Read-Only
               Builder(

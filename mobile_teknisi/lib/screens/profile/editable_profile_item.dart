@@ -6,25 +6,27 @@ class EditableProfileItem extends StatelessWidget {
   final String title;
   final String value;
   final bool isEditing;
-  final TextEditingController controller;
+  final bool isEditable;
+  final TextEditingController? controller;
   final FocusNode? focusNode;
   final TextInputType keyboardType;
-  final VoidCallback onTap;
-  final VoidCallback onSave;
-  final VoidCallback onCancel;
+  final VoidCallback? onTap;
+  final VoidCallback? onSave;
+  final VoidCallback? onCancel;
 
   const EditableProfileItem({
     super.key,
     required this.icon,
     required this.title,
     required this.value,
-    required this.isEditing,
-    required this.controller,
+    this.isEditing = false,
+    this.isEditable = true,
+    this.controller,
     this.focusNode,
     this.keyboardType = TextInputType.text,
-    required this.onTap,
-    required this.onSave,
-    required this.onCancel,
+    this.onTap,
+    this.onSave,
+    this.onCancel,
   });
 
   @override
@@ -52,7 +54,7 @@ class EditableProfileItem extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          onTap: onTap,
+          onTap: isEditable ? onTap : null,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -100,12 +102,13 @@ class EditableProfileItem extends StatelessWidget {
                   ),
                 ),
 
-                // Right Chevron Icon
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
+                // Right Chevron Icon only shown if field is editable
+                if (isEditable)
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
               ],
             ),
           ),

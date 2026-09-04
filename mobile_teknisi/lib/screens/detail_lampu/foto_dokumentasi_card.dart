@@ -2,15 +2,27 @@ import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 
 class FotoDokumentasiCard extends StatelessWidget {
+  final List<String>? photos;
   final VoidCallback? onLihatSemua;
+
+  static const List<String> defaultPhotos = [
+    'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&q=80',
+    'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&q=80',
+    'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?w=300&q=80',
+  ];
 
   const FotoDokumentasiCard({
     super.key,
+    this.photos,
     this.onLihatSemua,
   });
 
   @override
   Widget build(BuildContext context) {
+    final displayPhotos = (photos != null && photos!.isNotEmpty)
+        ? photos!
+        : defaultPhotos;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
@@ -30,9 +42,9 @@ class FotoDokumentasiCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                '3 FOTO DOKUMENTASI',
-                style: TextStyle(
+              Text(
+                '${displayPhotos.length} FOTO DOKUMENTASI',
+                style: const TextStyle(
                   color: AppColors.hintColor,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
@@ -55,63 +67,52 @@ class FotoDokumentasiCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // 3 Thumbnail Placeholders
+          // 3 Photo Thumbnails Row
           Row(
-            children: [
-              _buildPhotoThumbnail(
-                icon: Icons.streetview_rounded,
-                label: 'Foto 1',
-              ),
-              const SizedBox(width: 10),
-              _buildPhotoThumbnail(
-                icon: Icons.camera_alt_rounded,
-                label: 'Foto 2',
-              ),
-              const SizedBox(width: 10),
-              _buildPhotoThumbnail(
-                icon: Icons.lightbulb_rounded,
-                label: 'Foto 3',
-              ),
-            ],
+            children: displayPhotos.take(3).map((photoUrl) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: _buildPhotoThumbnail(photoUrl),
+              );
+            }).toList(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPhotoThumbnail({
-    required IconData icon,
-    required String label,
-  }) {
+  Widget _buildPhotoThumbnail(String url) {
     return Container(
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        color: AppColors.searchBackground,
+        color: const Color(0xFFE2EBF8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.border,
+          color: const Color(0xFFCBD5E1),
           width: 1,
         ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: AppColors.primary,
-            size: 26,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(11),
+        child: Image.network(
+          url,
+          width: 72,
+          height: 72,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: const Color(0xFFE2EBF8),
+              child: const Center(
+                child: Icon(
+                  Icons.image_outlined,
+                  color: AppColors.primary,
+                  size: 26,
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

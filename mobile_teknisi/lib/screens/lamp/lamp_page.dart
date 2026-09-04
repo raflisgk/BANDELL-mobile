@@ -115,7 +115,18 @@ class _LampPageState extends State<LampPage> {
       body: SafeArea(
         child: Column(
           children: [
-            AppTopBar(onBackPressed: _handleBack),
+            AppTopBar(
+              showDropdown: true,
+              selectedValue: DummyData.selectedProject?.projectName,
+              dropdownItems: DummyData.projectOptions,
+              onDropdownChanged: (val) {
+                setState(() {
+                  DummyData.selectedProject =
+                      val != null ? DummyData.getProjectByName(val) : null;
+                });
+              },
+              onBackPressed: _handleBack,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
