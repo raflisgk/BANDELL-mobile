@@ -7,13 +7,14 @@ class SmoothTabRoute<T> extends PageRouteBuilder<T> {
   SmoothTabRoute({required this.page})
       : super(
           pageBuilder: (context, animation, secondaryAnimation) => page,
-          transitionDuration: const Duration(milliseconds: 150),
-          reverseTransitionDuration: const Duration(milliseconds: 150),
+          transitionDuration: const Duration(milliseconds: 250),
+          reverseTransitionDuration: const Duration(milliseconds: 220),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: CurvedAnimation(
                 parent: animation,
-                curve: Curves.easeInOut,
+                curve: Curves.easeOut,
+                reverseCurve: Curves.easeIn,
               ),
               child: child,
             );
@@ -28,22 +29,24 @@ class SmoothSlideRoute<T> extends PageRouteBuilder<T> {
   SmoothSlideRoute({required this.page})
       : super(
           pageBuilder: (context, animation, secondaryAnimation) => page,
-          transitionDuration: const Duration(milliseconds: 220),
-          reverseTransitionDuration: const Duration(milliseconds: 200),
+          transitionDuration: const Duration(milliseconds: 280),
+          reverseTransitionDuration: const Duration(milliseconds: 250),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             final slideAnimation = Tween<Offset>(
-              begin: const Offset(0.06, 0.0),
+              begin: const Offset(0.05, 0.0),
               end: Offset.zero,
             ).animate(
               CurvedAnimation(
                 parent: animation,
                 curve: Curves.easeOutCubic,
+                reverseCurve: Curves.easeInCubic,
               ),
             );
 
             final fadeAnimation = CurvedAnimation(
               parent: animation,
               curve: Curves.easeOut,
+              reverseCurve: Curves.easeIn,
             );
 
             return SlideTransition(
@@ -55,6 +58,45 @@ class SmoothSlideRoute<T> extends PageRouteBuilder<T> {
             );
           },
         );
+}
+
+/// Smooth, lightweight page transitions builder for theme-wide consistency
+class SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
+  const SmoothPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final slideAnimation = Tween<Offset>(
+      begin: const Offset(0.05, 0.0),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ),
+    );
+
+    final fadeAnimation = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    );
+
+    return SlideTransition(
+      position: slideAnimation,
+      child: FadeTransition(
+        opacity: fadeAnimation,
+        child: child,
+      ),
+    );
+  }
 }
 
 /// Navigation helpers for quick, smooth routing
@@ -75,6 +117,14 @@ class AppNavigator {
     );
   }
 
+  /// Push replacement with smooth slide & fade transition
+  static Future<T?> pushReplacement<T>(BuildContext context, Widget page) {
+    return Navigator.pushReplacement(
+      context,
+      SmoothSlideRoute<T>(page: page),
+    );
+  }
+
   /// Push and remove all previous routes with smooth transition
   static Future<T?> pushAndRemoveUntil<T>(BuildContext context, Widget page) {
     return Navigator.pushAndRemoveUntil(
@@ -84,3 +134,4 @@ class AppNavigator {
     );
   }
 }
+

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../models/installation_model.dart';
+import '../../services/installation_service.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/dokumentasi.dart';
@@ -8,6 +10,7 @@ import 'edit_lampu_location.dart';
 import 'edit_lampu_type.dart';
 
 class EditDataLampuPage extends StatefulWidget {
+  final int? idInstallation;
   final bool isEdit;
   final String? scannedCode;
   final String? initialKodeLampu;
@@ -18,6 +21,7 @@ class EditDataLampuPage extends StatefulWidget {
 
   const EditDataLampuPage({
     super.key,
+    this.idInstallation,
     this.isEdit = false,
     this.scannedCode,
     this.initialKodeLampu,
@@ -33,6 +37,7 @@ class EditDataLampuPage extends StatefulWidget {
 
 class _EditDataLampuPageState extends State<EditDataLampuPage> {
   final _formKey = GlobalKey<FormState>();
+  bool _isSubmitting = false;
 
   late TextEditingController _kodeLampuController;
   late TextEditingController _longitudeController;
@@ -272,27 +277,79 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     }
   }
 
-  void _handleSubmit() {
-    if (widget.isEdit) {
-      debugPrint('Simpan Perubahan');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Perubahan Berhasil Disimpan (Simulasi UI)'),
-          backgroundColor: AppColors.primary,
-          duration: Duration(seconds: 1),
-        ),
+  Future<void> _handleSubmit() async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final updatedData = InstallationModel(
+        idInstallation: widget.idInstallation ?? 0,
+        idArea: 101,
+        lampCode: _kodeLampuController.text.trim(),
+        lampType: _tipeLampuController.text.trim(),
+        latitude: _latitudeController.text.trim(),
+        longitude: _longitudeController.text.trim(),
+        notes: _alamatController.text.trim(),
+        photos: List.from(_photos),
+        status: 'Tersimpan',
+        updatedAt: DateTime.now(),
       );
-      Navigator.pop(context);
-    } else {
-      debugPrint('Simpan Data Pendataan');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pendataan Lampu Berhasil Disimpan (Simulasi UI)'),
-          backgroundColor: AppColors.success,
-          duration: Duration(seconds: 1),
-        ),
-      );
-      Navigator.pop(context);
+
+      if (widget.isEdit) {
+        debugPrint('Simpan Perubahan (ID: ${widget.idInstallation})');
+        await InstallationService().updateInstallation(
+          widget.idInstallation ?? 0,
+          updatedData,
+        );
+
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Perubahan data lampu berhasil disimpan'),
+              backgroundColor: AppColors.primary,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        debugPrint('Simpan Data Pendataan Baru');
+        await InstallationService().createInstallation(updatedData);
+
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pendataan lampu berhasil disimpan'),
+              backgroundColor: AppColors.success,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error saving lamp data: $e');
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menyimpan perubahan. Silakan coba lagi.'),
+            backgroundColor: AppColors.error,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -427,6 +484,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
                 // Bottom Buttons Row: [ Batal ] & [ Simpan Perubahan ]
                 EditLampuActionButtons(
                   isEdit: widget.isEdit,
+                  isLoading: _isSubmitting,
                   onCancel: _handleBack,
                   onSave: _handleSubmit,
                 ),

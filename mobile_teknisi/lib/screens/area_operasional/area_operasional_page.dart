@@ -48,6 +48,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     AppNavigator.push(
       context,
       LampPage(
+        idProject: _selectedProject?.idProject ?? area.idProject,
         idArea: area.idArea,
         areaName: area.areaName,
       ),

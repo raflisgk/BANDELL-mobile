@@ -5,12 +5,14 @@ class EditLampuActionButtons extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onSave;
   final bool isEdit;
+  final bool isLoading;
 
   const EditLampuActionButtons({
     super.key,
     required this.onCancel,
     required this.onSave,
     this.isEdit = true,
+    this.isLoading = false,
   });
 
   @override
@@ -22,7 +24,7 @@ class EditLampuActionButtons extends StatelessWidget {
           child: SizedBox(
             height: 48,
             child: OutlinedButton(
-              onPressed: onCancel,
+              onPressed: isLoading ? null : onCancel,
               style: OutlinedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: AppColors.textPrimary,
@@ -47,7 +49,7 @@ class EditLampuActionButtons extends StatelessWidget {
           child: SizedBox(
             height: 48,
             child: ElevatedButton(
-              onPressed: onSave,
+              onPressed: isLoading ? null : onSave,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -56,13 +58,22 @@ class EditLampuActionButtons extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: Text(
-                isEdit ? 'Simpan Perubahan' : 'Simpan Data',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
+                    )
+                  : Text(
+                      isEdit ? 'Simpan Perubahan' : 'Simpan Data',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
         ),

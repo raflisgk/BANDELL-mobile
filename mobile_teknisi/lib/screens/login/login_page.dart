@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../area_operasional/area_operasional_page.dart';
@@ -20,6 +21,7 @@ class _LoginPageState extends State<LoginPage>
 
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
+  bool _isLoading = false;
 
   late final AnimationController _animController;
   late final Animation<double> _logoFadeAnimation;
@@ -84,17 +86,55 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
+    if (_isLoading) return;
+
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
 
-    debugPrint('Login attempted: username=$username, password=$password, rememberMe=$_rememberMe');
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan masukkan username dan password.'),
+          backgroundColor: Color(0xFFDC2626),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
-    // Navigation for UI preview
-    AppNavigator.pushAndRemoveUntil(
-      context,
-      const AreaOperasionalPage(),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      debugPrint('Login attempted: username=$username, password=$password, rememberMe=$_rememberMe');
+      await AuthService().login(username: username, password: password);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        AppNavigator.pushAndRemoveUntil(
+          context,
+          const AreaOperasionalPage(),
+        );
+      }
+    } catch (e) {
+      debugPrint('Login error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login gagal. Periksa kembali username dan password Anda.'),
+            backgroundColor: Color(0xFFDC2626),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _handleForgotPassword() {
@@ -346,23 +386,33 @@ class _LoginPageState extends State<LoginPage>
                           SizedBox(
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: _handleLogin,
+                              onPressed: _isLoading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.yellow,
                                 foregroundColor: AppColors.primary,
+                                disabledBackgroundColor: Colors.yellow.withValues(alpha: 0.6),
                                 elevation: 2,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text(
-                                'Login',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.primary,
+                                        strokeWidth: 2.2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Login',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
 

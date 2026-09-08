@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../dummy/dummy_data.dart';
+import '../../models/installation_model.dart';
+import '../../services/installation_service.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/dokumentasi.dart';
@@ -9,7 +11,18 @@ import '../../widgets/pop_up_sukses.dart';
 import '../../widgets/tombol_simpan_data.dart';
 
 class ManualPage extends StatefulWidget {
-  const ManualPage({super.key});
+  final int? idProject;
+  final int? idArea;
+  final String? areaName;
+  final String? lampType;
+
+  const ManualPage({
+    super.key,
+    this.idProject,
+    this.idArea,
+    this.areaName,
+    this.lampType,
+  });
 
   @override
   State<ManualPage> createState() => _ManualPageState();
@@ -26,6 +39,7 @@ class _ManualPageState extends State<ManualPage> {
   final FocusNode _latitudeFocusNode = FocusNode();
   final FocusNode _longitudeFocusNode = FocusNode();
 
+  bool _isSubmitting = false;
   final List<String> _photos = [];
 
   @override
@@ -205,7 +219,9 @@ class _ManualPageState extends State<ManualPage> {
     });
   }
 
-  void _handleSimpanData() {
+  Future<void> _handleSimpanData() async {
+    if (_isSubmitting) return;
+
     final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
         DummyData.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
@@ -263,7 +279,53 @@ class _ManualPageState extends State<ManualPage> {
       return;
     }
 
-    _showSuccessDialog(barcode);
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final installationData = InstallationModel(
+        idInstallation: 0,
+        idProject: widget.idProject ?? DummyData.selectedProject?.idProject,
+        idUser: DummyData.currentUser.idUser,
+        idArea: widget.idArea ?? 101,
+        lampCode: barcode,
+        lampType: widget.lampType ?? 'LED 90W',
+        latitude: latitude,
+        longitude: longitude,
+        panelCode: _panelCodeController.text.trim().isNotEmpty
+            ? _panelCodeController.text.trim()
+            : null,
+        photos: List.from(_photos),
+        inputMethod: 'Manual',
+        status: 'Tersimpan',
+        createdAt: DateTime.now(),
+      );
+
+      await InstallationService().createInstallation(installationData);
+
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        _showSuccessDialog(barcode);
+      }
+    } catch (e) {
+      debugPrint('Error creating manual installation: $e');
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menyimpan data pendataan. Silakan coba lagi.'),
+            backgroundColor: Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _showSuccessDialog(String barcode) {
@@ -410,6 +472,7 @@ class _ManualPageState extends State<ManualPage> {
 
                     // 5. TOMBOL SIMPAN DATA (SHARED WIDGET)
                     TombolSimpanData(
+                      isLoading: _isSubmitting,
                       onPressed: _handleSimpanData,
                     ),
 

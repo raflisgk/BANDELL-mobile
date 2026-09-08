@@ -149,9 +149,18 @@ class _HistoryPageState extends State<HistoryPage> {
     AppNavigator.push(
       context,
       DetailLampuPage(
+        idInstallation: item.idHistory,
         lampCode: item.kode,
         lampType: item.jenis,
         status: item.status,
+        latitude: item.koordinat.contains(',')
+            ? item.koordinat.split(',')[0].trim()
+            : null,
+        longitude: item.koordinat.contains(',')
+            ? item.koordinat.split(',')[1].trim()
+            : null,
+        address: item.lokasi,
+        createdAt: item.waktu,
         wattage: '120W',
       ),
     );

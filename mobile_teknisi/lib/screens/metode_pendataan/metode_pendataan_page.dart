@@ -7,7 +7,18 @@ import '../manual/manual_page.dart';
 import '../realtime/realtime_page.dart';
 
 class MetodePendataanPage extends StatelessWidget {
-  const MetodePendataanPage({super.key});
+  final int? idProject;
+  final int? idArea;
+  final String? areaName;
+  final String? lampType;
+
+  const MetodePendataanPage({
+    super.key,
+    this.idProject,
+    this.idArea,
+    this.areaName,
+    this.lampType,
+  });
 
   void _handleSelectRealtime(BuildContext context) {
     final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
@@ -25,7 +36,15 @@ class MetodePendataanPage extends StatelessWidget {
       return;
     }
     debugPrint('Realtime dipilih');
-    AppNavigator.push(context, const RealtimePage());
+    AppNavigator.push(
+      context,
+      RealtimePage(
+        idProject: idProject,
+        idArea: idArea,
+        areaName: areaName,
+        lampType: lampType,
+      ),
+    );
   }
 
   void _handleSelectManual(BuildContext context) {
@@ -44,7 +63,15 @@ class MetodePendataanPage extends StatelessWidget {
       return;
     }
     debugPrint('Manual dipilih');
-    AppNavigator.push(context, const ManualPage());
+    AppNavigator.push(
+      context,
+      ManualPage(
+        idProject: idProject,
+        idArea: idArea,
+        areaName: areaName,
+        lampType: lampType,
+      ),
+    );
   }
 
   @override

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../dummy/dummy_data.dart';
+import '../../models/installation_model.dart';
+import '../../services/installation_service.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
@@ -13,7 +16,18 @@ import 'realtime_location.dart';
 import 'scan_barcode_page.dart';
 
 class RealtimePage extends StatefulWidget {
-  const RealtimePage({super.key});
+  final int? idProject;
+  final int? idArea;
+  final String? areaName;
+  final String? lampType;
+
+  const RealtimePage({
+    super.key,
+    this.idProject,
+    this.idArea,
+    this.areaName,
+    this.lampType,
+  });
 
   @override
   State<RealtimePage> createState() => _RealtimePageState();
@@ -30,6 +44,7 @@ class _RealtimePageState extends State<RealtimePage> {
 
   String? _scannedBarcode;
   bool _isLoadingLocation = false;
+  bool _isSubmitting = false;
   final List<String> _photos = [];
 
   @override
@@ -68,11 +83,9 @@ class _RealtimePageState extends State<RealtimePage> {
 
   Future<void> _handleScanBarcode() async {
     debugPrint('Scan Barcode clicked');
-    final String? result = await Navigator.push<String>(
+    final String? result = await AppNavigator.push<String>(
       context,
-      MaterialPageRoute(
-        builder: (context) => const ScanBarcodePage(),
-      ),
+      const ScanBarcodePage(),
     );
 
     if (result != null && result.trim().isNotEmpty) {
@@ -216,7 +229,9 @@ class _RealtimePageState extends State<RealtimePage> {
     }
   }
 
-  void _handleSimpanData() {
+  Future<void> _handleSimpanData() async {
+    if (_isSubmitting) return;
+
     final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
         DummyData.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
@@ -250,10 +265,55 @@ class _RealtimePageState extends State<RealtimePage> {
       return;
     }
 
-    PopUpSukses.show(
-      context,
-      lampCode: _scannedBarcode!,
-    );
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final installationData = InstallationModel(
+        idInstallation: 0,
+        idProject: widget.idProject ?? DummyData.selectedProject?.idProject,
+        idUser: DummyData.currentUser.idUser,
+        idArea: widget.idArea ?? 101,
+        lampCode: _scannedBarcode!,
+        lampType: widget.lampType ?? 'LED 90W',
+        latitude: _latitudeController.text.trim(),
+        longitude: _longitudeController.text.trim(),
+        panelCode: _panelCodeController.text.trim().isNotEmpty
+            ? _panelCodeController.text.trim()
+            : null,
+        photos: List.from(_photos),
+        inputMethod: 'Realtime',
+        status: 'Tersimpan',
+        createdAt: DateTime.now(),
+      );
+
+      await InstallationService().createInstallation(installationData);
+
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        PopUpSukses.show(
+          context,
+          lampCode: _scannedBarcode!,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error creating installation: $e');
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menyimpan data pendataan. Silakan coba lagi.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -350,6 +410,7 @@ class _RealtimePageState extends State<RealtimePage> {
 
                     // 5. SIMPAN DATA BUTTON SECTION
                     TombolSimpanData(
+                      isLoading: _isSubmitting,
                       onPressed: _handleSimpanData,
                     ),
 

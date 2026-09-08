@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/page_transitions.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
 import '../manual/manual_page.dart';
 
@@ -69,11 +70,9 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
 
   void _handleInputManual() {
     debugPrint('Input ID Manual clicked');
-    Navigator.push(
+    AppNavigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const ManualPage(),
-      ),
+      const ManualPage(),
     );
   }
 
@@ -96,12 +95,10 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
             if (Navigator.canPop(context)) {
               Navigator.pop(context, value.trim());
             } else {
-              Navigator.pushReplacement(
+              AppNavigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => EditDataLampuPage(
-                    scannedCode: value.trim(),
-                  ),
+                EditDataLampuPage(
+                  scannedCode: value.trim(),
                 ),
               );
             }

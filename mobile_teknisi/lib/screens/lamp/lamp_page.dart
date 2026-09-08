@@ -24,11 +24,13 @@ class LampTypeItem {
 }
 
 class LampPage extends StatefulWidget {
+  final int? idProject;
   final int? idArea;
   final String? areaName;
 
   const LampPage({
     super.key,
+    this.idProject,
     this.idArea,
     this.areaName,
   });
@@ -97,11 +99,19 @@ class _LampPageState extends State<LampPage> {
       return;
     }
     debugPrint('Lamp type selected: ${item.name}');
-    _handleNavigateToInputMethod();
+    _handleNavigateToInputMethod(item);
   }
 
-  void _handleNavigateToInputMethod() {
-    AppNavigator.push(context, const MetodePendataanPage());
+  void _handleNavigateToInputMethod(LampTypeItem item) {
+    AppNavigator.push(
+      context,
+      MetodePendataanPage(
+        idProject: widget.idProject ?? DummyData.selectedProject?.idProject,
+        idArea: widget.idArea,
+        areaName: widget.areaName,
+        lampType: item.name,
+      ),
+    );
   }
 
   @override

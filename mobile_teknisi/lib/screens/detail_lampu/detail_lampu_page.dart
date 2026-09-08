@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../dummy/dummy_data.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../models/installation_model.dart';
+import '../../services/installation_service.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
 import 'barcode_card.dart';
 import 'dialog_hapus_lampu.dart';
@@ -12,19 +15,41 @@ import 'lampu_header_card.dart';
 import 'lokasi_card.dart';
 
 class DetailLampuPage extends StatefulWidget {
+  final int? idInstallation;
+  final InstallationModel? installation;
   final int? idLamp;
   final String? lampCode;
   final String? lampType;
   final String? wattage;
   final String? status;
+  final String? latitude;
+  final String? longitude;
+  final String? panelCode;
+  final String? address;
+  final String? inputMethod;
+  final List<String>? photos;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? createdBy;
 
   const DetailLampuPage({
     super.key,
+    this.idInstallation,
+    this.installation,
     this.idLamp,
     this.lampCode,
     this.lampType,
     this.wattage,
     this.status,
+    this.latitude,
+    this.longitude,
+    this.panelCode,
+    this.address,
+    this.inputMethod,
+    this.photos,
+    this.createdAt,
+    this.updatedAt,
+    this.createdBy,
   });
 
   @override
@@ -49,6 +74,27 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     );
   }
 
+  int? get _effectiveId =>
+      widget.idInstallation ??
+      widget.installation?.idInstallation ??
+      widget.idLamp;
+
+  String get _effectiveCode =>
+      widget.installation?.lampCode ??
+      ((widget.lampCode != null &&
+              widget.lampCode!.isNotEmpty &&
+              widget.lampCode != '-')
+          ? widget.lampCode!
+          : 'JKT-001');
+
+  String get _effectiveType =>
+      widget.installation?.lampType ??
+      ((widget.lampType != null &&
+              widget.lampType!.isNotEmpty &&
+              widget.lampType != '-')
+          ? widget.lampType!
+          : 'LED Street Light 100W');
+
   void _handleEditData() {
     final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
         DummyData.selectedProject?.status == 'selesai';
@@ -66,17 +112,18 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     }
 
     debugPrint('Edit Data');
-    Navigator.push(
+    AppNavigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => EditDataLampuPage(
-          isEdit: true,
-          initialKodeLampu: widget.lampCode ?? '',
-          initialLongitude: '',
-          initialLatitude: '',
-          initialAlamat: '',
-          initialTipeLampu: widget.lampType ?? '',
-        ),
+      EditDataLampuPage(
+        isEdit: true,
+        idInstallation: _effectiveId,
+        initialKodeLampu: _effectiveCode,
+        initialLongitude:
+            widget.installation?.longitude ?? widget.longitude ?? '',
+        initialLatitude:
+            widget.installation?.latitude ?? widget.latitude ?? '',
+        initialAlamat: widget.address ?? '',
+        initialTipeLampu: _effectiveType,
       ),
     );
   }
@@ -97,15 +144,23 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       return;
     }
 
-    final code = widget.lampCode ?? 'JKT-001';
+    final code = _effectiveCode;
     showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (dialogContext) => DialogHapusLampu(
         lampCode: code,
-        onConfirmHapus: () {
-          debugPrint('Hapus data $code');
-          Navigator.pop(dialogContext);
+        onConfirmHapus: () async {
+          debugPrint('Hapus data $code (ID: $_effectiveId)');
+          if (dialogContext.mounted) {
+            Navigator.pop(dialogContext);
+          }
+          if (_effectiveId != null) {
+            await InstallationService().deleteInstallation(_effectiveId!);
+          }
+          if (mounted) {
+            Navigator.pop(context);
+          }
         },
       ),
     );
@@ -113,18 +168,40 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
   @override
   Widget build(BuildContext context) {
-    final code = (widget.lampCode != null &&
-            widget.lampCode!.isNotEmpty &&
-            widget.lampCode != '-')
-        ? widget.lampCode!
-        : 'JKT-001';
-    final type = (widget.lampType != null &&
-            widget.lampType!.isNotEmpty &&
-            widget.lampType != '-')
-        ? widget.lampType!
-        : 'LED Street Light 100W';
-    final currentStatus = widget.status ?? 'Tersimpan';
+    final code = _effectiveCode;
+    final type = _effectiveType;
+    final currentStatus =
+        widget.installation?.status ?? widget.status ?? 'Tersimpan';
     final isTersimpan = currentStatus == 'Tersimpan';
+
+    final effectivePanelCode =
+        widget.installation?.panelCode ?? widget.panelCode ?? '123456';
+    final effectiveInputMethod =
+        widget.installation?.inputMethod ?? widget.inputMethod ?? 'Realtime';
+
+    final coords = (widget.installation?.latitude != null &&
+            widget.installation?.longitude != null)
+        ? '${widget.installation!.latitude}, ${widget.installation!.longitude}'
+        : (widget.latitude != null && widget.longitude != null
+            ? '${widget.latitude}, ${widget.longitude}'
+            : null);
+
+    final effectivePhotos = widget.installation?.photos.isNotEmpty == true
+        ? widget.installation!.photos
+        : widget.photos;
+
+    final effectiveCreatedAt = widget.installation?.createdAt != null
+        ? widget.installation!.createdAt.toString()
+        : widget.createdAt;
+
+    final effectiveUpdatedAt = widget.installation?.updatedAt != null
+        ? widget.installation!.updatedAt.toString()
+        : widget.updatedAt;
+
+    final projectName =
+        DummyData.selectedProject?.projectName ?? 'Project PJU';
+    final projectLocation =
+        DummyData.selectedProject?.location ?? 'Semarang, Jawa Tengah';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -148,16 +225,16 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
                     // Breadcrumb Row
                     Row(
-                      children: const [
+                      children: [
                         Text(
-                          'Project JKT',
-                          style: TextStyle(
+                          projectName,
+                          style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        Padding(
+                        const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 6.0),
                           child: Icon(
                             Icons.chevron_right_rounded,
@@ -166,8 +243,8 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                           ),
                         ),
                         Text(
-                          'Jakarta, Indonesia',
-                          style: TextStyle(
+                          projectLocation,
+                          style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -196,7 +273,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const LokasiCard(),
+                    LokasiCard(
+                      coordinates: coords,
+                      address: widget.address,
+                    ),
 
                     const SizedBox(height: 20),
 
@@ -213,20 +293,21 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                     InformasiLampuCard(
                       code: code,
                       type: type,
-                      panelCode: '123456',
-                      status: 'Active',
-                      inputMethod: 'Realtime',
+                      panelCode: effectivePanelCode,
+                      status: currentStatus,
+                      inputMethod: effectiveInputMethod,
                     ),
 
                     const SizedBox(height: 16),
 
                     // Section Barcode Card
-                    const BarcodeCard(barcode: 'JKT-2025-0001'),
+                    BarcodeCard(barcode: code),
 
                     const SizedBox(height: 16),
 
                     // Section Foto Dokumentasi Card
                     FotoDokumentasiCard(
+                      photos: effectivePhotos,
                       onLihatSemua: _handleLihatSemua,
                     ),
 
@@ -242,7 +323,11 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const InformasiRecordCard(),
+                    InformasiRecordCard(
+                      createdAt: effectiveCreatedAt,
+                      updatedAt: effectiveUpdatedAt,
+                      createdBy: widget.createdBy,
+                    ),
 
                     const SizedBox(height: 24),
 
