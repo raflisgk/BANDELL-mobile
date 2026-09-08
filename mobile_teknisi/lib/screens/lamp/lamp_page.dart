@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../dummy/dummy_data.dart';
+import '../../services/lamp_type_service.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
@@ -43,15 +44,32 @@ class _LampPageState extends State<LampPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int _currentNavIndex = 0;
-
-  List<LampTypeItem> get _lampTypes => DummyDataConfig.useDummyData
-      ? DummyData.lampTypes
-      : const [];
+  List<LampTypeItem> _lampTypes = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _loadLampTypes();
+  }
+
+  void _loadLampTypes() async {
+    setState(() => _isLoading = true);
+    final types = await LampTypeService().getLampTypes();
+    if (mounted) {
+      setState(() {
+        _lampTypes = types
+            .map((item) => LampTypeItem(
+                  id: item.id,
+                  name: item.name,
+                  description: item.description,
+                  icon: Icons.lightbulb_outline_rounded,
+                ))
+            .toList();
+        _isLoading = false;
+      });
+    }
   }
 
   void _onSearchChanged() {
@@ -84,13 +102,14 @@ class _LampPageState extends State<LampPage> {
   }
 
   void _handleLampTypeTap(LampTypeItem item) {
-    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
-        DummyData.selectedProject?.status == 'selesai';
+    final bool isProjectClosed =
+        ProjectService.selectedProject?.status == 'closed' ||
+            ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Project "${DummyData.selectedProject?.projectName}" telah Selesai. Penambahan data lampu baru tidak tersedia.',
+            'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Penambahan data lampu baru tidak tersedia.',
           ),
           backgroundColor: const Color(0xFF64748B),
           duration: const Duration(seconds: 2),
@@ -106,7 +125,7 @@ class _LampPageState extends State<LampPage> {
     AppNavigator.push(
       context,
       MetodePendataanPage(
-        idProject: widget.idProject ?? DummyData.selectedProject?.idProject,
+        idProject: widget.idProject ?? ProjectService.selectedProject?.idProject,
         idArea: widget.idArea,
         areaName: widget.areaName,
         lampType: item.name,
@@ -117,8 +136,9 @@ class _LampPageState extends State<LampPage> {
   @override
   Widget build(BuildContext context) {
     final filteredList = _filteredLampTypes;
-    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
-        DummyData.selectedProject?.status == 'selesai';
+    final bool isProjectClosed =
+        ProjectService.selectedProject?.status == 'closed' ||
+            ProjectService.selectedProject?.status == 'selesai';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -127,12 +147,12 @@ class _LampPageState extends State<LampPage> {
           children: [
             AppTopBar(
               showDropdown: true,
-              selectedValue: DummyData.selectedProject?.projectName,
-              dropdownItems: DummyData.projectOptions,
+              selectedValue: ProjectService.selectedProject?.projectName,
+              dropdownItems: ProjectService.projectOptions,
               onDropdownChanged: (val) {
                 setState(() {
-                  DummyData.selectedProject =
-                      val != null ? DummyData.getProjectByName(val) : null;
+                  ProjectService.selectedProject =
+                      val != null ? ProjectService.getProjectByName(val) : null;
                 });
               },
               onBackPressed: _handleBack,
@@ -238,7 +258,16 @@ class _LampPageState extends State<LampPage> {
               const SizedBox(height: 18),
 
               // 5. List of Lamp Types
-              if (filteredList.isEmpty)
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+              else if (filteredList.isEmpty)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),

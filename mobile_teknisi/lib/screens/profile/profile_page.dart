@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../dummy/dummy_data.dart';
+import '../../services/auth_service.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
@@ -20,11 +21,11 @@ class ProfilePage extends StatefulWidget {
 enum ProfileEditField { none, phone }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _name = 'Devanda Mahesa Putra';
-  final String _role = 'Teknisi Lapangan';
-  String _email = 'devanda@email.com';
-  String _phone = '+62 812 3456 7890';
-  final String _location = 'Jakarta, Indonesia';
+  String _name = '-';
+  String _role = 'Teknisi Lapangan';
+  String _email = '-';
+  String _phone = '-';
+  String _location = '-';
 
   ProfileEditField _activeEditField = ProfileEditField.none;
 
@@ -35,11 +36,14 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _editController = TextEditingController();
-    if (DummyDataConfig.useDummyData) {
-      _name = DummyData.profileData['name'] ?? _name;
-      _email = DummyData.profileData['email'] ?? _email;
-      _phone = DummyData.profileData['phone'] ?? _phone;
+    final user = AuthService.currentUser;
+    if (user != null) {
+      _name = user.name.isNotEmpty ? user.name : user.username;
+      _role = user.role.isNotEmpty ? user.role : 'Teknisi Lapangan';
+      _email = user.email ?? '-';
+      _phone = user.phone ?? '-';
     }
+    _location = ProjectService.selectedProject?.location ?? '-';
   }
 
   @override
@@ -165,6 +169,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        AuthService.currentUser = null;
+                        ProjectService.selectedProject = null;
                         Navigator.pop(dialogContext);
                         AppNavigator.pushAndRemoveUntil(
                           context,

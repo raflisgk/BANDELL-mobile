@@ -52,7 +52,7 @@ class InformasiLampuCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  (type.isEmpty || type == '-') ? 'LED Street Light 100W' : type,
+                  (type.isNotEmpty && type != '-') ? type : '-',
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 13,
@@ -71,7 +71,9 @@ class InformasiLampuCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  panelCode ?? '123456',
+                  (panelCode != null && panelCode!.isNotEmpty && panelCode != '-')
+                      ? panelCode!
+                      : '-',
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 13,
@@ -106,7 +108,7 @@ class InformasiLampuCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      status ?? 'Active',
+                      (status != null && status!.isNotEmpty) ? status! : '-',
                       style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 13,
@@ -145,7 +147,9 @@ class InformasiLampuCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 2),
                       Text(
-                        inputMethod ?? 'Realtime',
+                        (inputMethod != null && inputMethod!.isNotEmpty)
+                            ? inputMethod!
+                            : '-',
                         style: const TextStyle(
                           color: AppColors.success,
                           fontSize: 11,

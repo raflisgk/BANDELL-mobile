@@ -58,7 +58,9 @@ class LokasiCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  coordinates ?? '-6.2088, 106.8456',
+                  (coordinates != null && coordinates!.isNotEmpty)
+                      ? coordinates!
+                      : '-',
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 14,

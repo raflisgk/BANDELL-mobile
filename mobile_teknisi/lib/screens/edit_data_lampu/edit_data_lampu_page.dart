@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/installation_model.dart';
 import '../../services/installation_service.dart';
+import '../../services/lamp_type_service.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/dokumentasi.dart';
@@ -51,46 +52,46 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   final FocusNode _alamatFocusNode = FocusNode();
   final FocusNode _tipeLampuFocusNode = FocusNode();
 
-  final List<String> _lampTypeOptions = const [
-    'LED Street Light 100W',
-    'LED Street Light 150W',
-    'LED Street Light 80W',
-    'LED Cobra Head 120W',
-    'Solar Smart LED 150W',
-  ];
+  List<String> _lampTypeOptions = [];
 
-  final List<String> _photos = [
-    'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&q=80',
-    'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?w=300&q=80',
-    'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&q=80',
-  ];
+  final List<String> _photos = [];
 
   @override
   void initState() {
     super.initState();
 
     final defaultKode = widget.isEdit
-        ? ((widget.initialKodeLampu != null && widget.initialKodeLampu!.isNotEmpty)
+        ? ((widget.initialKodeLampu != null &&
+                widget.initialKodeLampu!.isNotEmpty &&
+                widget.initialKodeLampu != '-')
             ? widget.initialKodeLampu!
-            : 'JKT-2025-004')
+            : '')
         : (widget.scannedCode ?? '');
     final defaultLong = widget.isEdit
-        ? ((widget.initialLongitude != null && widget.initialLongitude!.isNotEmpty)
+        ? ((widget.initialLongitude != null &&
+                widget.initialLongitude!.isNotEmpty &&
+                widget.initialLongitude != '-')
             ? widget.initialLongitude!
-            : '106.8456')
+            : '')
         : '';
     final defaultLat = widget.isEdit
-        ? ((widget.initialLatitude != null && widget.initialLatitude!.isNotEmpty)
+        ? ((widget.initialLatitude != null &&
+                widget.initialLatitude!.isNotEmpty &&
+                widget.initialLatitude != '-')
             ? widget.initialLatitude!
-            : '-6.2088')
+            : '')
         : '';
     final defaultAlamat = widget.isEdit
-        ? (widget.initialAlamat ?? '')
+        ? ((widget.initialAlamat != null && widget.initialAlamat != '-')
+            ? widget.initialAlamat!
+            : '')
         : '';
     final defaultTipe = widget.isEdit
-        ? ((widget.initialTipeLampu != null && widget.initialTipeLampu!.isNotEmpty)
+        ? ((widget.initialTipeLampu != null &&
+                widget.initialTipeLampu!.isNotEmpty &&
+                widget.initialTipeLampu != '-')
             ? widget.initialTipeLampu!
-            : 'LED Street Light 100W')
+            : '')
         : '';
 
     _kodeLampuController = TextEditingController(text: defaultKode);
@@ -104,6 +105,20 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _latitudeFocusNode.addListener(_onFocusChange);
     _alamatFocusNode.addListener(_onFocusChange);
     _tipeLampuFocusNode.addListener(_onFocusChange);
+
+    _loadLampTypes();
+  }
+
+  void _loadLampTypes() async {
+    final types = await LampTypeService().getLampTypes();
+    if (mounted) {
+      setState(() {
+        _lampTypeOptions = types.map((t) => t.name).toList();
+        if (_lampTypeOptions.isNotEmpty && _tipeLampuController.text.isEmpty) {
+          _tipeLampuController.text = _lampTypeOptions.first;
+        }
+      });
+    }
   }
 
   void _onFocusChange() {
@@ -432,7 +447,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
                             _buildCustomTextField(
                               controller: _kodeLampuController,
                               focusNode: _kodeLampuFocusNode,
-                              hint: 'JKT-2025-004',
+                              hint: 'Masukkan kode lampu',
                             ),
 
                             const SizedBox(height: 20),

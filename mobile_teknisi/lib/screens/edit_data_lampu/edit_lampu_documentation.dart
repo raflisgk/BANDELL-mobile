@@ -5,12 +5,6 @@ class EditLampuDocumentation extends StatelessWidget {
   final List<String>? photos;
   final VoidCallback onTambahFoto;
 
-  static const List<String> defaultPhotos = [
-    'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&q=80',
-    'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?w=300&q=80',
-    'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&q=80',
-  ];
-
   const EditLampuDocumentation({
     super.key,
     this.photos,
@@ -19,9 +13,7 @@ class EditLampuDocumentation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayPhotos = (photos != null && photos!.isNotEmpty)
-        ? photos!
-        : defaultPhotos;
+    final displayPhotos = photos ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,17 +58,18 @@ class EditLampuDocumentation extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-
-        // 3 Photo Thumbnails Row
-        Row(
-          children: displayPhotos.take(3).map((photoUrl) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: _buildPhotoThumbnail(photoUrl),
-            );
-          }).toList(),
-        ),
+        if (displayPhotos.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          // Photo Thumbnails Row
+          Row(
+            children: displayPhotos.take(3).map((photoUrl) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: _buildPhotoThumbnail(photoUrl),
+              );
+            }).toList(),
+          ),
+        ],
 
         const SizedBox(height: 12),
 

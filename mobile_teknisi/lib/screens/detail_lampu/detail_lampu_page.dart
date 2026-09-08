@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../dummy/dummy_data.dart';
+import '../../models/installation_model.dart';
+import '../../services/installation_service.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
-import '../../models/installation_model.dart';
-import '../../services/installation_service.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
 import 'barcode_card.dart';
 import 'dialog_hapus_lampu.dart';
@@ -85,7 +85,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
               widget.lampCode!.isNotEmpty &&
               widget.lampCode != '-')
           ? widget.lampCode!
-          : 'JKT-001');
+          : '-');
 
   String get _effectiveType =>
       widget.installation?.lampType ??
@@ -93,11 +93,12 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
               widget.lampType!.isNotEmpty &&
               widget.lampType != '-')
           ? widget.lampType!
-          : 'LED Street Light 100W');
+          : '-');
 
   void _handleEditData() {
-    final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
-        DummyData.selectedProject?.status == 'selesai';
+    final isProjectClosed =
+        ProjectService.selectedProject?.status == 'closed' ||
+            ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -129,8 +130,9 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
   }
 
   void _handleHapusData() {
-    final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
-        DummyData.selectedProject?.status == 'selesai';
+    final isProjectClosed =
+        ProjectService.selectedProject?.status == 'closed' ||
+            ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -175,9 +177,9 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     final isTersimpan = currentStatus == 'Tersimpan';
 
     final effectivePanelCode =
-        widget.installation?.panelCode ?? widget.panelCode ?? '123456';
+        widget.installation?.panelCode ?? widget.panelCode;
     final effectiveInputMethod =
-        widget.installation?.inputMethod ?? widget.inputMethod ?? 'Realtime';
+        widget.installation?.inputMethod ?? widget.inputMethod ?? '-';
 
     final coords = (widget.installation?.latitude != null &&
             widget.installation?.longitude != null)
@@ -199,9 +201,9 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         : widget.updatedAt;
 
     final projectName =
-        DummyData.selectedProject?.projectName ?? 'Project PJU';
+        ProjectService.selectedProject?.projectName ?? '-';
     final projectLocation =
-        DummyData.selectedProject?.location ?? 'Semarang, Jawa Tengah';
+        ProjectService.selectedProject?.location ?? '-';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -335,8 +337,8 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
               Builder(
                 builder: (context) {
                   final isProjectClosed =
-                      DummyData.selectedProject?.status == 'closed' ||
-                          DummyData.selectedProject?.status == 'selesai';
+                      ProjectService.selectedProject?.status == 'closed' ||
+                          ProjectService.selectedProject?.status == 'selesai';
 
                   if (isProjectClosed) {
                     return Container(

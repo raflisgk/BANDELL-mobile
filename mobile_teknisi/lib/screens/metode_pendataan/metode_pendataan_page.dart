@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../dummy/dummy_data.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
@@ -21,13 +21,14 @@ class MetodePendataanPage extends StatelessWidget {
   });
 
   void _handleSelectRealtime(BuildContext context) {
-    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
-        DummyData.selectedProject?.status == 'selesai';
+    final bool isProjectClosed =
+        ProjectService.selectedProject?.status == 'closed' ||
+            ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Project "${DummyData.selectedProject?.projectName}" telah Selesai. Pendataan Realtime dinonaktifkan.',
+            'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Realtime dinonaktifkan.',
           ),
           backgroundColor: const Color(0xFF64748B),
           duration: const Duration(seconds: 2),
@@ -48,13 +49,14 @@ class MetodePendataanPage extends StatelessWidget {
   }
 
   void _handleSelectManual(BuildContext context) {
-    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
-        DummyData.selectedProject?.status == 'selesai';
+    final bool isProjectClosed =
+        ProjectService.selectedProject?.status == 'closed' ||
+            ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Project "${DummyData.selectedProject?.projectName}" telah Selesai. Pendataan Manual dinonaktifkan.',
+            'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Manual dinonaktifkan.',
           ),
           backgroundColor: const Color(0xFF64748B),
           duration: const Duration(seconds: 2),
@@ -76,8 +78,9 @@ class MetodePendataanPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
-        DummyData.selectedProject?.status == 'selesai';
+    final bool isProjectClosed =
+        ProjectService.selectedProject?.status == 'closed' ||
+            ProjectService.selectedProject?.status == 'selesai';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,

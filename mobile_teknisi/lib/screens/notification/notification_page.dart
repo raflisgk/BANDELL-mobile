@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../dummy/dummy_data.dart';
+import '../../services/notification_service.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
 import 'notification_card.dart';
@@ -14,14 +14,33 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
-  late List<NotificationItem> _notifications;
+  List<NotificationItem> _notifications = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _notifications = DummyDataConfig.useDummyData
-        ? List.from(DummyData.notifications)
-        : [];
+    _loadNotifications();
+  }
+
+  void _loadNotifications() async {
+    setState(() => _isLoading = true);
+    final list = await NotificationService().getNotifications();
+    if (mounted) {
+      setState(() {
+        _notifications = list
+            .map((n) => NotificationItem(
+                  id: n.id,
+                  title: n.title,
+                  time: n.time,
+                  content: n.content,
+                  isUnread: n.isUnread,
+                  boldText: n.boldText,
+                ))
+            .toList();
+        _isLoading = false;
+      });
+    }
   }
 
   void _handleBack() {
@@ -35,6 +54,7 @@ class _NotificationPageState extends State<NotificationPage> {
     setState(() {
       item.isUnread = false;
     });
+    NotificationService().markAsRead(item.id);
   }
 
   @override
@@ -65,8 +85,17 @@ class _NotificationPageState extends State<NotificationPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. EMPTY STATE
-                    if (_notifications.isEmpty)
+                    // 1. EMPTY / LOADING STATE
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 60),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )
+                    else if (_notifications.isEmpty)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(

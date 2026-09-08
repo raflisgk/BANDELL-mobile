@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../dummy/dummy_data.dart';
 import '../../models/project_model.dart';
+import '../../services/auth_service.dart';
+import '../../services/installation_service.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/bottom_navbar.dart';
@@ -25,30 +27,62 @@ class _HistoryPageState extends State<HistoryPage> {
   DateTime? _rangeStartDate;
   DateTime? _rangeEndDate;
   String? _selectedProject;
+  List<HistoryLampItem> _historyItems = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _selectedProject = DummyData.selectedProject?.projectName;
+    _selectedProject = ProjectService.selectedProject?.projectName;
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final proj = _currentProject;
+    if (proj == null) {
+      setState(() {
+        _historyItems = [];
+        _isLoading = false;
+      });
+      return;
+    }
+    setState(() => _isLoading = true);
+    final history = await InstallationService().getHistory(
+      userId: AuthService.currentUser?.idUser ?? 0,
+      projectId: proj.idProject,
+    );
+    if (mounted) {
+      setState(() {
+        _historyItems = history
+            .map((item) => HistoryLampItem(
+                  idHistory: item.idHistory,
+                  userId: item.userId,
+                  projectId: item.projectId,
+                  areaId: item.areaId,
+                  kode: item.kode,
+                  jenis: item.jenis,
+                  status: item.status,
+                  isVerified: item.isVerified,
+                  lokasi: item.lokasi,
+                  koordinat: item.koordinat,
+                  fotoCount: item.fotoCount,
+                  waktu: item.waktu,
+                  tanggal: item.tanggal,
+                ))
+            .toList();
+        _isLoading = false;
+      });
+    }
   }
 
   Project? get _currentProject {
     if (_selectedProject != null) {
-      return DummyData.getProjectByName(_selectedProject!);
+      return ProjectService.getProjectByName(_selectedProject!);
     }
-    return DummyData.selectedProject;
+    return ProjectService.selectedProject;
   }
 
-  List<HistoryLampItem> get _baseHistoryItems {
-    final proj = _currentProject;
-    if (proj == null) {
-      return const [];
-    }
-    return DummyData.getHistoryByUserAndProject(
-      userId: DummyData.currentUser.idUser,
-      projectId: proj.idProject,
-    );
-  }
+  List<HistoryLampItem> get _baseHistoryItems => _historyItems;
 
   bool _matchesTimeFilter(HistoryLampItem item) {
     final itemDate = item.tanggal;
@@ -329,7 +363,16 @@ class _HistoryPageState extends State<HistoryPage> {
               const SizedBox(height: 14),
 
               // List of History Cards
-              if (_currentProject == null)
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+              else if (_currentProject == null)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),

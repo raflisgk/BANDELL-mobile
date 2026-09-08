@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../dummy/dummy_data.dart';
 import '../../models/installation_model.dart';
+import '../../services/auth_service.dart';
 import '../../services/installation_service.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
@@ -232,8 +233,9 @@ class _RealtimePageState extends State<RealtimePage> {
   Future<void> _handleSimpanData() async {
     if (_isSubmitting) return;
 
-    final isProjectClosed = DummyData.selectedProject?.status == 'closed' ||
-        DummyData.selectedProject?.status == 'selesai';
+    final isProjectClosed =
+        ProjectService.selectedProject?.status == 'closed' ||
+            ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -272,11 +274,11 @@ class _RealtimePageState extends State<RealtimePage> {
     try {
       final installationData = InstallationModel(
         idInstallation: 0,
-        idProject: widget.idProject ?? DummyData.selectedProject?.idProject,
-        idUser: DummyData.currentUser.idUser,
-        idArea: widget.idArea ?? 101,
+        idProject: widget.idProject ?? ProjectService.selectedProject?.idProject,
+        idUser: AuthService.currentUser?.idUser ?? 0,
+        idArea: widget.idArea ?? 0,
         lampCode: _scannedBarcode!,
-        lampType: widget.lampType ?? 'LED 90W',
+        lampType: widget.lampType ?? '',
         latitude: _latitudeController.text.trim(),
         longitude: _longitudeController.text.trim(),
         panelCode: _panelCodeController.text.trim().isNotEmpty

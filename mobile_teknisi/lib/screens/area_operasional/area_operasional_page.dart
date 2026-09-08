@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../dummy/dummy_data.dart';
 import '../../models/area_model.dart';
 import '../../models/project_model.dart';
+import '../../services/operational_area_service.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
@@ -22,25 +23,48 @@ class AreaOperasionalPage extends StatefulWidget {
 
 class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   Project? _selectedProject;
+  List<AreaModel> _areas = [];
+  bool _isLoadingAreas = false;
   int _currentNavIndex = 0;
 
   @override
   void initState() {
     super.initState();
     if (widget.idProject != null) {
-      _selectedProject = DummyData.getProjectById(widget.idProject!);
-      DummyData.selectedProject = _selectedProject;
+      _selectedProject = ProjectService.getProjectByIdSync(widget.idProject!);
+      ProjectService.selectedProject = _selectedProject;
     } else {
-      _selectedProject = DummyData.selectedProject;
+      _selectedProject = ProjectService.selectedProject;
+    }
+    if (_selectedProject != null) {
+      _loadAreas(_selectedProject!.idProject);
+    }
+  }
+
+  void _loadAreas(int projectId) async {
+    setState(() => _isLoadingAreas = true);
+    final areas = await OperationalAreaService().getAreasByProjectId(projectId);
+    if (mounted) {
+      setState(() {
+        _areas = areas;
+        _isLoadingAreas = false;
+      });
     }
   }
 
   void _onProjectSelected(String? projectName) {
     if (projectName == null) return;
     setState(() {
-      _selectedProject = DummyData.getProjectByName(projectName);
-      DummyData.selectedProject = _selectedProject;
+      _selectedProject = ProjectService.getProjectByName(projectName);
+      ProjectService.selectedProject = _selectedProject;
     });
+    if (_selectedProject != null) {
+      _loadAreas(_selectedProject!.idProject);
+    } else {
+      setState(() {
+        _areas = [];
+      });
+    }
   }
 
   void _handleCardTap(AreaModel area) {
@@ -57,15 +81,13 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<AreaModel> currentAreas = _selectedProject != null
-        ? DummyData.getAreasByProjectId(_selectedProject!.idProject)
-        : [];
+    final List<AreaModel> currentAreas = _areas;
 
-    final bool isProjectClosed = _selectedProject?.status == 'closed' ||
-        _selectedProject?.status == 'selesai';
-    final String dateRangeStr = isProjectClosed
-        ? '01 Jan 2025 - 31 Des 2025'
-        : '10 Mei 2026 - 20 Des 2026';
+    final String dateRangeStr = _selectedProject != null &&
+            _selectedProject!.startDate != null &&
+            _selectedProject!.endDate != null
+        ? '${_selectedProject!.startDate!.day}/${_selectedProject!.startDate!.month}/${_selectedProject!.startDate!.year} - ${_selectedProject!.endDate!.day}/${_selectedProject!.endDate!.month}/${_selectedProject!.endDate!.year}'
+        : '-';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -75,7 +97,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
             // TopBar dengan dropdown Pilih Project di tengah dan ikon Notifikasi di kanan
             AppTopBar(
               selectedValue: _selectedProject?.projectName,
-              dropdownItems: DummyData.projectOptions,
+              dropdownItems: ProjectService.projectOptions,
               onDropdownChanged: _onProjectSelected,
               showBackButton: false,
             ),
@@ -172,7 +194,18 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ),
                       )
 
-                    // KONDISI 2: Project Dipilih tapi Tidak Memiliki Area (Empty State)
+                    // KONDISI 2: Sedang Memuat Data Area
+                    else if (_isLoadingAreas)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )
+
+                    // KONDISI 3: Project Dipilih tapi Tidak Memiliki Area (Empty State)
                     else if (currentAreas.isEmpty)
                       Container(
                         width: double.infinity,

@@ -35,21 +35,21 @@ class InformasiRecordCard extends StatelessWidget {
             label: 'Dibuat',
             value: (createdAt != null && createdAt!.isNotEmpty && createdAt != '-')
                 ? createdAt!
-                : '20 Mei 2025, 13:42',
+                : '-',
           ),
           const SizedBox(height: 10),
           _buildRecordInfoRow(
             label: 'Terakhir diperbarui',
             value: (updatedAt != null && updatedAt!.isNotEmpty && updatedAt != '-')
                 ? updatedAt!
-                : '20 Mei 2025, 14:30',
+                : '-',
           ),
           const SizedBox(height: 10),
           _buildRecordInfoRow(
             label: 'Dibuat oleh',
             value: (createdBy != null && createdBy!.isNotEmpty && createdBy != '-')
                 ? createdBy!
-                : 'Andi Saputra',
+                : '-',
             isBoldValue: true,
           ),
         ],

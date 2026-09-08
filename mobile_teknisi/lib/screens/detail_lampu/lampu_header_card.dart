@@ -54,7 +54,7 @@ class LampuHeaderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        (code.isEmpty || code == '-') ? 'JKT-001' : code,
+                        code.isNotEmpty ? code : '-',
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 18,

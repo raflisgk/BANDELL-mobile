@@ -5,12 +5,6 @@ class FotoDokumentasiCard extends StatelessWidget {
   final List<String>? photos;
   final VoidCallback? onLihatSemua;
 
-  static const List<String> defaultPhotos = [
-    'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&q=80',
-    'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&q=80',
-    'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?w=300&q=80',
-  ];
-
   const FotoDokumentasiCard({
     super.key,
     this.photos,
@@ -19,9 +13,7 @@ class FotoDokumentasiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayPhotos = (photos != null && photos!.isNotEmpty)
-        ? photos!
-        : defaultPhotos;
+    final displayPhotos = photos ?? [];
 
     return Container(
       decoration: BoxDecoration(
@@ -38,6 +30,7 @@ class FotoDokumentasiCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(16.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -51,7 +44,7 @@ class FotoDokumentasiCard extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              if (onLihatSemua != null)
+              if (onLihatSemua != null && displayPhotos.isNotEmpty)
                 GestureDetector(
                   onTap: onLihatSemua,
                   child: const Text(
@@ -67,15 +60,30 @@ class FotoDokumentasiCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // 3 Photo Thumbnails Row
-          Row(
-            children: displayPhotos.take(3).map((photoUrl) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: _buildPhotoThumbnail(photoUrl),
-              );
-            }).toList(),
-          ),
+          if (displayPhotos.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: const Center(
+                child: Text(
+                  'Belum ada foto dokumentasi',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            )
+          else
+            // 3 Photo Thumbnails Row
+            Row(
+              children: displayPhotos.take(3).map((photoUrl) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: _buildPhotoThumbnail(photoUrl),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );

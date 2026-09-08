@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../dummy/dummy_data.dart';
 import '../screens/notification/notification_page.dart';
+import '../services/project_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/page_transitions.dart';
 
@@ -80,7 +80,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 4,
       items: dropdownItems!.map((String item) {
         final bool isSelected = item == selectedValue;
-        final proj = DummyData.getProjectByName(item);
+        final proj = ProjectService.getProjectByName(item);
         final bool isActive = proj?.status == 'active' || proj?.status == 'aktif';
 
         return PopupMenuItem<String>(
