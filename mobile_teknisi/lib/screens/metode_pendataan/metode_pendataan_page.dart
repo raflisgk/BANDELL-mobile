@@ -11,6 +11,7 @@ class MetodePendataanPage extends StatelessWidget {
   final int? idArea;
   final String? areaName;
   final String? lampType;
+  final int? lampTypeId;
 
   const MetodePendataanPage({
     super.key,
@@ -18,6 +19,7 @@ class MetodePendataanPage extends StatelessWidget {
     this.idArea,
     this.areaName,
     this.lampType,
+    this.lampTypeId,
   });
 
   void _handleSelectRealtime(BuildContext context) {
@@ -40,11 +42,12 @@ class MetodePendataanPage extends StatelessWidget {
     AppNavigator.push(
       context,
       RealtimePage(
-        idProject: idProject,
-        idArea: idArea,
-        areaName: areaName,
-        lampType: lampType,
-      ),
+    idProject: idProject,
+    idArea: idArea,
+    areaName: areaName,
+    lampType: lampType,
+    lampTypeId: lampTypeId,
+),
     );
   }
 
@@ -68,11 +71,12 @@ class MetodePendataanPage extends StatelessWidget {
     AppNavigator.push(
       context,
       ManualPage(
-        idProject: idProject,
-        idArea: idArea,
-        areaName: areaName,
-        lampType: lampType,
-      ),
+    idProject: idProject,
+    idArea: idArea,
+    areaName: areaName,
+    lampType: lampType,
+    lampTypeId: lampTypeId,
+),
     );
   }
 

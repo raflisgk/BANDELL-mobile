@@ -15,12 +15,14 @@ class UserModel {
     this.phone,
   });
 
+  int get id => idUser;
+
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       idUser: json['id_user'] is int
           ? json['id_user']
-          : int.tryParse(json['id_user']?.toString() ?? '0') ?? 0,
-      username: json['username'] ?? '',
+          : int.tryParse(json['id_user']?.toString() ?? json['id']?.toString() ?? '0') ?? 0,
+      username: json['username'] ?? json['email'] ?? '',
       name: json['name'] ?? '',
       role: json['role'] ?? 'teknisi',
       email: json['email'],

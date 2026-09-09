@@ -16,6 +16,7 @@ class ManualPage extends StatefulWidget {
   final int? idArea;
   final String? areaName;
   final String? lampType;
+  final int? lampTypeId;
 
   const ManualPage({
     super.key,
@@ -23,6 +24,7 @@ class ManualPage extends StatefulWidget {
     this.idArea,
     this.areaName,
     this.lampType,
+    this.lampTypeId,
   });
 
   @override
@@ -291,18 +293,20 @@ class _ManualPageState extends State<ManualPage> {
         idProject: widget.idProject ?? ProjectService.selectedProject?.idProject,
         idUser: AuthService.currentUser?.idUser ?? 0,
         idArea: widget.idArea ?? 0,
+        lampTypeId: widget.lampTypeId,
+
         lampCode: barcode,
         lampType: widget.lampType ?? '',
         latitude: latitude,
         longitude: longitude,
         panelCode: _panelCodeController.text.trim().isNotEmpty
-            ? _panelCodeController.text.trim()
-            : null,
-        photos: List.from(_photos),
-        inputMethod: 'Manual',
-        status: 'Tersimpan',
-        createdAt: DateTime.now(),
-      );
+        ? _panelCodeController.text.trim()
+          : null,
+         photos: List.from(_photos),
+          inputMethod: 'Manual',
+          status: 'Tersimpan',
+          createdAt: DateTime.now(),
+);
 
       await InstallationService().createInstallation(installationData);
 

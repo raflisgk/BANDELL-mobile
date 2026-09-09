@@ -11,14 +11,18 @@ class AreaModel {
     this.totalLamps = 0,
   });
 
+  String get id => idArea.toString();
+  String get projectId => idProject.toString();
+  String get name => areaName;
+
   factory AreaModel.fromJson(Map<String, dynamic> json) {
     return AreaModel(
       idArea: json['id_area'] is int
           ? json['id_area']
-          : int.tryParse(json['id_area']?.toString() ?? '0') ?? 0,
+          : int.tryParse(json['id_area']?.toString() ?? json['id']?.toString() ?? '0') ?? 0,
       idProject: json['id_project'] is int
           ? json['id_project']
-          : int.tryParse(json['id_project']?.toString() ?? '0') ?? 0,
+          : int.tryParse(json['id_project']?.toString() ?? json['project_id']?.toString() ?? '0') ?? 0,
       areaName: json['area_name'] ?? json['name'] ?? '',
       totalLamps: json['total_lamps'] ?? 0,
     );

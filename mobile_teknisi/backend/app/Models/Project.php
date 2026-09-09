@@ -14,8 +14,9 @@ class Project extends Model
     protected $table = 'projects';
 
     protected $fillable = [
-        'name',
-    ];
+    'name',
+    'status',
+];
 
     public function districts(): HasMany
     {

@@ -125,11 +125,13 @@ class _LampPageState extends State<LampPage> {
     AppNavigator.push(
       context,
       MetodePendataanPage(
-        idProject: widget.idProject ?? ProjectService.selectedProject?.idProject,
-        idArea: widget.idArea,
-        areaName: widget.areaName,
-        lampType: item.name,
-      ),
+      idProject: widget.idProject ??
+      ProjectService.selectedProject?.idProject,
+      idArea: widget.idArea,
+      areaName: widget.areaName,
+      lampType: item.name,
+      lampTypeId: item.id,
+),
     );
   }
 
@@ -236,7 +238,7 @@ class _LampPageState extends State<LampPage> {
                     fontSize: 14,
                   ),
                   decoration: const InputDecoration(
-                    hintText: 'Cari project...',
+                    hintText: 'Cari Jenis Lampu',
                     hintStyle: TextStyle(
                       color: AppColors.hintColor,
                       fontSize: 14,

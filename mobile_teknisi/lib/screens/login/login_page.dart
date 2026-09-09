@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../area_operasional/area_operasional_page.dart';
+import '../../services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -86,56 +86,66 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (_isLoading) return;
+ Future<void> _handleLogin() async {
+  if (_isLoading) return;
 
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
+  final email = _usernameController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan masukkan username dan password.'),
-          backgroundColor: Color(0xFFDC2626),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Silakan masukkan email dan password.'),
+        backgroundColor: Color(0xFFDC2626),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    final result = await ApiService.login(
+      email: email,
+      password: password,
+    );
+
+    debugPrint('STATUS LOGIN BERHASIL');
+    debugPrint('RESPONSE LOGIN: $result');
+
+    if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
     });
 
-    try {
-      debugPrint('Login attempted: username=$username, password=$password, rememberMe=$_rememberMe');
-      await AuthService().login(username: username, password: password);
+    AppNavigator.pushAndRemoveUntil(
+      context,
+      const AreaOperasionalPage(),
+    );
+  } catch (e) {
+    debugPrint('Login error: $e');
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        AppNavigator.pushAndRemoveUntil(
-          context,
-          const AreaOperasionalPage(),
-        );
-      }
-    } catch (e) {
-      debugPrint('Login error: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login gagal. Periksa kembali username dan password Anda.'),
-            backgroundColor: Color(0xFFDC2626),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          e.toString().replaceFirst('Exception: ', ''),
+        ),
+        backgroundColor: const Color(0xFFDC2626),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
+}
 
   void _handleForgotPassword() {
     debugPrint('Lupa password clicked');

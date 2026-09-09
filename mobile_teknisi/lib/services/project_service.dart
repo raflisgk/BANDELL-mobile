@@ -1,50 +1,109 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+
 import '../models/project_model.dart';
+import 'api_service.dart';
 
 class ProjectService {
-  /// Context project yang sedang dipilih secara global
-  static Project? selectedProject;
+  static ProjectModel? selectedProject;
 
-  /// Cache list project yang tersedia dari API
-  static List<Project> cachedProjects = [];
+  static List<ProjectModel> _projects = [];
 
-  /// Mengambil daftar project dari Laravel API
-  Future<List<Project>> getProjects() async {
-    // Siap diganti dengan HTTP GET request ke API Laravel (/projects)
-    await Future.delayed(const Duration(milliseconds: 200));
-    return cachedProjects;
+  /// Nama project untuk dropdown
+  static List<String> get projectOptions {
+    return _projects.map((project) => project.name).toList();
   }
 
-  /// Mengambil detail project berdasarkan id
-  Future<Project?> getProjectById(int id) async {
-    // Siap diganti dengan HTTP GET request ke API Laravel (/projects/{id})
-    await Future.delayed(const Duration(milliseconds: 100));
+  /// Mengambil semua project dari Laravel
+  Future<List<ProjectModel>> getProjects() async {
+    final response = await http.get(
+      Uri.parse('${ApiService.baseUrl}/projects'),
+      headers: ApiService.defaultHeaders,
+    );
+
+    debugPrint('PROJECT STATUS: ${response.statusCode}');
+    debugPrint('PROJECT BODY: ${response.body}');
+
+    if (response.statusCode != 200) {
+      throw Exception('Gagal mengambil data project.');
+    }
+
+    final responseData = jsonDecode(response.body);
+
+    final List data = responseData['data'] ?? [];
+
+    final projects = data
+        .map(
+          (item) => ProjectModel.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
+        .toList();
+
+    // Aktif di atas, selesai di bawah.
+    projects.sort((a, b) {
+      if (a.isActive && b.isCompleted) {
+        return -1;
+      }
+
+      if (a.isCompleted && b.isActive) {
+        return 1;
+      }
+
+      return a.id.compareTo(b.id);
+    });
+
+    _projects = projects;
+
+    return projects;
+  }
+
+  /// Ambil project berdasarkan ID
+  static ProjectModel? getProjectById(int id) {
     try {
-      return cachedProjects.firstWhere((p) => p.idProject == id);
+      return _projects.firstWhere(
+        (project) => project.id == id,
+      );
     } catch (_) {
       return null;
     }
   }
 
-  /// List nama project untuk dropdown
-  static List<String> get projectOptions =>
-      cachedProjects.map((p) => p.projectName).toList();
+  /// Versi synchronous untuk kode lama
+  static ProjectModel? getProjectByIdSync(int id) {
+    return getProjectById(id);
+  }
 
-  /// Mengambil project berdasarkan ID secara sinkron dari cache
-  static Project? getProjectByIdSync(int id) {
+  /// Ambil project berdasarkan nama
+  static ProjectModel? getProjectByName(String name) {
     try {
-      return cachedProjects.firstWhere((p) => p.idProject == id);
+      return _projects.firstWhere(
+        (project) => project.name == name,
+      );
     } catch (_) {
       return null;
     }
   }
 
-  /// Mengambil project berdasarkan nama
-  static Project? getProjectByName(String name) {
-    try {
-      return cachedProjects.firstWhere((p) => p.projectName == name);
-    } catch (_) {
-      return null;
+  /// Mengambil area berdasarkan project
+  Future<List<dynamic>> getAreas(int projectId) async {
+    final response = await http.get(
+      Uri.parse(
+        '${ApiService.baseUrl}/projects/$projectId/areas',
+      ),
+      headers: ApiService.defaultHeaders,
+    );
+
+    debugPrint('AREA STATUS: ${response.statusCode}');
+    debugPrint('AREA BODY: ${response.body}');
+
+    if (response.statusCode != 200) {
+      throw Exception('Gagal mengambil area operasional.');
     }
+
+    final responseData = jsonDecode(response.body);
+
+    return responseData['data'] ?? [];
   }
 }
-

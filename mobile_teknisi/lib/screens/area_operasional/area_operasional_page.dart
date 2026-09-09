@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../models/area_model.dart';
+
 import '../../models/project_model.dart';
-import '../../services/operational_area_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -15,102 +14,200 @@ import 'area_operasional_card.dart';
 class AreaOperasionalPage extends StatefulWidget {
   final int? idProject;
 
-  const AreaOperasionalPage({super.key, this.idProject});
+  const AreaOperasionalPage({
+    super.key,
+    this.idProject,
+  });
 
   @override
   State<AreaOperasionalPage> createState() => _AreaOperasionalPageState();
 }
 
 class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
-  Project? _selectedProject;
-  List<AreaModel> _areas = [];
+  final ProjectService _projectService = ProjectService();
+
+  List<ProjectModel> _projects = [];
+  ProjectModel? _selectedProject;
+
+  List<Map<String, dynamic>> _areas = [];
+
+  bool _isLoadingProjects = true;
   bool _isLoadingAreas = false;
+
+  String? _errorMessage;
+
   int _currentNavIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    if (widget.idProject != null) {
-      _selectedProject = ProjectService.getProjectByIdSync(widget.idProject!);
-      ProjectService.selectedProject = _selectedProject;
-    } else {
-      _selectedProject = ProjectService.selectedProject;
-    }
-    if (_selectedProject != null) {
-      _loadAreas(_selectedProject!.idProject);
+    _loadProjects();
+  }
+
+  Future<void> _loadProjects() async {
+    setState(() {
+      _isLoadingProjects = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final projects = await _projectService.getProjects();
+
+      // Project aktif di atas, project selesai di bawah.
+      projects.sort((a, b) {
+        if (a.isActive && b.isCompleted) {
+          return -1;
+        }
+
+        if (a.isCompleted && b.isActive) {
+          return 1;
+        }
+
+        return a.id.compareTo(b.id);
+      });
+
+      if (!mounted) return;
+
+      setState(() {
+        _projects = projects;
+        _isLoadingProjects = false;
+      });
+
+      // Jika halaman dibuka dengan idProject tertentu
+      if (widget.idProject != null) {
+        final matchingProject = projects.where(
+          (project) => project.id == widget.idProject,
+        );
+
+        if (matchingProject.isNotEmpty) {
+          _selectProject(matchingProject.first);
+        }
+      } else if (ProjectService.selectedProject != null) {
+        final matchingProject = projects.where(
+          (project) => project.id == ProjectService.selectedProject!.id,
+        );
+        if (matchingProject.isNotEmpty) {
+          _selectProject(matchingProject.first);
+        } else if (projects.isNotEmpty) {
+          _selectProject(projects.first);
+        }
+      } else if (projects.isNotEmpty) {
+        _selectProject(projects.first);
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingProjects = false;
+        _errorMessage = e.toString();
+      });
     }
   }
 
-  void _loadAreas(int projectId) async {
-    setState(() => _isLoadingAreas = true);
-    final areas = await OperationalAreaService().getAreasByProjectId(projectId);
-    if (mounted) {
+  Future<void> _selectProject(ProjectModel project) async {
+    ProjectService.selectedProject = project;
+    setState(() {
+      _selectedProject = project;
+      _areas = [];
+      _isLoadingAreas = true;
+    });
+
+    try {
+      final areas = await _projectService.getAreas(project.id);
+
+      if (!mounted) return;
+
       setState(() {
-        _areas = areas;
+        _areas = areas.map<Map<String, dynamic>>((area) {
+          return {
+            'id': area['id'],
+            'name': area['name']?.toString() ?? '',
+          };
+        }).toList();
+
         _isLoadingAreas = false;
       });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _areas = [];
+        _isLoadingAreas = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gagal mengambil area: $e',
+          ),
+        ),
+      );
     }
   }
 
   void _onProjectSelected(String? projectName) {
     if (projectName == null) return;
-    setState(() {
-      _selectedProject = ProjectService.getProjectByName(projectName);
-      ProjectService.selectedProject = _selectedProject;
-    });
-    if (_selectedProject != null) {
-      _loadAreas(_selectedProject!.idProject);
-    } else {
-      setState(() {
-        _areas = [];
-      });
-    }
+
+    final matchingProjects = _projects.where(
+      (project) => project.name == projectName,
+    );
+
+    if (matchingProjects.isEmpty) return;
+
+    _selectProject(matchingProjects.first);
   }
 
-  void _handleCardTap(AreaModel area) {
-    debugPrint('Area selected: ${area.areaName} (ID: ${area.idArea})');
+  void _handleCardTap(Map<String, dynamic> area) {
+    final int areaId = int.tryParse(
+          area['id'].toString(),
+        ) ??
+        0;
+
+    final String areaName = area['name']?.toString() ?? '';
+
+    debugPrint(
+      'Area selected: $areaName (ID: $areaId)',
+    );
+
     AppNavigator.push(
       context,
       LampPage(
-        idProject: _selectedProject?.idProject ?? area.idProject,
-        idArea: area.idArea,
-        areaName: area.areaName,
+        idProject: _selectedProject?.id ?? 0,
+        idArea: areaId,
+        areaName: areaName,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<AreaModel> currentAreas = _areas;
-
-    final String dateRangeStr = _selectedProject != null &&
-            _selectedProject!.startDate != null &&
-            _selectedProject!.endDate != null
-        ? '${_selectedProject!.startDate!.day}/${_selectedProject!.startDate!.month}/${_selectedProject!.startDate!.year} - ${_selectedProject!.endDate!.day}/${_selectedProject!.endDate!.month}/${_selectedProject!.endDate!.year}'
-        : '-';
+    final projectNames = _projects
+        .map((project) => project.name)
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
         child: Column(
           children: [
-            // TopBar dengan dropdown Pilih Project di tengah dan ikon Notifikasi di kanan
             AppTopBar(
-              selectedValue: _selectedProject?.projectName,
-              dropdownItems: ProjectService.projectOptions,
+              selectedValue: _selectedProject?.name,
+              dropdownItems: projectNames,
               onDropdownChanged: _onProjectSelected,
               showBackButton: false,
             ),
+
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
 
-                    // Header Title
                     const Text(
                       'Pilih Area Operasional',
                       style: TextStyle(
@@ -120,9 +217,9 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         letterSpacing: -0.3,
                       ),
                     ),
+
                     const SizedBox(height: 4),
 
-                    // Header Subtitle
                     const Text(
                       'Berikut area operasional tersedia untuk Anda.',
                       style: TextStyle(
@@ -134,18 +231,79 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
                     const SizedBox(height: 20),
 
-                    // KONDISI 1: Belum Memilih Project
-                    if (_selectedProject == null)
+                    // Loading project
+                    if (_isLoadingProjects)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 40,
+                        ),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )
+
+                    // Error project
+                    else if (_errorMessage != null)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 48, horizontal: 20),
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: AppColors.border,
-                            width: 1.0,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: AppColors.error,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Gagal Mengambil Data Project',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadProjects,
+                              child: const Text('Coba Lagi'),
+                            ),
+                          ],
+                        ),
+                      )
+
+                    // Belum memilih project
+                    else if (_selectedProject == null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 48,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.border,
                           ),
                           boxShadow: const [
                             BoxShadow(
@@ -182,7 +340,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             ),
                             const SizedBox(height: 6),
                             const Text(
-                              'Gunakan menu dropdown di bagian atas layar untuk menentukan wilayah proyek aktif.',
+                              'Gunakan menu dropdown di bagian atas layar untuk menentukan project.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 13,
@@ -194,10 +352,12 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ),
                       )
 
-                    // KONDISI 2: Sedang Memuat Data Area
+                    // Loading area
                     else if (_isLoadingAreas)
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 40,
+                        ),
                         child: Center(
                           child: CircularProgressIndicator(
                             color: AppColors.primary,
@@ -205,18 +365,19 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ),
                       )
 
-                    // KONDISI 3: Project Dipilih tapi Tidak Memiliki Area (Empty State)
-                    else if (currentAreas.isEmpty)
+                    // Tidak ada area
+                    else if (_areas.isEmpty)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                            vertical: 44, horizontal: 20),
+                          vertical: 44,
+                          horizontal: 20,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: AppColors.border,
-                            width: 1.0,
                           ),
                         ),
                         child: Column(
@@ -237,7 +398,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Project "${_selectedProject!.projectName}" belum memiliki area operasional.',
+                              'Project "${_selectedProject!.name}" belum memiliki area operasional.',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 13,
@@ -248,18 +409,21 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ),
                       )
 
-                    // KONDISI 3: Project Dipilih & Menampilkan CARD BIRU Area Operasional
+                    // Area dari database
                     else
-                      ...currentAreas.map((area) => Padding(
-                            padding: const EdgeInsets.only(bottom: 14.0),
-                            child: AreaOperasionalCard(
-                              title: area.areaName,
-                              location: _selectedProject?.location ??
-                                  'Semarang, Jawa Tengah',
-                              dateRange: dateRangeStr,
-                              onTap: () => _handleCardTap(area),
-                            ),
-                          )),
+                      ..._areas.map(
+                        (area) => Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: 14.0,
+                          ),
+                          child: AreaOperasionalCard(
+                            title: area['name']?.toString() ?? '',
+                            location: _selectedProject?.name ?? '-',
+                            dateRange: '-',
+                            onTap: () => _handleCardTap(area),
+                          ),
+                        ),
+                      ),
 
                     const SizedBox(height: 16),
                   ],
@@ -269,13 +433,20 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
           ],
         ),
       ),
+
       bottomNavigationBar: BottomNavbar(
         currentIndex: _currentNavIndex,
         onTap: (index) {
           if (index == 1) {
-            AppNavigator.pushTabReplacement(context, const HistoryPage());
+            AppNavigator.pushTabReplacement(
+              context,
+              const HistoryPage(),
+            );
           } else if (index == 2) {
-            AppNavigator.pushTabReplacement(context, const ProfilePage());
+            AppNavigator.pushTabReplacement(
+              context,
+              const ProfilePage(),
+            );
           } else {
             setState(() {
               _currentNavIndex = index;
@@ -287,5 +458,5 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   }
 }
 
-// Alias class for backwards compatibility
+// Alias class untuk kompatibilitas
 typedef AreaPage = AreaOperasionalPage;

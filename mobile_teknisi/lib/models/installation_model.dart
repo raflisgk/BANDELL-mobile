@@ -3,8 +3,14 @@ class InstallationModel {
   final int? idProject;
   final int? idUser;
   final int idArea;
-  final String lampCode;
+
+  // ID jenis lampu untuk database
+  final int? lampTypeId;
+
+  // Nama jenis lampu untuk tampilan
   final String lampType;
+
+  final String lampCode;
   final String wattage;
   final String status;
   final String? latitude;
@@ -22,6 +28,7 @@ class InstallationModel {
     this.idProject,
     this.idUser,
     required this.idArea,
+    this.lampTypeId,
     required this.lampCode,
     required this.lampType,
     this.wattage = '',
@@ -37,47 +44,129 @@ class InstallationModel {
     this.updatedAt,
   });
 
+  String? get id => idInstallation.toString();
+
+  String? get lampId => lampCode;
+
+  String? get areaId => idArea.toString();
+
+  String? get projectId => idProject?.toString();
+
   factory InstallationModel.fromJson(Map<String, dynamic> json) {
     List<String> parsedPhotos = [];
+
     if (json['photos'] is List) {
-      parsedPhotos = (json['photos'] as List).map((e) => e.toString()).toList();
-    } else if (json['photo_url'] != null && json['photo_url'].toString().isNotEmpty) {
+      parsedPhotos = (json['photos'] as List)
+          .map((e) => e.toString())
+          .toList();
+    } else if (json['photo_url'] != null &&
+        json['photo_url'].toString().isNotEmpty) {
       parsedPhotos = [json['photo_url'].toString()];
+    }
+
+    int? parseInt(dynamic value) {
+      if (value == null) return null;
+
+      if (value is int) {
+        return value;
+      }
+
+      return int.tryParse(value.toString());
+    }
+
+    String lampTypeName = '';
+
+    if (json['lamp_type'] is Map) {
+      lampTypeName =
+          json['lamp_type']['lamp_name']?.toString() ??
+          json['lamp_type']['name']?.toString() ??
+          '';
+    } else {
+      lampTypeName =
+          json['lamp_type']?.toString() ??
+          json['jenis_lampu']?.toString() ??
+          '';
     }
 
     return InstallationModel(
       idInstallation: json['id_installation'] is int
           ? json['id_installation']
-          : int.tryParse(json['id_installation']?.toString() ?? '0') ?? 0,
-      idProject: json['id_project'] != null
-          ? (json['id_project'] is int
-              ? json['id_project']
-              : int.tryParse(json['id_project'].toString()))
-          : null,
-      idUser: json['id_user'] != null
-          ? (json['id_user'] is int
-              ? json['id_user']
-              : int.tryParse(json['id_user'].toString()))
-          : null,
-      idArea: json['id_area'] is int
-          ? json['id_area']
-          : int.tryParse(json['id_area']?.toString() ?? '0') ?? 0,
-      lampCode: json['lamp_code'] ?? json['kode_lampu'] ?? '',
-      lampType: json['lamp_type'] ?? json['jenis_lampu'] ?? '',
-      wattage: json['wattage'] ?? '',
-      status: json['status'] ?? 'Terpasang',
+          : int.tryParse(
+                json['id_installation']?.toString() ??
+                    json['id']?.toString() ??
+                    '0',
+              ) ??
+              0,
+
+      idProject: parseInt(
+        json['id_project'] ?? json['project_id'],
+      ),
+
+      idUser: parseInt(
+        json['id_user'] ?? json['user_id'],
+      ),
+
+      idArea: parseInt(
+            json['id_area'] ??
+                json['area_id'] ??
+                json['district_id'],
+          ) ??
+          0,
+
+      // ID jenis lampu dari database
+      lampTypeId: parseInt(
+        json['lamp_type_id'] ??
+            json['id_lamp_type'],
+      ),
+
+      lampCode:
+          json['lamp_code']?.toString() ??
+          json['kode_lampu']?.toString() ??
+          json['id_barcode']?.toString() ??
+          '',
+
+      lampType: lampTypeName,
+
+      wattage: json['wattage']?.toString() ?? '',
+
+      status:
+          json['status']?.toString() ??
+          json['verification_status']?.toString() ??
+          'Terpasang',
+
       latitude: json['latitude']?.toString(),
+
       longitude: json['longitude']?.toString(),
-      panelCode: json['panel_code'] ?? json['kode_panel'],
+
+      panelCode:
+          json['panel_code']?.toString() ??
+          json['kode_panel']?.toString() ??
+          json['code_panel']?.toString(),
+
       photos: parsedPhotos,
-      inputMethod: json['input_method'] ?? json['metode_input'],
-      photoUrl: json['photo_url'] ?? (parsedPhotos.isNotEmpty ? parsedPhotos.first : null),
-      notes: json['notes'] ?? json['catatan'],
+
+      inputMethod:
+          json['input_method']?.toString() ??
+          json['metode_input']?.toString(),
+
+      photoUrl:
+          json['photo_url']?.toString() ??
+          (parsedPhotos.isNotEmpty ? parsedPhotos.first : null),
+
+      notes:
+          json['notes']?.toString() ??
+          json['catatan']?.toString(),
+
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
+          ? DateTime.tryParse(
+              json['created_at'].toString(),
+            )
           : null,
+
       updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'].toString())
+          ? DateTime.tryParse(
+              json['updated_at'].toString(),
+            )
           : null,
     );
   }
@@ -88,6 +177,10 @@ class InstallationModel {
       'id_project': idProject,
       'id_user': idUser,
       'id_area': idArea,
+
+      // ID yang dikirim ke backend
+      'lamp_type_id': lampTypeId,
+
       'lamp_code': lampCode,
       'lamp_type': lampType,
       'wattage': wattage,

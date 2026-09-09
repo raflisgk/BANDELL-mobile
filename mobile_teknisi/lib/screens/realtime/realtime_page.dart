@@ -21,14 +21,16 @@ class RealtimePage extends StatefulWidget {
   final int? idArea;
   final String? areaName;
   final String? lampType;
+  final int? lampTypeId;
 
   const RealtimePage({
-    super.key,
-    this.idProject,
-    this.idArea,
-    this.areaName,
-    this.lampType,
-  });
+  super.key,
+  this.idProject,
+  this.idArea,
+  this.areaName,
+  this.lampType,
+  this.lampTypeId,
+});
 
   @override
   State<RealtimePage> createState() => _RealtimePageState();
@@ -273,22 +275,25 @@ class _RealtimePageState extends State<RealtimePage> {
 
     try {
       final installationData = InstallationModel(
-        idInstallation: 0,
-        idProject: widget.idProject ?? ProjectService.selectedProject?.idProject,
-        idUser: AuthService.currentUser?.idUser ?? 0,
-        idArea: widget.idArea ?? 0,
-        lampCode: _scannedBarcode!,
-        lampType: widget.lampType ?? '',
-        latitude: _latitudeController.text.trim(),
-        longitude: _longitudeController.text.trim(),
-        panelCode: _panelCodeController.text.trim().isNotEmpty
-            ? _panelCodeController.text.trim()
-            : null,
-        photos: List.from(_photos),
-        inputMethod: 'Realtime',
-        status: 'Tersimpan',
-        createdAt: DateTime.now(),
-      );
+    idInstallation: 0,
+    idProject: widget.idProject ?? ProjectService.selectedProject?.idProject,
+    idUser: AuthService.currentUser?.idUser ?? 0,
+    idArea: widget.idArea ?? 0,
+
+    lampTypeId: widget.lampTypeId,
+
+    lampCode: _scannedBarcode!,
+    lampType: widget.lampType ?? '',
+    latitude: _latitudeController.text.trim(),
+    longitude: _longitudeController.text.trim(),
+    panelCode: _panelCodeController.text.trim().isNotEmpty
+      ? _panelCodeController.text.trim()
+      : null,
+    photos: List.from(_photos),
+    inputMethod: 'Realtime',
+    status: 'Tersimpan',
+    createdAt: DateTime.now(),
+  );
 
       await InstallationService().createInstallation(installationData);
 

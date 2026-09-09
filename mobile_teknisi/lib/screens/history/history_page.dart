@@ -75,7 +75,7 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  Project? get _currentProject {
+  ProjectModel? get _currentProject {
     if (_selectedProject != null) {
       return ProjectService.getProjectByName(_selectedProject!);
     }

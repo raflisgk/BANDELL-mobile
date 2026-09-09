@@ -4,6 +4,7 @@ class AppColors {
   // Primary & Header Colors (Solid BANDELL Blue)
   static const Color primary = Color(0xFF0C5DA5);
   static const Color primaryLight = Color(0x1A0C5DA5);
+  static const Color background = Colors.white;
   static const Color backgroundWhite = Color(0xFFFFFFFF);
   static const Color headerTitle = Color(0xFFFFFFFF);
   static const Color headerSubtitle = Color(0xE6FFFFFF);
