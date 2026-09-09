@@ -56,13 +56,14 @@ class _PilihTanggalState extends State<PilihTanggal> {
   @override
   void initState() {
     super.initState();
-    _today = DateTime(2025, 5, 19);
+    final now = DateTime.now();
+    _today = DateTime(now.year, now.month, now.day);
     _startDate = widget.initialStartDate;
     _endDate = widget.initialEndDate;
     if (_startDate != null) {
       _focusedMonth = DateTime(_startDate!.year, _startDate!.month, 1);
     } else {
-      _focusedMonth = DateTime(2025, 5, 1);
+      _focusedMonth = DateTime(now.year, now.month, 1);
     }
   }
 

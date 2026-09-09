@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/installation_model.dart';
+import '../../services/auth_service.dart';
 import '../../services/installation_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
@@ -57,6 +58,29 @@ class DetailLampuPage extends StatefulWidget {
 }
 
 class _DetailLampuPageState extends State<DetailLampuPage> {
+  InstallationModel? _fetchedInstallation;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInstallationDetailIfNeeded();
+  }
+
+  Future<void> _loadInstallationDetailIfNeeded() async {
+    final id = _effectiveId;
+    if (id == null) return;
+    try {
+      final detail = await InstallationService().getInstallationDetail(id);
+      if (mounted && detail != null) {
+        setState(() {
+          _fetchedInstallation = detail;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading installation detail: $e');
+    }
+  }
+
   void _handleBack() {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
@@ -77,10 +101,12 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
   int? get _effectiveId =>
       widget.idInstallation ??
       widget.installation?.idInstallation ??
+      _fetchedInstallation?.idInstallation ??
       widget.idLamp;
 
   String get _effectiveCode =>
       widget.installation?.lampCode ??
+      _fetchedInstallation?.lampCode ??
       ((widget.lampCode != null &&
               widget.lampCode!.isNotEmpty &&
               widget.lampCode != '-')
@@ -89,11 +115,22 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
   String get _effectiveType =>
       widget.installation?.lampType ??
+      _fetchedInstallation?.lampType ??
       ((widget.lampType != null &&
               widget.lampType!.isNotEmpty &&
               widget.lampType != '-')
           ? widget.lampType!
           : '-');
+
+  String _normalizeInputMethod(String? raw) {
+    if (raw == null) return '-';
+    final s = raw.trim();
+    if (s.isEmpty || s == '-') return '-';
+    final l = s.toLowerCase();
+    if (l == 'realtime' || l == 'real-time') return 'Realtime';
+    if (l == 'manual') return 'Manual';
+    return s;
+  }
 
   void _handleEditData() {
     final isProjectClosed =
@@ -120,10 +157,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         idInstallation: _effectiveId,
         initialKodeLampu: _effectiveCode,
         initialLongitude:
-            widget.installation?.longitude ?? widget.longitude ?? '',
+            widget.installation?.longitude ?? _fetchedInstallation?.longitude ?? widget.longitude ?? '',
         initialLatitude:
-            widget.installation?.latitude ?? widget.latitude ?? '',
-        initialAlamat: widget.address ?? '',
+            widget.installation?.latitude ?? _fetchedInstallation?.latitude ?? widget.latitude ?? '',
+        initialAlamat: _fetchedInstallation?.address ?? widget.address ?? '',
         initialTipeLampu: _effectiveType,
       ),
     );
@@ -173,32 +210,46 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     final code = _effectiveCode;
     final type = _effectiveType;
     final currentStatus =
-        widget.installation?.status ?? widget.status ?? 'Tersimpan';
+        widget.installation?.status ?? _fetchedInstallation?.status ?? widget.status ?? 'Tersimpan';
     final isTersimpan = currentStatus == 'Tersimpan';
 
     final effectivePanelCode =
-        widget.installation?.panelCode ?? widget.panelCode;
-    final effectiveInputMethod =
-        widget.installation?.inputMethod ?? widget.inputMethod ?? '-';
+        widget.installation?.panelCode ?? _fetchedInstallation?.panelCode ?? widget.panelCode;
+
+    final rawInputMethod = widget.installation?.inputMethod ??
+        _fetchedInstallation?.inputMethod ??
+        widget.inputMethod;
+    final effectiveInputMethod = _normalizeInputMethod(rawInputMethod);
+
+    debugPrint('DETAIL inputMethod: ${widget.installation?.inputMethod ?? _fetchedInstallation?.inputMethod}');
+    debugPrint('CARD inputMethod: $effectiveInputMethod');
 
     final coords = (widget.installation?.latitude != null &&
             widget.installation?.longitude != null)
         ? '${widget.installation!.latitude}, ${widget.installation!.longitude}'
-        : (widget.latitude != null && widget.longitude != null
-            ? '${widget.latitude}, ${widget.longitude}'
-            : null);
+        : (_fetchedInstallation?.latitude != null && _fetchedInstallation?.longitude != null)
+            ? '${_fetchedInstallation!.latitude}, ${_fetchedInstallation!.longitude}'
+            : (widget.latitude != null && widget.longitude != null
+                ? '${widget.latitude}, ${widget.longitude}'
+                : null);
 
     final effectivePhotos = widget.installation?.photos.isNotEmpty == true
         ? widget.installation!.photos
-        : widget.photos;
+        : (_fetchedInstallation?.photos.isNotEmpty == true
+            ? _fetchedInstallation!.photos
+            : widget.photos);
 
     final effectiveCreatedAt = widget.installation?.createdAt != null
         ? widget.installation!.createdAt.toString()
-        : widget.createdAt;
+        : (_fetchedInstallation?.createdAt != null
+            ? _fetchedInstallation!.createdAt.toString()
+            : widget.createdAt);
 
     final effectiveUpdatedAt = widget.installation?.updatedAt != null
         ? widget.installation!.updatedAt.toString()
-        : widget.updatedAt;
+        : (_fetchedInstallation?.updatedAt != null
+            ? _fetchedInstallation!.updatedAt.toString()
+            : widget.updatedAt);
 
     final projectName =
         ProjectService.selectedProject?.projectName ?? '-';
@@ -328,7 +379,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                     InformasiRecordCard(
                       createdAt: effectiveCreatedAt,
                       updatedAt: effectiveUpdatedAt,
-                      createdBy: widget.createdBy,
+                      createdBy: widget.createdBy ?? AuthService.currentUser?.name,
                     ),
 
                     const SizedBox(height: 24),

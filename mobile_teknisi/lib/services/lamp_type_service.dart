@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/lamp_type_model.dart';
@@ -12,8 +13,8 @@ class LampTypeService {
       headers: ApiService.defaultHeaders,
     );
 
-    print('LAMP TYPE STATUS: ${response.statusCode}');
-    print('LAMP TYPE BODY: ${response.body}');
+    debugPrint('LAMP TYPE STATUS: ${response.statusCode}');
+    debugPrint('LAMP TYPE BODY: ${response.body}');
 
     if (response.statusCode != 200) {
       throw Exception('Gagal mengambil data jenis lampu.');

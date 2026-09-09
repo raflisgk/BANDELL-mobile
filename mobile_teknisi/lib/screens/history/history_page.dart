@@ -37,6 +37,66 @@ class _HistoryPageState extends State<HistoryPage> {
     _loadHistory();
   }
 
+  DateTime _subtractOneMonth(DateTime date) {
+    var year = date.year;
+    var month = date.month - 1;
+    var day = date.day;
+    if (month < 1) {
+      month = 12;
+      year -= 1;
+    }
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    if (day > daysInMonth) {
+      day = daysInMonth;
+    }
+    return DateTime(year, month, day);
+  }
+
+  (DateTime?, DateTime?) _getDateRangeForFilter(String filter) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    switch (filter) {
+      case 'Hari Ini':
+        return (today, today);
+
+      case '7 Hari':
+        // Termasuk hari ini + 6 hari sebelumnya = 7 hari
+        final start = today.subtract(const Duration(days: 6));
+        return (start, today);
+
+      case '1 Bulan':
+        final start = _subtractOneMonth(today);
+        return (start, today);
+
+      case 'Pilih Tanggal':
+        if (_rangeStartDate != null && _rangeEndDate != null) {
+          final start = DateTime(
+            _rangeStartDate!.year,
+            _rangeStartDate!.month,
+            _rangeStartDate!.day,
+          );
+          final end = DateTime(
+            _rangeEndDate!.year,
+            _rangeEndDate!.month,
+            _rangeEndDate!.day,
+          );
+          return (start, end);
+        } else if (_rangeStartDate != null) {
+          final d = DateTime(
+            _rangeStartDate!.year,
+            _rangeStartDate!.month,
+            _rangeStartDate!.day,
+          );
+          return (d, d);
+        }
+        return (null, null);
+
+      default:
+        return (null, null);
+    }
+  }
+
   Future<void> _loadHistory() async {
     final proj = _currentProject;
     if (proj == null) {
@@ -46,32 +106,56 @@ class _HistoryPageState extends State<HistoryPage> {
       });
       return;
     }
+
+    final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
+
+    debugPrint('========== HISTORY FILTER ==========');
+    debugPrint('FILTER: $_selectedFilter');
+    debugPrint('START DATE: $startDate');
+    debugPrint('END DATE: $endDate');
+    debugPrint('USER ID: ${AuthService.currentUser?.idUser}');
+    debugPrint('PROJECT ID: ${proj.idProject}');
+    debugPrint('====================================');
+
     setState(() => _isLoading = true);
-    final history = await InstallationService().getHistory(
-      userId: AuthService.currentUser?.idUser ?? 0,
-      projectId: proj.idProject,
-    );
-    if (mounted) {
-      setState(() {
-        _historyItems = history
-            .map((item) => HistoryLampItem(
-                  idHistory: item.idHistory,
-                  userId: item.userId,
-                  projectId: item.projectId,
-                  areaId: item.areaId,
-                  kode: item.kode,
-                  jenis: item.jenis,
-                  status: item.status,
-                  isVerified: item.isVerified,
-                  lokasi: item.lokasi,
-                  koordinat: item.koordinat,
-                  fotoCount: item.fotoCount,
-                  waktu: item.waktu,
-                  tanggal: item.tanggal,
-                ))
-            .toList();
-        _isLoading = false;
-      });
+    try {
+      final history = await InstallationService().getHistory(
+        userId: AuthService.currentUser?.idUser ?? 0,
+        projectId: proj.idProject,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      if (mounted) {
+        setState(() {
+          _historyItems = history
+              .map((item) => HistoryLampItem(
+                    idHistory: item.idHistory,
+                    userId: item.userId,
+                    projectId: item.projectId,
+                    areaId: item.areaId,
+                    kode: item.kode,
+                    jenis: item.jenis,
+                    status: item.status,
+                    isVerified: item.isVerified,
+                    lokasi: item.lokasi,
+                    koordinat: item.koordinat,
+                    fotoCount: item.fotoCount,
+                    waktu: item.waktu,
+                    tanggal: item.tanggal,
+                    createdAt: item.createdAt,
+                    inputMethod: item.inputMethod,
+                    panelCode: item.panelCode,
+                    installation: item.installation,
+                  ))
+              .toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading history: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -84,55 +168,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
   List<HistoryLampItem> get _baseHistoryItems => _historyItems;
 
-  bool _matchesTimeFilter(HistoryLampItem item) {
-    final itemDate = item.tanggal;
-    if (itemDate == null) return true;
-
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
-
-    switch (_selectedFilter) {
-      case 'Hari Ini':
-        final itemDay = DateTime(itemDate.year, itemDate.month, itemDate.day);
-        return itemDay.isAtSameMomentAs(todayStart);
-
-      case '7 Hari':
-        // Riwayat dalam 7 hari terakhir (hari ini + 6 hari ke belakang)
-        final sevenDaysAgo = todayStart.subtract(const Duration(days: 6));
-        return !itemDate.isBefore(sevenDaysAgo) && !itemDate.isAfter(todayEnd);
-
-      case '1 Bulan':
-        // Riwayat dalam 1 bulan terakhir (hari ini + 29 hari ke belakang)
-        final oneMonthAgo = todayStart.subtract(const Duration(days: 29));
-        return !itemDate.isBefore(oneMonthAgo) && !itemDate.isAfter(todayEnd);
-
-      case 'Pilih Tanggal':
-        if (_rangeStartDate == null || _rangeEndDate == null) return true;
-        final start = DateTime(
-          _rangeStartDate!.year,
-          _rangeStartDate!.month,
-          _rangeStartDate!.day,
-          0,
-          0,
-          0,
-        );
-        final end = DateTime(
-          _rangeEndDate!.year,
-          _rangeEndDate!.month,
-          _rangeEndDate!.day,
-          23,
-          59,
-          59,
-          999,
-        );
-        return !itemDate.isBefore(start) && !itemDate.isAfter(end);
-
-      default:
-        return true;
-    }
-  }
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -142,13 +177,11 @@ class _HistoryPageState extends State<HistoryPage> {
 
   List<HistoryLampItem> get _filteredItems {
     final baseItems = _baseHistoryItems;
-    final timeFiltered = baseItems.where(_matchesTimeFilter).toList();
-
     if (_searchQuery.trim().isEmpty) {
-      return timeFiltered;
+      return baseItems;
     }
     final query = _searchQuery.toLowerCase().trim();
-    return timeFiltered.where((item) {
+    return baseItems.where((item) {
       return item.kode.toLowerCase().contains(query) ||
           item.lokasi.toLowerCase().contains(query) ||
           item.jenis.toLowerCase().contains(query);
@@ -163,19 +196,19 @@ class _HistoryPageState extends State<HistoryPage> {
         initialEndDate: _rangeEndDate,
       );
 
-      if (result != null &&
-          result['startDate'] != null &&
-          result['endDate'] != null) {
+      if (result != null && result['startDate'] != null) {
         setState(() {
           _selectedFilter = 'Pilih Tanggal';
           _rangeStartDate = result['startDate'];
-          _rangeEndDate = result['endDate'];
+          _rangeEndDate = result['endDate'] ?? result['startDate'];
         });
+        await _loadHistory();
       }
     } else {
       setState(() {
         _selectedFilter = filter;
       });
+      await _loadHistory();
     }
   }
 
@@ -194,8 +227,11 @@ class _HistoryPageState extends State<HistoryPage> {
             ? item.koordinat.split(',')[1].trim()
             : null,
         address: item.lokasi,
-        createdAt: item.waktu,
+        createdAt: item.createdAt?.toIso8601String() ?? item.waktu,
         wattage: '120W',
+        installation: item.installation,
+        inputMethod: item.inputMethod,
+        panelCode: item.panelCode,
       ),
     );
   }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../models/installation_model.dart';
 import '../../utils/app_colors.dart';
 
 class HistoryLampItem {
@@ -15,6 +17,10 @@ class HistoryLampItem {
   final String fotoCount;
   final String waktu;
   final DateTime? tanggal;
+  final DateTime? createdAt;
+  final String? inputMethod;
+  final String? panelCode;
+  final InstallationModel? installation;
 
   const HistoryLampItem({
     this.idHistory,
@@ -30,6 +36,10 @@ class HistoryLampItem {
     required this.fotoCount,
     required this.waktu,
     this.tanggal,
+    this.createdAt,
+    this.inputMethod,
+    this.panelCode,
+    this.installation,
   });
 }
 
@@ -188,13 +198,26 @@ class HistoryLampCard extends StatelessWidget {
                     ),
 
                     // Waktu info
-                    Text(
-                      item.waktu,
-                      style: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w400,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final createdAt = item.createdAt ??
+                            item.installation?.createdAt ??
+                            (item.waktu.trim().isNotEmpty && item.waktu != '-'
+                                ? DateTime.tryParse(item.waktu.trim())
+                                : null) ??
+                            item.tanggal;
+
+                        debugPrint('HISTORY CARD createdAt: $createdAt');
+
+                        return Text(
+                          _formatWaktu(createdAt, item.waktu),
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -204,6 +227,33 @@ class HistoryLampCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatWaktu(DateTime? createdAt, String? fallbackWaktu) {
+    if (createdAt == null) {
+      if (fallbackWaktu != null &&
+          fallbackWaktu.trim().isNotEmpty &&
+          fallbackWaktu.trim() != '-') {
+        final parsed = DateTime.tryParse(fallbackWaktu.trim());
+        if (parsed != null) {
+          try {
+            return DateFormat('dd MMM yyyy, HH:mm', 'id_ID')
+                .format(parsed.toLocal());
+          } catch (_) {
+            return DateFormat('dd MMM yyyy, HH:mm').format(parsed.toLocal());
+          }
+        }
+        return fallbackWaktu.trim();
+      }
+      return '-';
+    }
+
+    try {
+      return DateFormat('dd MMM yyyy, HH:mm', 'id_ID')
+          .format(createdAt.toLocal());
+    } catch (_) {
+      return DateFormat('dd MMM yyyy, HH:mm').format(createdAt.toLocal());
+    }
   }
 
   Widget _buildStatusBadge() {

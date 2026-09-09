@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class InstallationModel {
   final int idInstallation;
   final int? idProject;
@@ -52,13 +54,19 @@ class InstallationModel {
 
   String? get projectId => idProject?.toString();
 
+  String? get address => notes;
+
   factory InstallationModel.fromJson(Map<String, dynamic> json) {
     List<String> parsedPhotos = [];
 
     if (json['photos'] is List) {
-      parsedPhotos = (json['photos'] as List)
-          .map((e) => e.toString())
-          .toList();
+      parsedPhotos = (json['photos'] as List).map((e) {
+        if (e is Map) {
+          final path = e['photo_path'] ?? e['url'] ?? e['path'];
+          if (path != null) return path.toString();
+        }
+        return e.toString();
+      }).toList();
     } else if (json['photo_url'] != null &&
         json['photo_url'].toString().isNotEmpty) {
       parsedPhotos = [json['photo_url'].toString()];
@@ -87,6 +95,27 @@ class InstallationModel {
           json['jenis_lampu']?.toString() ??
           '';
     }
+
+    String? parseInputMethod(dynamic raw) {
+      if (raw == null) return null;
+      final s = raw.toString().trim();
+      if (s.isEmpty || s == '-') return null;
+      final lower = s.toLowerCase();
+      if (lower == 'realtime' || lower == 'real-time') {
+        return 'Realtime';
+      }
+      if (lower == 'manual') {
+        return 'Manual';
+      }
+      return s;
+    }
+
+    final parsedInputMethod = parseInputMethod(
+      json['input_method'] ??
+          json['metode_input'] ??
+          json['inputMethod'],
+    );
+    debugPrint('MODEL inputMethod: $parsedInputMethod (raw: ${json['input_method']})');
 
     return InstallationModel(
       idInstallation: json['id_installation'] is int
@@ -145,9 +174,7 @@ class InstallationModel {
 
       photos: parsedPhotos,
 
-      inputMethod:
-          json['input_method']?.toString() ??
-          json['metode_input']?.toString(),
+      inputMethod: parsedInputMethod,
 
       photoUrl:
           json['photo_url']?.toString() ??
@@ -155,7 +182,8 @@ class InstallationModel {
 
       notes:
           json['notes']?.toString() ??
-          json['catatan']?.toString(),
+          json['catatan']?.toString() ??
+          json['address']?.toString(),
 
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(

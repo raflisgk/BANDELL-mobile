@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+import 'installation_model.dart';
+
 class HistoryLampModel {
   final int? idHistory;
   final int userId;
@@ -12,6 +15,10 @@ class HistoryLampModel {
   final String fotoCount;
   final String waktu;
   final DateTime? tanggal;
+  final DateTime? createdAt;
+  final String? inputMethod;
+  final String? panelCode;
+  final InstallationModel? installation;
 
   const HistoryLampModel({
     this.idHistory,
@@ -27,45 +34,128 @@ class HistoryLampModel {
     required this.fotoCount,
     required this.waktu,
     this.tanggal,
+    this.createdAt,
+    this.inputMethod,
+    this.panelCode,
+    this.installation,
   });
 
   factory HistoryLampModel.fromJson(Map<String, dynamic> json) {
+    String lampTypeName = '';
+    if (json['lamp_type'] is Map) {
+      lampTypeName = json['lamp_type']['lamp_name']?.toString() ??
+          json['lamp_type']['name']?.toString() ??
+          '';
+    } else if (json['lampType'] is Map) {
+      lampTypeName = json['lampType']['lamp_name']?.toString() ??
+          json['lampType']['name']?.toString() ??
+          '';
+    } else {
+      lampTypeName = json['jenis']?.toString() ??
+          json['lamp_type']?.toString() ??
+          '';
+    }
+
+    final rawId = json['id_history'] ?? json['id'];
+    final parsedId = rawId is int
+        ? rawId
+        : int.tryParse(rawId?.toString() ?? '');
+
+    final rawAreaId = json['area_id'] ?? json['district_id'];
+    final parsedAreaId = rawAreaId is int
+        ? rawAreaId
+        : int.tryParse(rawAreaId?.toString() ?? '');
+
+    final vStatus = json['verification_status']?.toString() ??
+        json['status']?.toString() ??
+        'Tersimpan';
+
+    final isVerif = json['is_verified'] == true ||
+        json['is_verified'] == 1 ||
+        json['is_verified'] == '1' ||
+        vStatus.toLowerCase() == 'terverifikasi';
+
+    InstallationModel? instModel;
+    try {
+      instModel = InstallationModel.fromJson(json);
+    } catch (_) {}
+
+    final createdAt = instModel?.createdAt ??
+        (json['created_at'] != null
+            ? DateTime.tryParse(json['created_at'].toString())
+            : null);
+
+    debugPrint('HISTORY created_at API: ${json['created_at']}');
+    debugPrint('HISTORY createdAt MODEL: $createdAt');
+
+    final waktuStr = createdAt?.toIso8601String() ??
+        json['created_at']?.toString() ??
+        json['waktu']?.toString() ??
+        json['installed_at']?.toString() ??
+        '';
+
+    final rawInput = json['input_method'] ??
+        json['metode_input'] ??
+        json['inputMethod'] ??
+        instModel?.inputMethod;
+
+    String? normInput;
+    if (rawInput != null) {
+      final s = rawInput.toString().trim();
+      final l = s.toLowerCase();
+      if (l == 'realtime' || l == 'real-time') {
+        normInput = 'Realtime';
+      } else if (l == 'manual') {
+        normInput = 'Manual';
+      } else if (s.isNotEmpty && s != '-') {
+        normInput = s;
+      }
+    }
+
+    final pCode = json['code_panel']?.toString() ??
+        json['panel_code']?.toString() ??
+        json['kode_panel']?.toString() ??
+        instModel?.panelCode;
+
     return HistoryLampModel(
-      idHistory: json['id_history'] is int
-          ? json['id_history']
-          : int.tryParse(json['id_history']?.toString() ?? ''),
+      idHistory: parsedId,
       userId: json['user_id'] is int
           ? json['user_id']
           : int.tryParse(json['user_id']?.toString() ?? '0') ?? 0,
       projectId: json['project_id'] is int
           ? json['project_id']
           : int.tryParse(json['project_id']?.toString() ?? '0') ?? 0,
-      areaId: json['area_id'] != null
-          ? (json['area_id'] is int
-              ? json['area_id']
-              : int.tryParse(json['area_id'].toString()))
-          : null,
-      kode: json['kode'] ?? json['lamp_code'] ?? '',
-      jenis: json['jenis'] ?? json['lamp_type'] ?? '',
-      status: json['status'] ?? 'Tersimpan',
-      isVerified: json['is_verified'] == true ||
-          json['is_verified'] == 1 ||
-          json['is_verified'] == '1',
-      lokasi: json['lokasi'] ?? json['address'] ?? json['location'] ?? '',
-      koordinat: json['koordinat'] ??
+      areaId: parsedAreaId,
+      kode: json['kode']?.toString() ??
+          json['lamp_code']?.toString() ??
+          json['id_barcode']?.toString() ??
+          '',
+      jenis: lampTypeName,
+      status: vStatus,
+      isVerified: isVerif,
+      lokasi: json['lokasi']?.toString() ??
+          json['address']?.toString() ??
+          json['location']?.toString() ??
+          '',
+      koordinat: json['koordinat']?.toString() ??
           (json['latitude'] != null && json['longitude'] != null
               ? '${json['latitude']}, ${json['longitude']}'
               : ''),
-      fotoCount: json['foto_count'] ??
+      fotoCount: json['foto_count']?.toString() ??
           (json['photos'] is List
               ? '${(json['photos'] as List).length} Foto Lampu'
               : '0 Foto Lampu'),
-      waktu: json['waktu'] ?? '',
-      tanggal: json['tanggal'] != null
-          ? DateTime.tryParse(json['tanggal'].toString())
-          : (json['created_at'] != null
-              ? DateTime.tryParse(json['created_at'].toString())
-              : null),
+      waktu: waktuStr,
+      tanggal: createdAt ??
+          (json['tanggal'] != null
+              ? DateTime.tryParse(json['tanggal'].toString())
+              : (json['installed_at'] != null
+                  ? DateTime.tryParse(json['installed_at'].toString())
+                  : null)),
+      createdAt: createdAt,
+      inputMethod: normInput,
+      panelCode: pCode,
+      installation: instModel,
     );
   }
 
@@ -84,6 +174,9 @@ class HistoryLampModel {
       'foto_count': fotoCount,
       'waktu': waktu,
       'tanggal': tanggal?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'input_method': inputMethod,
+      'panel_code': panelCode,
     };
   }
 }

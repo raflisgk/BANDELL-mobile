@@ -15,6 +15,7 @@ import '../../widgets/tombol_simpan_data.dart';
 import 'realtime_barcode.dart';
 import 'realtime_location.dart';
 import 'scan_barcode_page.dart';
+import '../metode_pendataan/metode_pendataan_page.dart';
 
 class RealtimePage extends StatefulWidget {
   final int? idProject;
@@ -200,27 +201,136 @@ class _RealtimePageState extends State<RealtimePage> {
     }
   }
 
-  Future<void> _handleTambahFoto() async {
+  void _handleTambahFoto() {
     if (_photos.length >= 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maksimal 4 foto dokumentasi.'),
-          backgroundColor: Color(0xFFDC2626),
+          content: Text('Maksimal 4 foto sudah tercapai'),
+          backgroundColor: Color(0xFFEF4444),
+          duration: Duration(seconds: 1),
         ),
       );
       return;
     }
 
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
+    _showPhotoSourcePicker();
+  }
 
-    if (image != null) {
-      setState(() {
-        _photos.add(image.path);
-      });
+  void _showPhotoSourcePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Tambah Foto Dokumentasi',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.camera_alt_rounded,
+                        color: AppColors.primary),
+                  ),
+                  title: const Text(
+                    'Ambil Foto Kamera',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle:
+                      const Text('Buka kamera untuk mengambil foto baru'),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.photo_library_rounded,
+                        color: AppColors.primary),
+                  ),
+                  title: const Text(
+                    'Pilih dari Galeri',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text('Buka galeri hp untuk memilih foto'),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        setState(() {
+          _photos.add(image.path);
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Foto ${_photos.length} berhasil ditambahkan'),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengambil foto: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -305,6 +415,20 @@ class _RealtimePageState extends State<RealtimePage> {
         PopUpSukses.show(
           context,
           lampCode: _scannedBarcode!,
+          onAddData: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MetodePendataanPage(
+                  idProject: widget.idProject,
+                  idArea: widget.idArea,
+                  areaName: widget.areaName,
+                  lampType: widget.lampType,
+                  lampTypeId: widget.lampTypeId,
+                ),
+              ),
+            );
+          },
         );
       }
     } catch (e) {

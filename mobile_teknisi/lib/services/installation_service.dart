@@ -1,12 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/history_lamp_model.dart';
 import '../models/installation_model.dart';
 import 'api_service.dart';
+import 'lamp_type_service.dart';
 
 class InstallationService {
-  /// Menyimpan data pendataan lampu baru ke Laravel
+  /// Simpan data pemasangan lampu baru ke Laravel API
   Future<InstallationModel> createInstallation(
     InstallationModel installation,
   ) async {
@@ -23,7 +27,10 @@ class InstallationService {
       ApiService.multipartHeaders,
     );
 
-    // Data utama
+    // =========================
+    // DATA INSTALLATION
+    // =========================
+
     request.fields['project_id'] =
         installation.idProject?.toString() ?? '';
 
@@ -39,6 +46,7 @@ class InstallationService {
     request.fields['id_barcode'] =
         installation.lampCode;
 
+    // Laravel menerima: realtime / manual
     request.fields['input_method'] =
         (installation.inputMethod ?? '').toLowerCase();
 
@@ -60,6 +68,7 @@ class InstallationService {
           installation.notes!.trim();
     }
 
+    // installed_at menggunakan tanggal saja
     if (installation.createdAt != null) {
       request.fields['installed_at'] =
           installation.createdAt!
@@ -68,33 +77,41 @@ class InstallationService {
               .first;
     }
 
-    // Foto dokumentasi
+    // =========================
+    // FOTO
+    // =========================
+
     for (final photoPath in installation.photos) {
-      try {
-        final file = await http.MultipartFile.fromPath(
+      if (photoPath.trim().isEmpty) {
+        continue;
+      }
+
+      final file = File(photoPath);
+      if (file.existsSync()) {
+        final photo = await http.MultipartFile.fromPath(
           'photos[]',
           photoPath,
         );
-
-        request.files.add(file);
-      } catch (e) {
-        throw Exception(
-          'Gagal membaca foto dokumentasi: $e',
-        );
+        request.files.add(photo);
       }
     }
 
-    print('INSTALLATION REQUEST:');
-    print('project_id: ${request.fields['project_id']}');
-    print('user_id: ${request.fields['user_id']}');
-    print('lamp_type_id: ${request.fields['lamp_type_id']}');
-    print('district_id: ${request.fields['district_id']}');
-    print('id_barcode: ${request.fields['id_barcode']}');
-    print('input_method: ${request.fields['input_method']}');
-    print('latitude: ${request.fields['latitude']}');
-    print('longitude: ${request.fields['longitude']}');
-    print('code_panel: ${request.fields['code_panel']}');
-    print('jumlah foto: ${request.files.length}');
+    // =========================
+    // DEBUG
+    // =========================
+
+    debugPrint('========== CREATE INSTALLATION ==========');
+    debugPrint('project_id   : ${request.fields['project_id']}');
+    debugPrint('user_id      : ${request.fields['user_id']}');
+    debugPrint('lamp_type_id : ${request.fields['lamp_type_id']}');
+    debugPrint('district_id  : ${request.fields['district_id']}');
+    debugPrint('id_barcode   : ${request.fields['id_barcode']}');
+    debugPrint('input_method : ${request.fields['input_method']}');
+    debugPrint('latitude     : ${request.fields['latitude']}');
+    debugPrint('longitude    : ${request.fields['longitude']}');
+    debugPrint('code_panel   : ${request.fields['code_panel']}');
+    debugPrint('jumlah foto  : ${request.files.length}');
+    debugPrint('=========================================');
 
     final streamedResponse = await request.send();
 
@@ -102,15 +119,14 @@ class InstallationService {
       streamedResponse,
     );
 
-    print(
-      'INSTALLATION STATUS: ${response.statusCode}',
-    );
+    debugPrint('INSTALLATION STATUS: ${response.statusCode}');
+    debugPrint('INSTALLATION RESPONSE: ${response.body}');
 
-    print(
-      'INSTALLATION BODY: ${response.body}',
-    );
+    // =========================
+    // RESPONSE
+    // =========================
 
-    Map<String, dynamic> responseData = {};
+    Map<String, dynamic> responseData;
 
     try {
       responseData =
@@ -126,54 +142,56 @@ class InstallationService {
       final data = responseData['data'];
 
       if (data is Map<String, dynamic>) {
-        return InstallationModel.fromJson(data);
+        final parsed = InstallationModel.fromJson(data);
+        debugPrint('PARSED INPUT METHOD: ${parsed.inputMethod}');
+        return parsed;
       }
 
       return installation;
     }
 
     throw Exception(
-      responseData['message']?.toString() ??
-          'Gagal menyimpan data pemasangan.',
+      _extractErrorMessage(responseData, 'Gagal menyimpan data pemasangan.'),
     );
   }
 
-  /// Mengambil detail record lampu
-  Future<InstallationModel?> getInstallationDetail(
-    int idInstallation,
-  ) async {
+  /// Mengambil detail record lampu berdasarkan ID dari Laravel API
+  Future<InstallationModel?> getInstallationDetail(int idInstallation) async {
     final response = await http.get(
-      Uri.parse(
-        '${ApiService.baseUrl}/installations/$idInstallation',
-      ),
+      Uri.parse('${ApiService.baseUrl}/installations/$idInstallation'),
       headers: ApiService.defaultHeaders,
     );
 
-    print(
-      'INSTALLATION DETAIL STATUS: ${response.statusCode}',
-    );
+    debugPrint('DETAIL STATUS: ${response.statusCode}');
+    debugPrint('INSTALLATION RESPONSE: ${response.body}');
 
-    print(
-      'INSTALLATION DETAIL BODY: ${response.body}',
-    );
-
-    if (response.statusCode != 200) {
+    if (response.statusCode == 404) {
       return null;
     }
 
-    final responseData =
-        jsonDecode(response.body);
-
-    final data = responseData['data'];
-
-    if (data is! Map<String, dynamic>) {
-      return null;
+    Map<String, dynamic> responseData = {};
+    try {
+      responseData = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception('Response server tidak valid.');
     }
 
-    return InstallationModel.fromJson(data);
+    if (response.statusCode == 200 && responseData['success'] == true) {
+      final data = responseData['data'];
+      if (data is Map<String, dynamic>) {
+        final parsed = InstallationModel.fromJson(data);
+        debugPrint('PARSED INPUT METHOD: ${parsed.inputMethod}');
+        return parsed;
+      }
+    }
+
+    throw Exception(
+      _extractErrorMessage(responseData, 'Gagal mengambil detail data pemasangan.'),
+    );
   }
 
-  /// Mengubah data lampu
+  /// Mengubah data lampu berdasarkan ID ke Laravel API
+  /// Menggunakan POST + _method=PUT untuk kompatibilitas multipart Laravel
   Future<InstallationModel> updateInstallation(
     int idInstallation,
     InstallationModel installation,
@@ -191,115 +209,152 @@ class InstallationService {
       ApiService.multipartHeaders,
     );
 
-    // Laravel method spoofing
+    // Method spoofing untuk Laravel
     request.fields['_method'] = 'PUT';
 
-    request.fields['project_id'] =
-        installation.idProject?.toString() ?? '';
-
-    request.fields['user_id'] =
-        installation.idUser?.toString() ?? '';
-
-    request.fields['lamp_type_id'] =
-        installation.lampTypeId?.toString() ?? '';
-
-    request.fields['district_id'] =
-        installation.idArea.toString();
-
-    request.fields['id_barcode'] =
-        installation.lampCode;
-
-    request.fields['input_method'] =
-        (installation.inputMethod ?? '').toLowerCase();
-
-    request.fields['latitude'] =
-        installation.latitude ?? '';
-
-    request.fields['longitude'] =
-        installation.longitude ?? '';
-
-    if (installation.panelCode != null) {
-      request.fields['code_panel'] =
-          installation.panelCode!;
+    if (installation.idProject != null && installation.idProject! > 0) {
+      request.fields['project_id'] = installation.idProject.toString();
     }
 
-    if (installation.installedAt != null) {
+    if (installation.idUser != null && installation.idUser! > 0) {
+      request.fields['user_id'] = installation.idUser.toString();
+    }
+
+    // Lamp Type ID
+    if (installation.lampTypeId != null && installation.lampTypeId! > 0) {
+      request.fields['lamp_type_id'] = installation.lampTypeId.toString();
+    } else if (installation.lampType.isNotEmpty) {
+      try {
+        final types = await LampTypeService().getLampTypes();
+        final match = types.firstWhere(
+          (t) => t.name.toLowerCase() == installation.lampType.toLowerCase(),
+        );
+        request.fields['lamp_type_id'] = match.id.toString();
+      } catch (_) {
+        // Fallback jika tidak ditemukan
+      }
+    }
+
+    // Hanya kirim district_id jika idProject juga valid
+    if (installation.idArea > 0 &&
+        installation.idProject != null &&
+        installation.idProject! > 0) {
+      request.fields['district_id'] = installation.idArea.toString();
+    }
+
+    if (installation.lampCode.isNotEmpty) {
+      request.fields['id_barcode'] = installation.lampCode;
+    }
+
+    if (installation.inputMethod != null &&
+        installation.inputMethod!.trim().isNotEmpty) {
+      request.fields['input_method'] =
+          installation.inputMethod!.trim().toLowerCase();
+    }
+
+    if (installation.latitude != null &&
+        installation.latitude!.trim().isNotEmpty) {
+      request.fields['latitude'] = installation.latitude!.trim();
+    }
+
+    if (installation.longitude != null &&
+        installation.longitude!.trim().isNotEmpty) {
+      request.fields['longitude'] = installation.longitude!.trim();
+    }
+
+    if (installation.notes != null && installation.notes!.trim().isNotEmpty) {
+      request.fields['address'] = installation.notes!.trim();
+    }
+
+    if (installation.panelCode != null &&
+        installation.panelCode!.trim().isNotEmpty) {
+      request.fields['code_panel'] = installation.panelCode!.trim();
+    }
+
+    if (installation.createdAt != null) {
       request.fields['installed_at'] =
-          installation.installedAt!
-              .toIso8601String()
-              .split('T')
-              .first;
+          installation.createdAt!.toIso8601String().split('T').first;
+    } else if (installation.updatedAt != null) {
+      request.fields['installed_at'] =
+          installation.updatedAt!.toIso8601String().split('T').first;
     }
 
+    // Foto tambahan
     for (final photoPath in installation.photos) {
-      final file = await http.MultipartFile.fromPath(
-        'photos[]',
-        photoPath,
-      );
+      if (photoPath.trim().isEmpty) {
+        continue;
+      }
 
-      request.files.add(file);
+      final file = File(photoPath);
+      if (file.existsSync()) {
+        final photo = await http.MultipartFile.fromPath(
+          'photos[]',
+          photoPath,
+        );
+        request.files.add(photo);
+      }
     }
+
+    debugPrint('========== UPDATE INSTALLATION ==========');
+    debugPrint('id           : $idInstallation');
+    debugPrint('fields       : ${request.fields}');
+    debugPrint('files        : ${request.files.length}');
+    debugPrint('=========================================');
 
     final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
 
-    final response = await http.Response.fromStream(
-      streamedResponse,
-    );
+    debugPrint('UPDATE STATUS: ${response.statusCode}');
+    debugPrint('UPDATE BODY: ${response.body}');
 
-    print(
-      'UPDATE INSTALLATION STATUS: ${response.statusCode}',
-    );
+    Map<String, dynamic> responseData = {};
+    try {
+      responseData = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception('Response server tidak valid.');
+    }
 
-    print(
-      'UPDATE INSTALLATION BODY: ${response.body}',
-    );
-
-    final responseData =
-        jsonDecode(response.body);
-
-    if (response.statusCode == 200 &&
+    if ((response.statusCode == 200 || response.statusCode == 201) &&
         responseData['success'] == true) {
-      return InstallationModel.fromJson(
-        responseData['data'],
-      );
+      final data = responseData['data'];
+      if (data is Map<String, dynamic>) {
+        return InstallationModel.fromJson(data);
+      }
+      return installation;
     }
 
     throw Exception(
-      responseData['message']?.toString() ??
-          'Gagal memperbarui data pemasangan.',
+      _extractErrorMessage(responseData, 'Gagal memperbarui data pemasangan.'),
     );
   }
 
-  /// Menghapus data lampu
-  Future<bool> deleteInstallation(
-    int idInstallation,
-  ) async {
+  /// Menghapus data lampu berdasarkan ID dari Laravel API
+  Future<bool> deleteInstallation(int idInstallation) async {
     final response = await http.delete(
-      Uri.parse(
-        '${ApiService.baseUrl}/installations/$idInstallation',
-      ),
+      Uri.parse('${ApiService.baseUrl}/installations/$idInstallation'),
       headers: ApiService.defaultHeaders,
     );
 
-    print(
-      'DELETE INSTALLATION STATUS: ${response.statusCode}',
-    );
+    debugPrint('DELETE STATUS: ${response.statusCode}');
+    debugPrint('DELETE BODY: ${response.body}');
 
-    print(
-      'DELETE INSTALLATION BODY: ${response.body}',
-    );
-
-    if (response.statusCode == 200) {
-      final responseData =
-          jsonDecode(response.body);
-
-      return responseData['success'] == true;
+    Map<String, dynamic> responseData = {};
+    try {
+      responseData = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception('Response server tidak valid.');
     }
 
-    return false;
+    if (response.statusCode == 200 && responseData['success'] == true) {
+      return true;
+    }
+
+    throw Exception(
+      _extractErrorMessage(responseData, 'Gagal menghapus data pemasangan.'),
+    );
   }
 
-  /// Mengambil riwayat pendataan berdasarkan user + project
+  /// Mengambil riwayat pendataan lampu berdasarkan user dan project dari Laravel API
   Future<List<HistoryLampModel>> getHistory({
     required int userId,
     required int projectId,
@@ -312,10 +367,11 @@ class InstallationService {
       'project_id': projectId.toString(),
     };
 
-    if (filter != null &&
-        filter.trim().isNotEmpty) {
-      queryParameters['district_id'] =
-          filter.trim();
+    if (filter != null && filter.trim().isNotEmpty) {
+      final districtId = int.tryParse(filter.trim());
+      if (districtId != null) {
+        queryParameters['district_id'] = districtId.toString();
+      }
     }
 
     if (startDate != null) {
@@ -334,37 +390,63 @@ class InstallationService {
       queryParameters: queryParameters,
     );
 
+    debugPrint('HISTORY URL: $uri');
+
     final response = await http.get(
       uri,
       headers: ApiService.defaultHeaders,
     );
 
-    print(
-      'HISTORY STATUS: ${response.statusCode}',
-    );
+    debugPrint('HISTORY STATUS: ${response.statusCode}');
+    debugPrint('INSTALLATION RESPONSE: ${response.body}');
 
-    print(
-      'HISTORY BODY: ${response.body}',
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Gagal mengambil riwayat pendataan.',
-      );
+    Map<String, dynamic> responseData = {};
+    try {
+      responseData = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception('Response server tidak valid.');
     }
 
-    final responseData =
-        jsonDecode(response.body);
+    if (response.statusCode == 200 && responseData['success'] == true) {
+      final List data = responseData['data'] ?? [];
+      debugPrint('HISTORY RESPONSE COUNT: ${data.length}');
+      return data
+          .map(
+            (item) {
+              final map = item as Map<String, dynamic>;
+              debugPrint('API input_method: ${map['input_method']}');
+              return HistoryLampModel.fromJson(map);
+            },
+          )
+          .toList();
+    }
 
-    final List data =
-        responseData['data'] ?? [];
+    throw Exception(
+      _extractErrorMessage(responseData, 'Gagal mengambil riwayat pendataan.'),
+    );
+  }
 
-    return data
-        .map(
-          (item) => HistoryLampModel.fromJson(
-            item as Map<String, dynamic>,
-          ),
-        )
-        .toList();
+  /// Ekstraksi pesan error dari response Laravel (422, 403, dsb)
+  static String _extractErrorMessage(
+    Map<String, dynamic> responseData,
+    String defaultMessage,
+  ) {
+    if (responseData['message'] != null &&
+        responseData['message'].toString().trim().isNotEmpty) {
+      return responseData['message'].toString();
+    }
+
+    if (responseData['errors'] is Map) {
+      final errors = responseData['errors'] as Map;
+      if (errors.isNotEmpty) {
+        final firstVal = errors.values.first;
+        if (firstVal is List && firstVal.isNotEmpty) {
+          return firstVal.first.toString();
+        }
+        return firstVal.toString();
+      }
+    }
+
+    return defaultMessage;
   }
 }
