@@ -14,9 +14,8 @@ class Project extends Model
     protected $table = 'projects';
 
     protected $fillable = [
-    'name',
-    'status',
-];
+        'name',
+    ];
 
     public function districts(): HasMany
     {
@@ -31,7 +30,11 @@ class Project extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_assignments', 'project_id', 'user_id')
-            ->withPivot(['district_id', 'notes', 'assigned_at', 'unassigned_at'])
+            ->withPivot([
+                'district_id',
+                'notes',
+                'assigned_at',
+            ])
             ->withTimestamps();
     }
 

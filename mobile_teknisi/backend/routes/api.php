@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\LampTypeController;
 use App\Http\Controllers\Api\InstallationController;
 use App\Http\Controllers\Api\ProjectAssignmentController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\ProfileController;
+
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/projects', [ProjectController::class, 'index']);
@@ -19,3 +21,5 @@ Route::get('/installations/{installation}', [InstallationController::class, 'sho
 Route::put('/installations/{installation}', [InstallationController::class, 'update']);
 Route::delete('/installations/{installation}', [InstallationController::class, 'destroy']);
 Route::get('/notifications', [NotificationController::class, 'index']);
+Route::get('/profile', [ProfileController::class, 'show']);
+Route::put('/profile/phone', [ProfileController::class, 'updatePhone']);

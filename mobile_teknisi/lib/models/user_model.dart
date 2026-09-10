@@ -5,6 +5,7 @@ class UserModel {
   final String role;
   final String? email;
   final String? phone;
+  final String? placementArea;
 
   UserModel({
     required this.idUser,
@@ -13,6 +14,7 @@ class UserModel {
     required this.role,
     this.email,
     this.phone,
+    this.placementArea,
   });
 
   int get id => idUser;
@@ -27,6 +29,7 @@ class UserModel {
       role: json['role'] ?? 'teknisi',
       email: json['email'],
       phone: json['phone'] ?? json['no_hp'] ?? json['phone_number'],
+      placementArea: json['placement_area']?.toString()
     );
   }
 

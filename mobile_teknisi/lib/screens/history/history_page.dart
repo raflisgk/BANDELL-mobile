@@ -109,13 +109,9 @@ class _HistoryPageState extends State<HistoryPage> {
 
     final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
 
-    debugPrint('========== HISTORY FILTER ==========');
-    debugPrint('FILTER: $_selectedFilter');
+    debugPrint('HISTORY FILTER: $_selectedFilter');
     debugPrint('START DATE: $startDate');
     debugPrint('END DATE: $endDate');
-    debugPrint('USER ID: ${AuthService.currentUser?.idUser}');
-    debugPrint('PROJECT ID: ${proj.idProject}');
-    debugPrint('====================================');
 
     setState(() => _isLoading = true);
     try {
@@ -142,7 +138,6 @@ class _HistoryPageState extends State<HistoryPage> {
                     fotoCount: item.fotoCount,
                     waktu: item.waktu,
                     tanggal: item.tanggal,
-                    createdAt: item.createdAt,
                     inputMethod: item.inputMethod,
                     panelCode: item.panelCode,
                     installation: item.installation,
@@ -166,8 +161,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return ProjectService.selectedProject;
   }
 
-  List<HistoryLampItem> get _baseHistoryItems => _historyItems;
-
+ 
   @override
   void dispose() {
     _searchController.dispose();
@@ -176,12 +170,11 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   List<HistoryLampItem> get _filteredItems {
-    final baseItems = _baseHistoryItems;
     if (_searchQuery.trim().isEmpty) {
-      return baseItems;
+      return _historyItems;
     }
     final query = _searchQuery.toLowerCase().trim();
-    return baseItems.where((item) {
+    return _historyItems.where((item) {
       return item.kode.toLowerCase().contains(query) ||
           item.lokasi.toLowerCase().contains(query) ||
           item.jenis.toLowerCase().contains(query);
@@ -227,7 +220,7 @@ class _HistoryPageState extends State<HistoryPage> {
             ? item.koordinat.split(',')[1].trim()
             : null,
         address: item.lokasi,
-        createdAt: item.createdAt?.toIso8601String() ?? item.waktu,
+        createdAt: item.waktu,
         wattage: '120W',
         installation: item.installation,
         inputMethod: item.inputMethod,

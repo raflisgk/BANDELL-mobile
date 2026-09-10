@@ -22,21 +22,15 @@ class NotificationController extends Controller
             ->where('user_id', $validated['user_id'])
             ->whereNotNull('notes')
             ->where('notes', '!=', '')
-            ->where(function ($query) {
-                $query->whereNull('unassigned_at')
-                    ->orWhere('unassigned_at', '>', now());
-            })
             ->orderByDesc('assigned_at')
             ->get()
             ->map(function ($assignment) {
                 return [
                     'id' => $assignment->id,
                     'project_id' => $assignment->project_id,
-                    'project_name' => $assignment->project?->name,
-                    'district_id' => $assignment->district_id,
-                    'district_name' => $assignment->district?->name,
+                    'project_name' => $assignment->project?->name ?? '-',
+                    'district_name' => $assignment->district?->name ?? '-',
                     'notes' => $assignment->notes,
-                    'assigned_at' => $assignment->assigned_at,
                 ];
             });
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../models/notification_model.dart';
 import '../../utils/app_colors.dart';
 
 class NotificationItem {
@@ -6,6 +8,10 @@ class NotificationItem {
   final String title;
   final String time;
   final String content;
+  final String? projectName;
+  final String? districtName;
+  final String? notes;
+  final DateTime? assignedAt;
   final IconData? icon;
   final Color? iconColor;
   final Color? iconBackgroundColor;
@@ -18,6 +24,10 @@ class NotificationItem {
     required this.title,
     required this.time,
     required this.content,
+    this.projectName,
+    this.districtName,
+    this.notes,
+    this.assignedAt,
     this.icon,
     this.iconColor,
     this.iconBackgroundColor,
@@ -26,19 +36,102 @@ class NotificationItem {
     this.boldText,
   });
 
+  bool get hasAssignmentDetails =>
+      (projectName != null && projectName!.isNotEmpty && projectName != '-') ||
+      (districtName != null && districtName!.isNotEmpty && districtName != '-');
+
+  String get formattedDate {
+    if (assignedAt == null) return '';
+    try {
+      return DateFormat('dd MMMM yyyy', 'id_ID').format(assignedAt!.toLocal());
+    } catch (_) {
+      try {
+        return DateFormat('dd MMMM yyyy').format(assignedAt!.toLocal());
+      } catch (_) {
+        return assignedAt!.toIso8601String().split('T').first;
+      }
+    }
+  }
+
+  static String _formatHeaderTime(DateTime? dt) {
+    if (dt == null) return 'Baru saja';
+    final now = DateTime.now();
+    final local = dt.toLocal();
+    final diff = now.difference(local);
+
+    if (diff.inMinutes < 1) {
+      return 'Baru saja';
+    } else if (diff.inHours < 1) {
+      return '${diff.inMinutes} mnt lalu';
+    } else if (diff.inDays == 0 && now.day == local.day) {
+      try {
+        return DateFormat('HH:mm').format(local);
+      } catch (_) {
+        return '${local.hour}:${local.minute.toString().padLeft(2, '0')}';
+      }
+    } else if (diff.inDays < 7) {
+      try {
+        return DateFormat('dd MMM', 'id_ID').format(local);
+      } catch (_) {
+        return DateFormat('dd MMM').format(local);
+      }
+    } else {
+      try {
+        return DateFormat('dd/MM/yy').format(local);
+      } catch (_) {
+        return '${local.day}/${local.month}';
+      }
+    }
+  }
+
+  static String _resolveSection(DateTime? dt) {
+    if (dt == null) return 'TERBARU';
+    final now = DateTime.now();
+    final diff = now.difference(dt.toLocal());
+    if (diff.inDays <= 1) {
+      return 'TERBARU';
+    }
+    return 'SEBELUMNYA';
+  }
+
+  factory NotificationItem.fromModel(NotificationModel model) {
+    return NotificationItem(
+      id: model.id,
+      title: model.title,
+      time: model.time.isNotEmpty ? model.time : _formatHeaderTime(model.assignedAt),
+      content: model.content,
+      projectName: model.projectName,
+      districtName: model.districtName,
+      notes: model.notes,
+      assignedAt: model.assignedAt,
+      isUnread: model.isUnread,
+      section: _resolveSection(model.assignedAt),
+      boldText: model.boldText,
+    );
+  }
+
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
     final bool unread = json['is_unread'] == true ||
         json['is_read'] == false ||
         json['read_at'] == null;
+    DateTime? assignedDate;
+    if (json['assigned_at'] != null) {
+      assignedDate = DateTime.tryParse(json['assigned_at'].toString());
+    }
+
     return NotificationItem(
       id: json['id'] is int
           ? json['id']
           : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      title: json['title'] ?? '',
-      time: json['time'] ?? 'Baru saja',
+      title: json['title'] ?? 'Penugasan Project',
+      time: json['time'] ?? _formatHeaderTime(assignedDate),
       content: json['content'] ?? json['message'] ?? '',
+      projectName: json['project_name']?.toString() ?? json['project']?['name']?.toString(),
+      districtName: json['district_name']?.toString() ?? json['district']?['name']?.toString(),
+      notes: json['notes']?.toString(),
+      assignedAt: assignedDate,
       isUnread: unread,
-      section: json['section'] ?? (unread ? 'TERBARU' : 'SEBELUMNYA'),
+      section: json['section'] ?? _resolveSection(assignedDate),
       boldText: json['bold_text'],
     );
   }
@@ -49,6 +142,10 @@ class NotificationItem {
       'title': title,
       'time': time,
       'content': content,
+      'project_name': projectName,
+      'district_name': districtName,
+      'notes': notes,
+      'assigned_at': assignedAt?.toIso8601String(),
       'is_unread': isUnread,
       'section': section,
       'bold_text': boldText,
@@ -169,10 +266,13 @@ class NotificationCard extends StatelessWidget {
                         ],
                       ),
 
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
 
-                      // Description Message (Supports Bold Text)
-                      _buildMessageText(),
+                      // Description Message / Assignment Details
+                      if (notification.hasAssignmentDetails)
+                        _buildAssignmentDetails()
+                      else
+                        _buildMessageText(),
                     ],
                   ),
                 ),
@@ -180,6 +280,62 @@ class NotificationCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAssignmentDetails() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (notification.projectName != null &&
+            notification.projectName!.isNotEmpty &&
+            notification.projectName != '-')
+          _buildDetailRow('Project', notification.projectName!),
+        if (notification.districtName != null &&
+            notification.districtName!.isNotEmpty &&
+            notification.districtName != '-') ...[
+          const SizedBox(height: 3),
+          _buildDetailRow('Area', notification.districtName!),
+        ],
+        if (notification.notes != null &&
+            notification.notes!.trim().isNotEmpty &&
+            notification.notes != '-') ...[
+          const SizedBox(height: 3),
+          _buildDetailRow('Catatan', notification.notes!),
+        ],
+        if (notification.formattedDate.isNotEmpty) ...[
+          const SizedBox(height: 3),
+          _buildDetailRow('Tanggal', notification.formattedDate),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 12.5,
+          height: 1.35,
+        ),
+        children: [
+          TextSpan(
+            text: '$label: ',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF475569),
+            ),
+          ),
+          TextSpan(
+            text: value,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -238,7 +394,9 @@ class NotificationCard extends StatelessWidget {
     if (notification.icon != null) return notification.icon!;
 
     final lowerTitle = notification.title.toLowerCase();
-    if (lowerTitle.contains('terkirim') || lowerTitle.contains('selesai')) {
+    if (lowerTitle.contains('penugasan') || lowerTitle.contains('project') || lowerTitle.contains('tugas')) {
+      return Icons.assignment_outlined;
+    } else if (lowerTitle.contains('terkirim') || lowerTitle.contains('selesai')) {
       return Icons.assignment_turned_in_rounded;
     } else if (lowerTitle.contains('menunggu') || lowerTitle.contains('verifikasi')) {
       return Icons.pending_actions_rounded;
@@ -257,7 +415,9 @@ class NotificationCard extends StatelessWidget {
     if (notification.iconColor != null) return notification.iconColor!;
 
     final lowerTitle = notification.title.toLowerCase();
-    if (lowerTitle.contains('setuju') || lowerTitle.contains('sukses')) {
+    if (lowerTitle.contains('penugasan') || lowerTitle.contains('project') || lowerTitle.contains('tugas')) {
+      return AppColors.primary;
+    } else if (lowerTitle.contains('setuju') || lowerTitle.contains('sukses')) {
       return AppColors.realtimeGreen;
     } else if (lowerTitle.contains('menunggu') || lowerTitle.contains('verifikasi')) {
       return AppColors.textSecondary;
@@ -274,7 +434,9 @@ class NotificationCard extends StatelessWidget {
     }
 
     final lowerTitle = notification.title.toLowerCase();
-    if (lowerTitle.contains('setuju') || lowerTitle.contains('sukses')) {
+    if (lowerTitle.contains('penugasan') || lowerTitle.contains('project') || lowerTitle.contains('tugas')) {
+      return AppColors.infoBackground;
+    } else if (lowerTitle.contains('setuju') || lowerTitle.contains('sukses')) {
       return AppColors.realtimeBackground;
     } else if (lowerTitle.contains('menunggu') || lowerTitle.contains('verifikasi')) {
       return AppColors.inputBackground;

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_teknisi/models/notification_model.dart';
 import 'package:mobile_teknisi/screens/detail_lampu/informasi_record_card.dart';
 import 'package:mobile_teknisi/screens/history/history_lamp_card.dart';
+import 'package:mobile_teknisi/screens/notification/notification_card.dart';
 
 void main() {
   test('DateFormat id_ID initialization test', () async {
@@ -98,5 +100,54 @@ void main() {
     final expectedFormatted = DateFormat('dd MMM yyyy, HH:mm', 'id_ID')
         .format(DateTime.parse('2026-09-09T07:06:59.000000Z').toLocal());
     expect(find.text(expectedFormatted), findsOneWidget);
+  });
+
+  test('NotificationModel.fromJson correctly parses assignment API data', () {
+    final json = {
+      'id': 111,
+      'project_name': 'Sidoarjo',
+      'district_name': 'Lingkar Timur',
+      'notes': 'jalan gunung',
+      'assigned_at': '2026-09-10T08:00:00.000000Z',
+    };
+
+    final model = NotificationModel.fromJson(json);
+
+    expect(model.id, 111);
+    expect(model.projectName, 'Sidoarjo');
+    expect(model.districtName, 'Lingkar Timur');
+    expect(model.notes, 'jalan gunung');
+    expect(model.assignedAt, isNotNull);
+    expect(model.title, 'Penugasan Project');
+  });
+
+  testWidgets('NotificationCard renders assignment details properly', (tester) async {
+    await initializeDateFormatting('id_ID', null);
+
+    final item = NotificationItem(
+      id: 111,
+      title: 'Penugasan Project',
+      time: '15:54',
+      content: '',
+      projectName: 'Sidoarjo',
+      districtName: 'Lingkar Timur',
+      notes: 'jalan gunung',
+      assignedAt: DateTime.parse('2026-09-10T08:00:00.000000Z'),
+      isUnread: true,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NotificationCard(notification: item),
+        ),
+      ),
+    );
+
+    expect(find.text('Penugasan Project'), findsOneWidget);
+    expect(find.textContaining('Sidoarjo'), findsOneWidget);
+    expect(find.textContaining('Lingkar Timur'), findsOneWidget);
+    expect(find.textContaining('jalan gunung'), findsOneWidget);
+    expect(find.textContaining('September 2026'), findsOneWidget);
   });
 }

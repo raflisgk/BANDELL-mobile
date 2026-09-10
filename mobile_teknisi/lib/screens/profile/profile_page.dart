@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
@@ -36,14 +35,16 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _editController = TextEditingController();
+
     final user = AuthService.currentUser;
+
     if (user != null) {
       _name = user.name.isNotEmpty ? user.name : user.username;
       _role = user.role.isNotEmpty ? user.role : 'Teknisi Lapangan';
       _email = user.email ?? '-';
       _phone = user.phone ?? '-';
+      _location = user.placementArea ?? '-';
     }
-    _location = ProjectService.selectedProject?.location ?? '-';
   }
 
   @override
@@ -64,24 +65,39 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  void _saveActiveField() {
+  Future<void> _saveActiveField() async {
     final newValue = _editController.text.trim();
+
     if (newValue.isEmpty) return;
 
-    setState(() {
-      if (_activeEditField == ProfileEditField.phone) {
-        _phone = newValue;
-      }
-      _activeEditField = ProfileEditField.none;
-    });
+    if (_activeEditField == ProfileEditField.phone) {
+      final success = await AuthService().updatePhone(newValue);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Nomor Telepon berhasil disimpan'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 2),
-      ),
-    );
+      if (!mounted) return;
+
+      if (success) {
+        setState(() {
+          _phone = newValue;
+          _activeEditField = ProfileEditField.none;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nomor Telepon berhasil disimpan'),
+            backgroundColor: AppColors.primary,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menyimpan nomor telepon'),
+            backgroundColor: Color(0xFFDC2626),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _cancelEditing() {
@@ -170,7 +186,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: ElevatedButton(
                       onPressed: () {
                         AuthService.currentUser = null;
-                        ProjectService.selectedProject = null;
                         Navigator.pop(dialogContext);
                         AppNavigator.pushAndRemoveUntil(
                           context,

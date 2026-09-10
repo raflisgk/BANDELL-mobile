@@ -43,8 +43,8 @@ class InstallationService {
     request.fields['district_id'] =
         installation.idArea.toString();
 
-    request.fields['id_barcode'] =
-        installation.lampCode;
+    request.fields['id_lcu'] =
+    installation.lampCode;
 
     // Laravel menerima: realtime / manual
     request.fields['input_method'] =
@@ -105,7 +105,7 @@ class InstallationService {
     debugPrint('user_id      : ${request.fields['user_id']}');
     debugPrint('lamp_type_id : ${request.fields['lamp_type_id']}');
     debugPrint('district_id  : ${request.fields['district_id']}');
-    debugPrint('id_barcode   : ${request.fields['id_barcode']}');
+    debugPrint('id_lcu       : ${request.fields['id_lcu']}');
     debugPrint('input_method : ${request.fields['input_method']}');
     debugPrint('latitude     : ${request.fields['latitude']}');
     debugPrint('longitude    : ${request.fields['longitude']}');
@@ -243,7 +243,7 @@ class InstallationService {
     }
 
     if (installation.lampCode.isNotEmpty) {
-      request.fields['id_barcode'] = installation.lampCode;
+      request.fields['id_lcu'] = installation.lampCode;
     }
 
     if (installation.inputMethod != null &&

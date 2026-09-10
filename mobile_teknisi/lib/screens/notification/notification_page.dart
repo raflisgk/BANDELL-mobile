@@ -23,20 +23,13 @@ class _NotificationPageState extends State<NotificationPage> {
     _loadNotifications();
   }
 
-  void _loadNotifications() async {
+  Future<void> _loadNotifications() async {
     setState(() => _isLoading = true);
     final list = await NotificationService().getNotifications();
     if (mounted) {
       setState(() {
         _notifications = list
-            .map((n) => NotificationItem(
-                  id: n.id,
-                  title: n.title,
-                  time: n.time,
-                  content: n.content,
-                  isUnread: n.isUnread,
-                  boldText: n.boldText,
-                ))
+            .map((n) => NotificationItem.fromModel(n))
             .toList();
         _isLoading = false;
       });
@@ -76,12 +69,17 @@ class _NotificationPageState extends State<NotificationPage> {
               onBackPressed: _handleBack,
             ),
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18.0,
-                  vertical: 16.0,
-                ),
+              child: RefreshIndicator(
+                onRefresh: _loadNotifications,
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18.0,
+                    vertical: 16.0,
+                  ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

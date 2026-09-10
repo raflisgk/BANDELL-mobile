@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import 'api_service.dart';
 
@@ -35,19 +36,38 @@ class AuthService {
   }
 
   Future<bool> updatePhone(String newPhone) async {
-    if (currentUser == null) {
+    final user = currentUser;
+
+    if (user == null) {
       return false;
     }
 
-    currentUser = UserModel(
-      idUser: currentUser!.idUser,
-      username: currentUser!.username,
-      name: currentUser!.name,
-      role: currentUser!.role,
-      email: currentUser!.email,
-      phone: newPhone,
-    );
+    try {
+      final response = await ApiService.updateProfilePhone(
+        userId: user.idUser,
+        phoneNumber: newPhone,
+      );
 
-    return true;
+      final data = response['data'];
+
+      if (data is Map<String, dynamic>) {
+        currentUser = UserModel.fromJson(data);
+      } else {
+        currentUser = UserModel(
+          idUser: user.idUser,
+          username: user.username,
+          name: user.name,
+          role: user.role,
+          email: user.email,
+          phone: newPhone,
+          placementArea: user.placementArea,
+        );
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('Update phone error: $e');
+      return false;
+    }
   }
 }

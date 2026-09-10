@@ -20,10 +20,6 @@ class ProjectAssignmentController extends Controller
             'district',
         ])
             ->where('user_id', $request->user_id)
-            ->where(function ($query) {
-                $query->whereNull('unassigned_at')
-                    ->orWhere('unassigned_at', '>', now());
-            })
             ->orderBy('project_id')
             ->get();
 

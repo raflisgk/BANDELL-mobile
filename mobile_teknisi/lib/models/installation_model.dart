@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class InstallationModel {
   final int idInstallation;
   final int? idProject;
@@ -54,8 +52,6 @@ class InstallationModel {
 
   String? get projectId => idProject?.toString();
 
-  String? get address => notes;
-
   factory InstallationModel.fromJson(Map<String, dynamic> json) {
     List<String> parsedPhotos = [];
 
@@ -96,27 +92,6 @@ class InstallationModel {
           '';
     }
 
-    String? parseInputMethod(dynamic raw) {
-      if (raw == null) return null;
-      final s = raw.toString().trim();
-      if (s.isEmpty || s == '-') return null;
-      final lower = s.toLowerCase();
-      if (lower == 'realtime' || lower == 'real-time') {
-        return 'Realtime';
-      }
-      if (lower == 'manual') {
-        return 'Manual';
-      }
-      return s;
-    }
-
-    final parsedInputMethod = parseInputMethod(
-      json['input_method'] ??
-          json['metode_input'] ??
-          json['inputMethod'],
-    );
-    debugPrint('MODEL inputMethod: $parsedInputMethod (raw: ${json['input_method']})');
-
     return InstallationModel(
       idInstallation: json['id_installation'] is int
           ? json['id_installation']
@@ -149,10 +124,10 @@ class InstallationModel {
       ),
 
       lampCode:
-          json['lamp_code']?.toString() ??
-          json['kode_lampu']?.toString() ??
-          json['id_barcode']?.toString() ??
-          '',
+      json['lamp_code']?.toString() ??
+      json['kode_lampu']?.toString() ??
+      json['id_lcu']?.toString() ??
+      '',
 
       lampType: lampTypeName,
 
@@ -174,7 +149,25 @@ class InstallationModel {
 
       photos: parsedPhotos,
 
-      inputMethod: parsedInputMethod,
+      inputMethod: (() {
+    final value = json['input_method'] ??
+      json['metode_input'] ??
+      json['inputMethod'];
+
+    if (value == null) return null;
+
+    final method = value.toString().trim().toLowerCase();
+
+    if (method == 'realtime' || method == 'real-time') {
+    return 'Realtime';
+    }
+
+    if (method == 'manual') {
+    return 'Manual';
+    }
+
+  return value.toString();
+})(),
 
       photoUrl:
           json['photo_url']?.toString() ??
@@ -182,8 +175,7 @@ class InstallationModel {
 
       notes:
           json['notes']?.toString() ??
-          json['catatan']?.toString() ??
-          json['address']?.toString(),
+          json['catatan']?.toString(),
 
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(
@@ -209,7 +201,7 @@ class InstallationModel {
       // ID yang dikirim ke backend
       'lamp_type_id': lampTypeId,
 
-      'lamp_code': lampCode,
+      'id_lcu': lampCode,
       'lamp_type': lampType,
       'wattage': wattage,
       'status': status,

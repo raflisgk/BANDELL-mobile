@@ -18,7 +18,7 @@ class Installation extends Model
         'user_id',
         'lamp_type_id',
         'district_id',
-        'id_barcode',
+        'id_lcu',
         'input_method',
         'verification_status',
         'latitude',
