@@ -10,6 +10,7 @@ class InstallationModel {
   // Nama jenis lampu untuk tampilan
   final String lampType;
 
+  final String? idLcu;
   final String lampCode;
   final String wattage;
   final String status;
@@ -20,6 +21,7 @@ class InstallationModel {
   final String? inputMethod;
   final String? photoUrl;
   final String? notes;
+  final DateTime? installedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -29,6 +31,7 @@ class InstallationModel {
     this.idUser,
     required this.idArea,
     this.lampTypeId,
+    this.idLcu,
     required this.lampCode,
     required this.lampType,
     this.wattage = '',
@@ -40,6 +43,7 @@ class InstallationModel {
     this.inputMethod,
     this.photoUrl,
     this.notes,
+    this.installedAt,
     this.createdAt,
     this.updatedAt,
   });
@@ -91,6 +95,11 @@ class InstallationModel {
           json['jenis_lampu']?.toString() ??
           '';
     }
+    final rawLcu = json['id_lcu']?.toString() ??
+        json['idLcu']?.toString() ??
+        json['lamp_code']?.toString() ??
+        json['kode_lampu']?.toString() ??
+        json['id_barcode']?.toString();
 
     return InstallationModel(
       idInstallation: json['id_installation'] is int
@@ -123,12 +132,8 @@ class InstallationModel {
             json['id_lamp_type'],
       ),
 
-      lampCode:
-      json['lamp_code']?.toString() ??
-      json['kode_lampu']?.toString() ??
-      json['id_lcu']?.toString() ??
-      '',
-
+      idLcu: json['id_lcu']?.toString() ?? rawLcu,
+      lampCode: rawLcu ?? '',
       lampType: lampTypeName,
 
       wattage: json['wattage']?.toString() ?? '',
@@ -177,6 +182,12 @@ class InstallationModel {
           json['notes']?.toString() ??
           json['catatan']?.toString(),
 
+      installedAt: json['installed_at'] != null
+          ? DateTime.tryParse(
+              json['installed_at'].toString(),
+            )
+          : null,
+
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(
               json['created_at'].toString(),
@@ -201,7 +212,7 @@ class InstallationModel {
       // ID yang dikirim ke backend
       'lamp_type_id': lampTypeId,
 
-      'id_lcu': lampCode,
+      'id_lcu': idLcu ?? lampCode,
       'lamp_type': lampType,
       'wattage': wattage,
       'status': status,
@@ -212,6 +223,7 @@ class InstallationModel {
       'input_method': inputMethod,
       'photo_url': photoUrl,
       'notes': notes,
+      'installed_at': installedAt?.toIso8601String(),
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };

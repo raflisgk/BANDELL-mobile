@@ -68,8 +68,14 @@ class InstallationService {
           installation.notes!.trim();
     }
 
-    // installed_at menggunakan tanggal saja
-    if (installation.createdAt != null) {
+    // installed_at menggunakan tanggal instalasi
+    if (installation.installedAt != null) {
+      request.fields['installed_at'] =
+          installation.installedAt!
+              .toIso8601String()
+              .split('T')
+              .first;
+    } else if (installation.createdAt != null) {
       request.fields['installed_at'] =
           installation.createdAt!
               .toIso8601String()
@@ -271,12 +277,11 @@ class InstallationService {
       request.fields['code_panel'] = installation.panelCode!.trim();
     }
 
-    if (installation.createdAt != null) {
+    // Hanya kirim installed_at jika secara eksplisit diset pada installedAt.
+    // JANGAN gunakan updatedAt atau createdAt untuk installed_at saat update.
+    if (installation.installedAt != null) {
       request.fields['installed_at'] =
-          installation.createdAt!.toIso8601String().split('T').first;
-    } else if (installation.updatedAt != null) {
-      request.fields['installed_at'] =
-          installation.updatedAt!.toIso8601String().split('T').first;
+          installation.installedAt!.toIso8601String().split('T').first;
     }
 
     // Foto tambahan

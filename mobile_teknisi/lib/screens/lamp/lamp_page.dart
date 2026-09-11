@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../services/lamp_type_service.dart';
 import '../../services/project_service.dart';
@@ -7,6 +8,7 @@ import '../../widgets/app_top_bar.dart';
 import '../../widgets/bottom_navbar.dart';
 import '../history/history_page.dart';
 import '../metode_pendataan/metode_pendataan_page.dart';
+import '../notification/notification_page.dart';
 import '../profile/profile_page.dart';
 import 'lamp_type_card.dart';
 
@@ -46,15 +48,40 @@ class _LampPageState extends State<LampPage> {
   int _currentNavIndex = 0;
   List<LampTypeItem> _lampTypes = [];
   bool _isLoading = false;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     _loadLampTypes();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _loadLampTypesSilently(),
+    );
   }
 
-  void _loadLampTypes() async {
+  Future<void> _loadLampTypesSilently() async {
+    try {
+      final types = await LampTypeService().getLampTypes();
+      if (!mounted) return;
+      final newItems = types
+          .map((item) => LampTypeItem(
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                icon: Icons.lightbulb_outline_rounded,
+              ))
+          .toList();
+      setState(() {
+        _lampTypes = newItems;
+      });
+    } catch (e) {
+      debugPrint('Auto refresh error in LampPage: $e');
+    }
+  }
+
+  Future<void> _loadLampTypes() async {
     setState(() => _isLoading = true);
     final types = await LampTypeService().getLampTypes();
     if (mounted) {
@@ -80,6 +107,7 @@ class _LampPageState extends State<LampPage> {
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
@@ -121,18 +149,21 @@ class _LampPageState extends State<LampPage> {
     _handleNavigateToInputMethod(item);
   }
 
-  void _handleNavigateToInputMethod(LampTypeItem item) {
-    AppNavigator.push(
+  void _handleNavigateToInputMethod(LampTypeItem item) async {
+    await AppNavigator.push(
       context,
       MetodePendataanPage(
-      idProject: widget.idProject ??
-      ProjectService.selectedProject?.idProject,
-      idArea: widget.idArea,
-      areaName: widget.areaName,
-      lampType: item.name,
-      lampTypeId: item.id,
-),
+        idProject: widget.idProject ??
+            ProjectService.selectedProject?.idProject,
+        idArea: widget.idArea,
+        areaName: widget.areaName,
+        lampType: item.name,
+        lampTypeId: item.id,
+      ),
     );
+    if (mounted) {
+      _loadLampTypes();
+    }
   }
 
   @override
@@ -158,12 +189,18 @@ class _LampPageState extends State<LampPage> {
                 });
               },
               onBackPressed: _handleBack,
+              onNotificationPressed: () async {
+                await AppNavigator.push(context, const NotificationPage());
+                if (mounted) {
+                  _loadLampTypes();
+                }
+              },
             ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),

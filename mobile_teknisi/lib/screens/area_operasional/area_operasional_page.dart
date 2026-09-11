@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../../models/area_model.dart';
 import '../../models/project_model.dart';
+import '../../services/auth_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -8,6 +11,7 @@ import '../../widgets/app_top_bar.dart';
 import '../../widgets/bottom_navbar.dart';
 import '../history/history_page.dart';
 import '../lamp/lamp_page.dart';
+import '../notification/notification_page.dart';
 import '../profile/profile_page.dart';
 import 'area_operasional_card.dart';
 
@@ -25,6 +29,7 @@ class AreaOperasionalPage extends StatefulWidget {
 
 class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   final ProjectService _projectService = ProjectService();
+  Timer? _refreshTimer;
 
   List<ProjectModel> _projects = [];
   ProjectModel? _selectedProject;
@@ -42,6 +47,60 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   void initState() {
     super.initState();
     _loadProjects();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _refreshSilently(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshSilently() async {
+    try {
+      final projects = await _projectService.getProjects();
+      projects.sort((a, b) => a.id.compareTo(b.id));
+
+      if (!mounted) return;
+
+      ProjectModel? currentSelected = _selectedProject;
+      if (currentSelected != null) {
+        final matches = projects.where((p) => p.id == currentSelected!.id);
+        if (matches.isNotEmpty) {
+          currentSelected = matches.first;
+          ProjectService.selectedProject = currentSelected;
+        }
+      }
+
+      List<Map<String, dynamic>> updatedAreas = _areas;
+      if (currentSelected != null) {
+        final userId = AuthService.currentUser?.idUser;
+        final areas = await _projectService.getAreas(currentSelected.id, userId: userId);
+        updatedAreas = areas.map<Map<String, dynamic>>((area) {
+          return {
+            'id': area['id'],
+            'name': area['name']?.toString() ?? '',
+            'status': area['status']?.toString() ?? 'aktif',
+            'assigned_at': area['assigned_at']?.toString(),
+          };
+        }).toList();
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _projects = projects;
+        if (currentSelected != null) {
+          _selectedProject = currentSelected;
+          _areas = updatedAreas;
+        }
+      });
+    } catch (e) {
+      debugPrint('Auto refresh error in AreaOperasionalPage: $e');
+    }
   }
 
   Future<void> _loadProjects() async {
@@ -53,18 +112,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     try {
       final projects = await _projectService.getProjects();
 
-      // Project aktif di atas, project selesai di bawah.
-      projects.sort((a, b) {
-        if (a.isActive && b.isCompleted) {
-          return -1;
-        }
-
-        if (a.isCompleted && b.isActive) {
-          return 1;
-        }
-
-        return a.id.compareTo(b.id);
-      });
+      projects.sort((a, b) => a.id.compareTo(b.id));
 
       if (!mounted) return;
 
@@ -113,7 +161,8 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     });
 
     try {
-      final areas = await _projectService.getAreas(project.id);
+      final userId = AuthService.currentUser?.idUser;
+      final areas = await _projectService.getAreas(project.id, userId: userId);
 
       if (!mounted) return;
 
@@ -122,6 +171,8 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
           return {
             'id': area['id'],
             'name': area['name']?.toString() ?? '',
+            'status': area['status']?.toString() ?? 'aktif',
+            'assigned_at': area['assigned_at']?.toString(),
           };
         }).toList();
 
@@ -157,7 +208,16 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     _selectProject(matchingProjects.first);
   }
 
-  void _handleCardTap(Map<String, dynamic> area) {
+  Future<void> _refreshData() async {
+    await _loadProjects();
+  }
+
+  void _handleCardTap(Map<String, dynamic> area) async {
+    final status = area['status']?.toString().toLowerCase() ?? 'aktif';
+    if (status == 'nonaktif') {
+      return;
+    }
+
     final int areaId = int.tryParse(
           area['id'].toString(),
         ) ??
@@ -169,7 +229,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
       'Area selected: $areaName (ID: $areaId)',
     );
 
-    AppNavigator.push(
+    await AppNavigator.push(
       context,
       LampPage(
         idProject: _selectedProject?.id ?? 0,
@@ -177,6 +237,10 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         areaName: areaName,
       ),
     );
+
+    if (mounted) {
+      _refreshData();
+    }
   }
 
   @override
@@ -195,6 +259,12 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
               dropdownItems: projectNames,
               onDropdownChanged: _onProjectSelected,
               showBackButton: false,
+              onNotificationPressed: () async {
+                await AppNavigator.push(context, const NotificationPage());
+                if (mounted) {
+                  _refreshData();
+                }
+              },
             ),
 
             Expanded(
@@ -419,8 +489,14 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                           child: AreaOperasionalCard(
                             title: area['name']?.toString() ?? '',
                             location: _selectedProject?.name ?? '-',
-                            dateRange: '-',
-                            onTap: () => _handleCardTap(area),
+                            dateRange: AreaModel.formatAssignedAt(
+                              area['assigned_at']?.toString(),
+                            ),
+                            status: area['status']?.toString() ?? 'aktif',
+                            onTap: (area['status']?.toString().toLowerCase() ==
+                                    'nonaktif')
+                                ? null
+                                : () => _handleCardTap(area),
                           ),
                         ),
                       ),

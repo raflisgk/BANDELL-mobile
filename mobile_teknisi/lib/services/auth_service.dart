@@ -32,6 +32,31 @@ class AuthService {
   }
 
   Future<UserModel?> getProfile() async {
+    final user = currentUser;
+    if (user == null) return null;
+
+    try {
+      final response = await ApiService.getProfile(user.idUser);
+      final data = response['data'];
+      if (data is Map<String, dynamic>) {
+        final updated = UserModel(
+          idUser: data['id'] is int
+              ? data['id']
+              : int.tryParse(data['id']?.toString() ?? '') ?? user.idUser,
+          username: user.username,
+          name: data['name']?.toString() ?? user.name,
+          role: user.role,
+          email: data['email']?.toString() ?? user.email,
+          phone: data['phone_number']?.toString() ?? user.phone,
+          placementArea:
+              data['placement_area']?.toString() ?? user.placementArea,
+        );
+        currentUser = updated;
+        return updated;
+      }
+    } catch (e) {
+      debugPrint('Error getProfile: $e');
+    }
     return currentUser;
   }
 

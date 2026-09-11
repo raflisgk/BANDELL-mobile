@@ -21,7 +21,7 @@ class NotificationModel {
     this.districtName = '-',
     required this.notes,
     this.assignedAt,
-    this.title = 'Penugasan Project',
+    this.title = 'Penugasan Baru Diterima',
     this.time = '',
     this.isUnread = false,
     this.type,
@@ -78,7 +78,11 @@ class NotificationModel {
       districtName: districtName,
       notes: notes,
       assignedAt: assignedDate,
-      title: json['title']?.toString() ?? 'Penugasan Project',
+      title: (json['title'] == null ||
+              json['title'] == 'Penugasan Project' ||
+              json['title'] == 'Penugasan Proyek')
+          ? 'Penugasan Baru Diterima'
+          : json['title'].toString(),
       time: json['time']?.toString() ?? '',
       isUnread: json['is_unread'] == true ||
           json['is_read'] == false ||

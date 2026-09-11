@@ -1,68 +1,31 @@
 import 'package:flutter/material.dart';
 
-/// Smooth, fast fade transition route specifically for Bottom Navigation Bar tab switching
-class SmoothTabRoute<T> extends PageRouteBuilder<T> {
+/// Instant / zero-duration route for instant tab switching
+class InstantPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
 
-  SmoothTabRoute({required this.page})
+  InstantPageRoute({required this.page, super.settings})
       : super(
           pageBuilder: (context, animation, secondaryAnimation) => page,
-          transitionDuration: const Duration(milliseconds: 250),
-          reverseTransitionDuration: const Duration(milliseconds: 220),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOut,
-                reverseCurve: Curves.easeIn,
-              ),
-              child: child,
-            );
-          },
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) => child,
         );
 }
 
-/// Smooth slide & fade transition route for pushing sub-pages / detail screens
-class SmoothSlideRoute<T> extends PageRouteBuilder<T> {
-  final Widget page;
-
-  SmoothSlideRoute({required this.page})
-      : super(
-          pageBuilder: (context, animation, secondaryAnimation) => page,
-          transitionDuration: const Duration(milliseconds: 280),
-          reverseTransitionDuration: const Duration(milliseconds: 250),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            final slideAnimation = Tween<Offset>(
-              begin: const Offset(0.05, 0.0),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-                reverseCurve: Curves.easeInCubic,
-              ),
-            );
-
-            final fadeAnimation = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOut,
-              reverseCurve: Curves.easeIn,
-            );
-
-            return SlideTransition(
-              position: slideAnimation,
-              child: FadeTransition(
-                opacity: fadeAnimation,
-                child: child,
-              ),
-            );
-          },
-        );
+/// Kept for backward compatibility - now instant (zero delay)
+class SmoothTabRoute<T> extends InstantPageRoute<T> {
+  SmoothTabRoute({required super.page, super.settings});
 }
 
-/// Smooth, lightweight page transitions builder for theme-wide consistency
-class SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
-  const SmoothPageTransitionsBuilder();
+/// Kept for backward compatibility - now instant (zero delay)
+class SmoothSlideRoute<T> extends InstantPageRoute<T> {
+  SmoothSlideRoute({required super.page, super.settings});
+}
+
+/// Fast, instant page transitions builder for theme-wide consistency (no slide, no fade, no zoom, no bounce)
+class FastPageTransitionsBuilder extends PageTransitionsBuilder {
+  const FastPageTransitionsBuilder();
 
   @override
   Widget buildTransitions<T>(
@@ -72,64 +35,50 @@ class SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final slideAnimation = Tween<Offset>(
-      begin: const Offset(0.05, 0.0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeOutCubic,
-        reverseCurve: Curves.easeInCubic,
-      ),
-    );
-
-    final fadeAnimation = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeOut,
-      reverseCurve: Curves.easeIn,
-    );
-
-    return SlideTransition(
-      position: slideAnimation,
-      child: FadeTransition(
-        opacity: fadeAnimation,
-        child: child,
-      ),
-    );
+    return child;
   }
 }
 
-/// Navigation helpers for quick, smooth routing
+/// Backward compatibility alias
+typedef SmoothPageTransitionsBuilder = FastPageTransitionsBuilder;
+
+/// Navigation helpers for ultra-fast, responsive routing (sat-set like Instagram)
 class AppNavigator {
-  /// Push replacement with smooth fade transition (perfect for bottom navbar tabs)
+  /// Tab switching (Bottom Navigation Bar): Instant transition (0ms)
   static Future<T?> pushTabReplacement<T>(BuildContext context, Widget page) {
-    return Navigator.pushReplacement(
+    return Navigator.pushReplacement<T, dynamic>(
       context,
-      SmoothTabRoute<T>(page: page),
+      InstantPageRoute<T>(page: page),
     );
   }
 
-  /// Push route with smooth slide & fade transition (perfect for detail pages)
+  /// Push route with MaterialPageRoute (fast & responsive, no zoom/slide/fade delay)
   static Future<T?> push<T>(BuildContext context, Widget page) {
-    return Navigator.push(
+    return Navigator.push<T>(
       context,
-      SmoothSlideRoute<T>(page: page),
+      MaterialPageRoute<T>(
+        builder: (_) => page,
+      ),
     );
   }
 
-  /// Push replacement with smooth slide & fade transition
+  /// Push replacement with MaterialPageRoute
   static Future<T?> pushReplacement<T>(BuildContext context, Widget page) {
-    return Navigator.pushReplacement(
+    return Navigator.pushReplacement<T, dynamic>(
       context,
-      SmoothSlideRoute<T>(page: page),
+      MaterialPageRoute<T>(
+        builder: (_) => page,
+      ),
     );
   }
 
-  /// Push and remove all previous routes with smooth transition
+  /// Push and remove all previous routes with MaterialPageRoute
   static Future<T?> pushAndRemoveUntil<T>(BuildContext context, Widget page) {
-    return Navigator.pushAndRemoveUntil(
+    return Navigator.pushAndRemoveUntil<T>(
       context,
-      SmoothSlideRoute<T>(page: page),
+      MaterialPageRoute<T>(
+        builder: (_) => page,
+      ),
       (route) => false,
     );
   }

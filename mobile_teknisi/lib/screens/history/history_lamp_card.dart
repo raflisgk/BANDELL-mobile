@@ -17,9 +17,12 @@ class HistoryLampItem {
   final String fotoCount;
   final String waktu;
   final DateTime? tanggal;
+  final DateTime? installedAt;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
   final String? inputMethod;
   final String? panelCode;
+  final String? idLcu;
   final InstallationModel? installation;
 
   const HistoryLampItem({
@@ -36,9 +39,12 @@ class HistoryLampItem {
     required this.fotoCount,
     required this.waktu,
     this.tanggal,
+    this.installedAt,
     this.createdAt,
+    this.updatedAt,
     this.inputMethod,
     this.panelCode,
+    this.idLcu,
     this.installation,
   });
 }
@@ -95,7 +101,12 @@ class HistoryLampCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.kode,
+                            item.kode.isNotEmpty
+                                ? item.kode
+                                : ((item.idLcu != null &&
+                                        item.idLcu!.trim().isNotEmpty)
+                                    ? item.idLcu!
+                                    : '-'),
                             style: const TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 16,
@@ -122,7 +133,7 @@ class HistoryLampCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Lokasi & Koordinat Row
+                // Lokasi & Koordinat Row (Koordinat di atas, Alamat di bawah)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -140,21 +151,23 @@ class HistoryLampCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.lokasi,
+                            item.koordinat.isNotEmpty ? item.koordinat : '-',
                             style: const TextStyle(
                               color: Color(0xFF334155),
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item.koordinat,
-                            style: const TextStyle(
-                              color: Color(0xFF64748B),
-                              fontSize: 11.5,
+                          if (item.lokasi.trim().isNotEmpty && item.lokasi.trim() != '-') ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              item.lokasi,
+                              style: const TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 11.5,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
@@ -162,11 +175,13 @@ class HistoryLampCard extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 12),
+
                 const Divider(
                   color: Color(0xFFF1F5F9),
                   height: 1,
                   thickness: 1,
                 ),
+
                 const SizedBox(height: 10),
 
                 // Bottom Row: Foto & Waktu
@@ -197,20 +212,14 @@ class HistoryLampCard extends StatelessWidget {
                       ],
                     ),
 
-                    // Waktu info
+                    // Waktu info (HANYA gunakan created_at sesuai aturan)
                     Builder(
                       builder: (context) {
-                        final createdAt = item.createdAt ??
-                            item.installation?.createdAt ??
-                            (item.waktu.trim().isNotEmpty && item.waktu != '-'
-                                ? DateTime.tryParse(item.waktu.trim())
-                                : null) ??
-                            item.tanggal;
-
-                        debugPrint('HISTORY CARD createdAt: $createdAt');
+                        final displayDate = item.createdAt ??
+                            item.installation?.createdAt;
 
                         return Text(
-                          _formatWaktu(createdAt, item.waktu),
+                          _formatWaktu(displayDate, null),
                           style: const TextStyle(
                             color: Color(0xFF94A3B8),
                             fontSize: 11.5,
@@ -229,37 +238,56 @@ class HistoryLampCard extends StatelessWidget {
     );
   }
 
-  String _formatWaktu(DateTime? createdAt, String? fallbackWaktu) {
+  String _formatWaktu(
+    DateTime? createdAt,
+    String? fallbackWaktu,
+  ) {
     if (createdAt == null) {
       if (fallbackWaktu != null &&
           fallbackWaktu.trim().isNotEmpty &&
           fallbackWaktu.trim() != '-') {
-        final parsed = DateTime.tryParse(fallbackWaktu.trim());
+        final parsed = DateTime.tryParse(
+          fallbackWaktu.trim(),
+        );
+
         if (parsed != null) {
           try {
-            return DateFormat('dd MMM yyyy, HH:mm', 'id_ID')
-                .format(parsed.toLocal());
+            return DateFormat(
+              'dd MMM yyyy, HH:mm',
+              'id_ID',
+            ).format(parsed.toLocal());
           } catch (_) {
-            return DateFormat('dd MMM yyyy, HH:mm').format(parsed.toLocal());
+            return DateFormat(
+              'dd MMM yyyy, HH:mm',
+            ).format(parsed.toLocal());
           }
         }
+
         return fallbackWaktu.trim();
       }
+
       return '-';
     }
 
     try {
-      return DateFormat('dd MMM yyyy, HH:mm', 'id_ID')
-          .format(createdAt.toLocal());
+      return DateFormat(
+        'dd MMM yyyy, HH:mm',
+        'id_ID',
+      ).format(createdAt.toLocal());
     } catch (_) {
-      return DateFormat('dd MMM yyyy, HH:mm').format(createdAt.toLocal());
+      return DateFormat(
+        'dd MMM yyyy, HH:mm',
+      ).format(createdAt.toLocal());
     }
   }
 
   Widget _buildStatusBadge() {
     if (item.isVerified) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 4,
+        ),
         decoration: BoxDecoration(
           color: const Color(0xFFDCFCE7),
           borderRadius: BorderRadius.circular(12),
@@ -286,7 +314,10 @@ class HistoryLampCard extends StatelessWidget {
       );
     } else {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 4,
+        ),
         decoration: BoxDecoration(
           color: const Color(0xFFFEF3C7),
           borderRadius: BorderRadius.circular(12),

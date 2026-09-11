@@ -15,9 +15,12 @@ class HistoryLampModel {
   final String fotoCount;
   final String waktu;
   final DateTime? tanggal;
+  final DateTime? installedAt;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
   final String? inputMethod;
   final String? panelCode;
+  final String? idLcu;
   final InstallationModel? installation;
 
   const HistoryLampModel({
@@ -34,9 +37,12 @@ class HistoryLampModel {
     required this.fotoCount,
     required this.waktu,
     this.tanggal,
+    this.installedAt,
     this.createdAt,
+    this.updatedAt,
     this.inputMethod,
     this.panelCode,
+    this.idLcu,
     this.installation,
   });
 
@@ -80,18 +86,36 @@ class HistoryLampModel {
       instModel = InstallationModel.fromJson(json);
     } catch (_) {}
 
+    final installedAt = json['installed_at'] != null
+        ? DateTime.tryParse(json['installed_at'].toString())
+        : instModel?.installedAt;
+
     final createdAt = instModel?.createdAt ??
         (json['created_at'] != null
             ? DateTime.tryParse(json['created_at'].toString())
             : null);
 
+    final updatedAt = instModel?.updatedAt ??
+        (json['updated_at'] != null
+            ? DateTime.tryParse(json['updated_at'].toString())
+            : null);
+
+    debugPrint('HISTORY installed_at API: ${json['installed_at']}');
+    debugPrint('HISTORY installedAt MODEL: $installedAt');
     debugPrint('HISTORY created_at API: ${json['created_at']}');
     debugPrint('HISTORY createdAt MODEL: $createdAt');
 
-    final waktuStr = createdAt?.toIso8601String() ??
+    // Tanggal instalasi utama adalah installed_at. JANGAN gunakan updated_at atau created_at!
+    final effectiveTanggal = installedAt ??
+        (json['tanggal'] != null
+            ? DateTime.tryParse(json['tanggal'].toString())
+            : null);
+
+    final waktuStr = json['installed_at']?.toString() ??
+        installedAt?.toIso8601String() ??
+        createdAt?.toIso8601String() ??
         json['created_at']?.toString() ??
         json['waktu']?.toString() ??
-        json['installed_at']?.toString() ??
         '';
 
     final rawInput = json['input_method'] ??
@@ -117,6 +141,15 @@ class HistoryLampModel {
         json['kode_panel']?.toString() ??
         instModel?.panelCode;
 
+    final rawLcu = json['id_lcu']?.toString() ??
+        json['idLcu']?.toString() ??
+        json['kode']?.toString() ??
+        json['lamp_code']?.toString() ??
+        json['kode_lampu']?.toString() ??
+        json['id_barcode']?.toString() ??
+        instModel?.idLcu ??
+        instModel?.lampCode;
+
     return HistoryLampModel(
       idHistory: parsedId,
       userId: json['user_id'] is int
@@ -126,10 +159,8 @@ class HistoryLampModel {
           ? json['project_id']
           : int.tryParse(json['project_id']?.toString() ?? '0') ?? 0,
       areaId: parsedAreaId,
-      kode: json['kode']?.toString() ??
-          json['lamp_code']?.toString() ??
-          json['id_barcode']?.toString() ??
-          '',
+      idLcu: json['id_lcu']?.toString() ?? rawLcu,
+      kode: rawLcu ?? '',
       jenis: lampTypeName,
       status: vStatus,
       isVerified: isVerif,
@@ -146,13 +177,10 @@ class HistoryLampModel {
               ? '${(json['photos'] as List).length} Foto Lampu'
               : '0 Foto Lampu'),
       waktu: waktuStr,
-      tanggal: createdAt ??
-          (json['tanggal'] != null
-              ? DateTime.tryParse(json['tanggal'].toString())
-              : (json['installed_at'] != null
-                  ? DateTime.tryParse(json['installed_at'].toString())
-                  : null)),
+      tanggal: effectiveTanggal,
+      installedAt: installedAt,
       createdAt: createdAt,
+      updatedAt: updatedAt,
       inputMethod: normInput,
       panelCode: pCode,
       installation: instModel,
@@ -165,6 +193,7 @@ class HistoryLampModel {
       'user_id': userId,
       'project_id': projectId,
       'area_id': areaId,
+      'id_lcu': idLcu ?? kode,
       'kode': kode,
       'jenis': jenis,
       'status': status,

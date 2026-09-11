@@ -23,9 +23,9 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: SmoothPageTransitionsBuilder(),
-            TargetPlatform.iOS: SmoothPageTransitionsBuilder(),
-            TargetPlatform.windows: SmoothPageTransitionsBuilder(),
+            TargetPlatform.android: FastPageTransitionsBuilder(),
+            TargetPlatform.iOS: FastPageTransitionsBuilder(),
+            TargetPlatform.windows: FastPageTransitionsBuilder(),
           },
         ),
       ),

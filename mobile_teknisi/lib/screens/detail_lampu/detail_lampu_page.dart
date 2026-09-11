@@ -58,6 +58,30 @@ class DetailLampuPage extends StatefulWidget {
 }
 
 class _DetailLampuPageState extends State<DetailLampuPage> {
+  InstallationModel? _currentInstallation;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentInstallation = widget.installation;
+    _refreshDetail();
+  }
+
+  Future<void> _refreshDetail() async {
+    final id = _effectiveId;
+    if (id == null || id <= 0) return;
+    try {
+      final updated = await InstallationService().getInstallationDetail(id);
+      if (updated != null && mounted) {
+        setState(() {
+          _currentInstallation = updated;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error refreshing installation detail: $e');
+    }
+  }
+
   void _handleBack() {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
@@ -77,10 +101,12 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
   int? get _effectiveId =>
       widget.idInstallation ??
+      _currentInstallation?.idInstallation ??
       widget.installation?.idInstallation ??
       widget.idLamp;
 
   String get _effectiveCode =>
+      _currentInstallation?.lampCode ??
       widget.installation?.lampCode ??
       ((widget.lampCode != null &&
               widget.lampCode!.isNotEmpty &&
@@ -89,6 +115,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           : '-');
 
   String get _effectiveType =>
+      _currentInstallation?.lampType ??
       widget.installation?.lampType ??
       ((widget.lampType != null &&
               widget.lampType!.isNotEmpty &&
@@ -96,7 +123,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           ? widget.lampType!
           : '-');
 
-  void _handleEditData() {
+  void _handleEditData() async {
     final isProjectClosed =
         ProjectService.selectedProject?.status == 'closed' ||
             ProjectService.selectedProject?.status == 'selesai';
@@ -114,20 +141,24 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     }
 
     debugPrint('Edit Data');
-    AppNavigator.push(
+    await AppNavigator.push(
       context,
       EditDataLampuPage(
         isEdit: true,
         idInstallation: _effectiveId,
         initialKodeLampu: _effectiveCode,
         initialLongitude:
-            widget.installation?.longitude ?? widget.longitude ?? '',
+            _currentInstallation?.longitude ?? widget.installation?.longitude ?? widget.longitude ?? '',
         initialLatitude:
-            widget.installation?.latitude ?? widget.latitude ?? '',
-        initialAlamat: widget.address ?? '',
+            _currentInstallation?.latitude ?? widget.installation?.latitude ?? widget.latitude ?? '',
+        initialAlamat: _currentInstallation?.notes ?? widget.address ?? '',
         initialTipeLampu: _effectiveType,
       ),
     );
+
+    if (mounted) {
+      _refreshDetail();
+    }
   }
 
   void _handleHapusData() {
@@ -171,52 +202,53 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
   @override
   Widget build(BuildContext context) {
+    final inst = _currentInstallation ?? widget.installation;
     final code = _effectiveCode;
     final type = _effectiveType;
     final currentStatus =
-        widget.installation?.status ?? widget.status ?? 'Tersimpan';
+        inst?.status ?? widget.status ?? 'Tersimpan';
     final isTersimpan = currentStatus == 'Tersimpan';
 
     final effectivePanelCode =
-        widget.installation?.panelCode ?? widget.panelCode;
+        inst?.panelCode ?? widget.panelCode;
     final effectiveInputMethod = (() {
-    final value =
-      widget.installation?.inputMethod ?? widget.inputMethod;
+      final value =
+          inst?.inputMethod ?? widget.inputMethod;
 
-    if (value == null || value.trim().isEmpty) {
-    return '-';
-    }
+      if (value == null || value.trim().isEmpty) {
+        return '-';
+      }
 
-    final method = value.trim().toLowerCase();
+      final method = value.trim().toLowerCase();
 
-    if (method == 'realtime' || method == 'real-time') {
-    return 'Realtime';
-    }
+      if (method == 'realtime' || method == 'real-time') {
+        return 'Realtime';
+      }
 
-    if (method == 'manual') {
-    return 'Manual';
-    }
+      if (method == 'manual') {
+        return 'Manual';
+      }
 
-    return value;
+      return value;
     })();
 
-    final coords = (widget.installation?.latitude != null &&
-            widget.installation?.longitude != null)
-        ? '${widget.installation!.latitude}, ${widget.installation!.longitude}'
+    final coords = (inst?.latitude != null &&
+            inst?.longitude != null)
+        ? '${inst!.latitude}, ${inst.longitude}'
         : (widget.latitude != null && widget.longitude != null
             ? '${widget.latitude}, ${widget.longitude}'
             : null);
 
-    final effectivePhotos = widget.installation?.photos.isNotEmpty == true
-        ? widget.installation!.photos
+    final effectivePhotos = inst?.photos.isNotEmpty == true
+        ? inst!.photos
         : widget.photos;
 
-    final effectiveCreatedAt = widget.installation?.createdAt != null
-        ? widget.installation!.createdAt.toString()
+    final effectiveCreatedAt = inst?.createdAt != null
+        ? inst!.createdAt.toString()
         : widget.createdAt;
 
-    final effectiveUpdatedAt = widget.installation?.updatedAt != null
-        ? widget.installation!.updatedAt.toString()
+    final effectiveUpdatedAt = inst?.updatedAt != null
+        ? inst!.updatedAt.toString()
         : widget.updatedAt;
 
     final projectName =
@@ -237,7 +269,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

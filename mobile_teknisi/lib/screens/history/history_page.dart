@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/project_model.dart';
 import '../../services/auth_service.dart';
@@ -29,12 +30,65 @@ class _HistoryPageState extends State<HistoryPage> {
   String? _selectedProject;
   List<HistoryLampItem> _historyItems = [];
   bool _isLoading = false;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _selectedProject = ProjectService.selectedProject?.projectName;
     _loadHistory();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _loadHistorySilently(),
+    );
+  }
+
+  Future<void> _loadHistorySilently() async {
+    final proj = _currentProject;
+    if (proj == null) return;
+
+    final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
+
+    try {
+      final history = await InstallationService().getHistory(
+        userId: AuthService.currentUser?.idUser ?? 0,
+        projectId: proj.idProject,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      if (!mounted) return;
+      final newItems = history
+          .map((item) => HistoryLampItem(
+                idHistory: item.idHistory,
+                userId: item.userId,
+                projectId: item.projectId,
+                areaId: item.areaId,
+                kode: item.kode.isNotEmpty
+                    ? item.kode
+                    : (item.idLcu ?? '-'),
+                jenis: item.jenis,
+                status: item.status,
+                isVerified: item.isVerified,
+                lokasi: item.lokasi,
+                koordinat: item.koordinat,
+                fotoCount: item.fotoCount,
+                waktu: item.waktu,
+                tanggal: item.tanggal,
+                installedAt: item.installedAt,
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt,
+                inputMethod: item.inputMethod,
+                panelCode: item.panelCode,
+                idLcu: item.idLcu ?? (item.kode.isNotEmpty ? item.kode : null),
+                installation: item.installation,
+              ))
+          .toList();
+      setState(() {
+        _historyItems = newItems;
+      });
+    } catch (e) {
+      debugPrint('Auto refresh error in HistoryPage: $e');
+    }
   }
 
   DateTime _subtractOneMonth(DateTime date) {
@@ -129,7 +183,9 @@ class _HistoryPageState extends State<HistoryPage> {
                     userId: item.userId,
                     projectId: item.projectId,
                     areaId: item.areaId,
-                    kode: item.kode,
+                    kode: item.kode.isNotEmpty
+                        ? item.kode
+                        : (item.idLcu ?? '-'),
                     jenis: item.jenis,
                     status: item.status,
                     isVerified: item.isVerified,
@@ -138,8 +194,12 @@ class _HistoryPageState extends State<HistoryPage> {
                     fotoCount: item.fotoCount,
                     waktu: item.waktu,
                     tanggal: item.tanggal,
+                    installedAt: item.installedAt,
+                    createdAt: item.createdAt,
+                    updatedAt: item.updatedAt,
                     inputMethod: item.inputMethod,
                     panelCode: item.panelCode,
+                    idLcu: item.idLcu ?? (item.kode.isNotEmpty ? item.kode : null),
                     installation: item.installation,
                   ))
               .toList();
@@ -164,21 +224,91 @@ class _HistoryPageState extends State<HistoryPage> {
  
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
   }
 
-  List<HistoryLampItem> get _filteredItems {
-    if (_searchQuery.trim().isEmpty) {
-      return _historyItems;
+  DateTime? _extractDateOnly(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is DateTime) {
+      final local = raw.isUtc ? raw.toLocal() : raw;
+      return DateTime(local.year, local.month, local.day);
     }
-    final query = _searchQuery.toLowerCase().trim();
-    return _historyItems.where((item) {
-      return item.kode.toLowerCase().contains(query) ||
-          item.lokasi.toLowerCase().contains(query) ||
-          item.jenis.toLowerCase().contains(query);
-    }).toList();
+    final str = raw.toString().trim();
+    if (str.isEmpty || str == '-' || str.toLowerCase() == 'null') return null;
+
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(str);
+    if (match != null) {
+      final y = int.parse(match.group(1)!);
+      final m = int.parse(match.group(2)!);
+      final d = int.parse(match.group(3)!);
+      return DateTime(y, m, d);
+    }
+
+    final dt = DateTime.tryParse(str);
+    if (dt != null) {
+      final local = dt.toLocal();
+      return DateTime(local.year, local.month, local.day);
+    }
+    return null;
+  }
+
+  bool _matchesDateFilter(HistoryLampItem item, String filter) {
+    final (startDate, endDate) = _getDateRangeForFilter(filter);
+    if (startDate == null && endDate == null) return true;
+
+    // HANYA gunakan created_at (tanggal record dibuat).
+    final itemDate = _extractDateOnly(item.createdAt) ??
+        _extractDateOnly(item.installation?.createdAt);
+
+    if (itemDate == null) return false;
+
+    if (startDate != null && itemDate.isBefore(startDate)) {
+      return false;
+    }
+    if (endDate != null && itemDate.isAfter(endDate)) {
+      return false;
+    }
+    return true;
+  }
+
+  List<HistoryLampItem> get _filteredItems {
+    var items = _historyItems
+        .where((item) => _matchesDateFilter(item, _selectedFilter))
+        .toList();
+
+    if (_searchQuery.trim().isNotEmpty) {
+      final query = _searchQuery.toLowerCase().trim();
+      items = items.where((item) {
+        return item.kode.toLowerCase().contains(query) ||
+            (item.idLcu != null && item.idLcu!.toLowerCase().contains(query)) ||
+            item.lokasi.toLowerCase().contains(query) ||
+            item.jenis.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    // Sorting "Terbaru" berdasarkan created_at (record paling baru di atas).
+    items.sort((a, b) {
+      final dateA = a.createdAt ?? a.installation?.createdAt;
+      final dateB = b.createdAt ?? b.installation?.createdAt;
+
+      if (dateA != null && dateB != null) {
+        final cmp = dateB.compareTo(dateA);
+        if (cmp != 0) return cmp;
+      } else if (dateA != null) {
+        return -1;
+      } else if (dateB != null) {
+        return 1;
+      }
+
+      final idA = a.idHistory ?? 0;
+      final idB = b.idHistory ?? 0;
+      return idB.compareTo(idA);
+    });
+
+    return items;
   }
 
   Future<void> _handleFilterTap(String filter) async {
@@ -205,12 +335,16 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  void _handleCardTap(HistoryLampItem item) {
-    AppNavigator.push(
+  void _handleCardTap(HistoryLampItem item) async {
+    final effectiveCode = (item.idLcu != null && item.idLcu!.trim().isNotEmpty)
+        ? item.idLcu!
+        : (item.kode.trim().isNotEmpty ? item.kode : '-');
+
+    await AppNavigator.push(
       context,
       DetailLampuPage(
         idInstallation: item.idHistory,
-        lampCode: item.kode,
+        lampCode: effectiveCode,
         lampType: item.jenis,
         status: item.status,
         latitude: item.koordinat.contains(',')
@@ -220,13 +354,18 @@ class _HistoryPageState extends State<HistoryPage> {
             ? item.koordinat.split(',')[1].trim()
             : null,
         address: item.lokasi,
-        createdAt: item.waktu,
+        createdAt: item.createdAt?.toIso8601String() ?? item.installation?.createdAt?.toIso8601String(),
+        updatedAt: item.updatedAt?.toIso8601String() ?? item.installation?.updatedAt?.toIso8601String(),
         wattage: '120W',
         installation: item.installation,
         inputMethod: item.inputMethod,
         panelCode: item.panelCode,
       ),
     );
+
+    if (mounted) {
+      _loadHistory();
+    }
   }
 
   void _handleNavTap(int index) {
@@ -248,7 +387,7 @@ class _HistoryPageState extends State<HistoryPage> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +518,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     ],
                   ),
                   Text(
-                    '${filtered.length} Record',
+                    '${filtered.length} Instalasi',
                     style: const TextStyle(
                       color: Color(0xFF94A3B8),
                       fontSize: 12.5,

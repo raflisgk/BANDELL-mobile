@@ -41,18 +41,7 @@ class ProjectService {
         )
         .toList();
 
-    // Aktif di atas, selesai di bawah.
-    projects.sort((a, b) {
-      if (a.isActive && b.isCompleted) {
-        return -1;
-      }
-
-      if (a.isCompleted && b.isActive) {
-        return 1;
-      }
-
-      return a.id.compareTo(b.id);
-    });
+    projects.sort((a, b) => a.id.compareTo(b.id));
 
     _projects = projects;
 
@@ -87,10 +76,11 @@ class ProjectService {
   }
 
   /// Mengambil area berdasarkan project
-  Future<List<dynamic>> getAreas(int projectId) async {
+  Future<List<dynamic>> getAreas(int projectId, {int? userId}) async {
+    final query = userId != null ? '?user_id=$userId' : '';
     final response = await http.get(
       Uri.parse(
-        '${ApiService.baseUrl}/projects/$projectId/areas',
+        '${ApiService.baseUrl}/projects/$projectId/areas$query',
       ),
       headers: ApiService.defaultHeaders,
     );

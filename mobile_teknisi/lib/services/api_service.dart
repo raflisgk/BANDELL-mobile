@@ -49,6 +49,22 @@ class ApiService {
   );
 }
 
+  static Future<Map<String, dynamic>> getProfile(int userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/profile?user_id=$userId'),
+      headers: defaultHeaders,
+    );
+
+    debugPrint('GET PROFILE STATUS: ${response.statusCode}');
+    debugPrint('GET PROFILE BODY: ${response.body}');
+
+    if (response.statusCode != 200) {
+      throw Exception('Gagal mengambil data profile.');
+    }
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   static String? get authToken => _authToken;
 
   /// Default headers yang akan dikirim pada setiap request API

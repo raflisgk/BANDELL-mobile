@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_colors.dart';
@@ -30,6 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   late TextEditingController _editController;
   final FocusNode _editFocusNode = FocusNode();
+  Timer? _refreshTimer;
 
   @override
   void initState() {
@@ -45,10 +47,32 @@ class _ProfilePageState extends State<ProfilePage> {
       _phone = user.phone ?? '-';
       _location = user.placementArea ?? '-';
     }
+
+    _loadProfile();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _loadProfile(),
+    );
+  }
+
+  Future<void> _loadProfile() async {
+    final user = await AuthService().getProfile();
+    if (user != null && mounted) {
+      setState(() {
+        _name = user.name.isNotEmpty ? user.name : user.username;
+        _role = user.role.isNotEmpty ? user.role : 'Teknisi Lapangan';
+        _email = user.email ?? '-';
+        if (_activeEditField != ProfileEditField.phone) {
+          _phone = user.phone ?? '-';
+        }
+        _location = user.placementArea ?? '-';
+      });
+    }
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _editController.dispose();
     _editFocusNode.dispose();
     super.dispose();
@@ -106,8 +130,11 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  void _handleNotification() {
-    AppNavigator.push(context, const NotificationPage());
+  void _handleNotification() async {
+    await AppNavigator.push(context, const NotificationPage());
+    if (mounted) {
+      _loadProfile();
+    }
   }
 
   void _handleNavTap(int index) {

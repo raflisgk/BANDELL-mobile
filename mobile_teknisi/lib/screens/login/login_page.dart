@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../area_operasional/area_operasional_page.dart';
 import '../../services/api_service.dart';
+
+import '../../services/secure_credential_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -68,6 +71,22 @@ class _LoginPageState extends State<LoginPage>
     );
 
     _animController.forward();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final saved = await SecureCredentialService.getSavedCredentials();
+      if (saved != null && mounted) {
+        setState(() {
+          _rememberMe = true;
+          _usernameController.text = saved['email'] ?? '';
+          _passwordController.text = saved['password'] ?? '';
+        });
+      }
+    } catch (_) {
+      // Ignore secure storage read errors gracefully
+    }
   }
 
   void _onFocusChange() {
@@ -84,6 +103,19 @@ class _LoginPageState extends State<LoginPage>
     _usernameFocusNode.dispose();
     _passwordFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRememberMeChanged(bool? value) async {
+    final newValue = value ?? false;
+    setState(() {
+      _rememberMe = newValue;
+    });
+
+    if (!newValue) {
+      try {
+        await SecureCredentialService.clearCredentials();
+      } catch (_) {}
+    }
   }
 
  Future<void> _handleLogin() async {
@@ -108,13 +140,19 @@ class _LoginPageState extends State<LoginPage>
   });
 
   try {
-    final result = await ApiService.login(
+    await ApiService.login(
       email: email,
       password: password,
     );
 
-    debugPrint('STATUS LOGIN BERHASIL');
-    debugPrint('RESPONSE LOGIN: $result');
+    if (_rememberMe) {
+      await SecureCredentialService.saveCredentials(
+        email: email,
+        password: password,
+      );
+    } else {
+      await SecureCredentialService.clearCredentials();
+    }
 
     if (!mounted) return;
 
@@ -127,8 +165,6 @@ class _LoginPageState extends State<LoginPage>
       const AreaOperasionalPage(),
     );
   } catch (e) {
-    debugPrint('Login error: $e');
-
     if (!mounted) return;
 
     setState(() {
@@ -158,15 +194,53 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  void _handleContactAdmin() {
-    debugPrint('Hubungi Admin clicked');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Hubungi Admin (Aksi UI Sementara)'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 1),
-      ),
+  Future<void> _handleContactAdmin() async {
+    const adminPhone = '62895627111665';
+    final message = Uri.encodeComponent(
+      'Halo Admin, saya ingin menghubungi Admin terkait akun aplikasi.',
     );
+    final whatsappUrl = Uri.parse('https://wa.me/$adminPhone?text=$message');
+
+    try {
+      final canLaunch = await canLaunchUrl(whatsappUrl);
+      if (!canLaunch) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('WhatsApp tidak tersedia di perangkat.'),
+              backgroundColor: Color(0xFFDC2626),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      final launched = await launchUrl(
+        whatsappUrl,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('WhatsApp tidak tersedia di perangkat.'),
+            backgroundColor: Color(0xFFDC2626),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('WhatsApp tidak tersedia di perangkat.'),
+            backgroundColor: Color(0xFFDC2626),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -181,9 +255,7 @@ class _LoginPageState extends State<LoginPage>
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
-          physics: isKeyboardOpen
-              ? const BouncingScrollPhysics()
-              : const ClampingScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: availableHeight > 0 ? availableHeight : 600,
@@ -347,11 +419,7 @@ class _LoginPageState extends State<LoginPage>
                                     height: 24,
                                     child: Checkbox(
                                       value: _rememberMe,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _rememberMe = value ?? false;
-                                        });
-                                      },
+                                      onChanged: _handleRememberMeChanged,
                                       activeColor: Colors.white,
                                       checkColor: AppColors.primary,
                                       side: const BorderSide(
@@ -364,12 +432,15 @@ class _LoginPageState extends State<LoginPage>
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text(
-                                    'Ingat saya',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                  GestureDetector(
+                                    onTap: () => _handleRememberMeChanged(!_rememberMe),
+                                    child: const Text(
+                                      'Ingat saya',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                 ],

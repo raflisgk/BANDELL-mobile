@@ -248,8 +248,9 @@ class InstallationController extends Controller
                 ?? $installation->address,
             'code_panel' => $validated['code_panel']
                 ?? $installation->code_panel,
-            'installed_at' => $validated['installed_at']
-                ?? $installation->installed_at,
+            'installed_at' => (!empty($validated['installed_at']))
+                ? $validated['installed_at']
+                : $installation->installed_at,
         ]);
 
         if ($request->hasFile('photos')) {
@@ -329,7 +330,7 @@ class InstallationController extends Controller
 
         if (!empty($validated['start_date'])) {
             $query->whereDate(
-                'installed_at',
+                'created_at',
                 '>=',
                 $validated['start_date']
             );
@@ -337,7 +338,7 @@ class InstallationController extends Controller
 
         if (!empty($validated['end_date'])) {
             $query->whereDate(
-                'installed_at',
+                'created_at',
                 '<=',
                 $validated['end_date']
             );
