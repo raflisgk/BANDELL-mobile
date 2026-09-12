@@ -20,8 +20,6 @@ class NotificationController extends Controller
             'district',
         ])
             ->where('user_id', $validated['user_id'])
-            ->whereNotNull('notes')
-            ->where('notes', '!=', '')
             ->orderByDesc('assigned_at')
             ->get()
             ->map(function ($assignment) {
@@ -31,6 +29,7 @@ class NotificationController extends Controller
                     'project_name' => $assignment->project?->name ?? '-',
                     'district_name' => $assignment->district?->name ?? '-',
                     'notes' => $assignment->notes,
+                    'assigned_at' => $assignment->assigned_at?->toIso8601String() ?? $assignment->created_at?->toIso8601String(),
                 ];
             });
 

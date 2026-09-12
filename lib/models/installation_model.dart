@@ -14,6 +14,7 @@ class InstallationModel {
   final String lampCode;
   final String wattage;
   final String status;
+  final String? districtName;
   final String? latitude;
   final String? longitude;
   final String? panelCode;
@@ -30,6 +31,7 @@ class InstallationModel {
     this.idProject,
     this.idUser,
     required this.idArea,
+    this.districtName,
     this.lampTypeId,
     this.idLcu,
     required this.lampCode,
@@ -125,6 +127,15 @@ class InstallationModel {
                 json['district_id'],
           ) ??
           0,
+
+      districtName: (() {
+        if (json['district'] is Map) {
+          return json['district']['name']?.toString() ??
+              json['district']['district_name']?.toString();
+        }
+        return json['district_name']?.toString() ??
+            json['area_name']?.toString();
+      })(),
 
       // ID jenis lampu dari database
       lampTypeId: parseInt(

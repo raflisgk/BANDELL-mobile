@@ -4,7 +4,7 @@ class NotificationModel {
   final String projectName;
   final int? districtId;
   final String districtName;
-  final String notes;
+  final String? notes;
   final DateTime? assignedAt;
   final String title;
   final String time;
@@ -19,7 +19,7 @@ class NotificationModel {
     this.projectName = '-',
     this.districtId,
     this.districtName = '-',
-    required this.notes,
+    this.notes,
     this.assignedAt,
     this.title = 'Penugasan Baru Diterima',
     this.time = '',
@@ -37,7 +37,7 @@ class NotificationModel {
     if (districtName.isNotEmpty && districtName != '-') {
       buffer.writeln('Area: $districtName');
     }
-    if (notes.isNotEmpty && notes != '-') {
+    if (notes != null && notes!.isNotEmpty && notes != '-') {
       buffer.writeln('Catatan: $notes');
     }
     return buffer.toString().trim();
@@ -61,10 +61,16 @@ class NotificationModel {
         json['district']?['name']?.toString() ??
         '-';
 
-    final notes = json['notes']?.toString() ??
+    final rawNotes = json['notes']?.toString() ??
         json['content']?.toString() ??
-        json['message']?.toString() ??
-        '-';
+        json['message']?.toString();
+
+    final String? notes = (rawNotes != null &&
+            rawNotes.trim().isNotEmpty &&
+            rawNotes.trim() != '-' &&
+            rawNotes.trim().toLowerCase() != 'null')
+        ? rawNotes.trim()
+        : null;
 
     return NotificationModel(
       id: id,

@@ -8,12 +8,15 @@ class HistoryLampItem {
   final int userId;
   final int projectId;
   final int? areaId;
+  final String? districtName;
   final String kode;
   final String jenis;
   final String status;
   final bool isVerified;
   final String lokasi;
   final String koordinat;
+  final String? latitude;
+  final String? longitude;
   final String fotoCount;
   final String waktu;
   final DateTime? tanggal;
@@ -30,12 +33,15 @@ class HistoryLampItem {
     required this.userId,
     required this.projectId,
     this.areaId,
+    this.districtName,
     required this.kode,
     required this.jenis,
     required this.status,
     required this.isVerified,
     required this.lokasi,
     required this.koordinat,
+    this.latitude,
+    this.longitude,
     required this.fotoCount,
     required this.waktu,
     this.tanggal,
@@ -133,7 +139,7 @@ class HistoryLampCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Lokasi & Koordinat Row (Koordinat di atas, Alamat di bawah)
+                // Lokasi & Koordinat Row (Baris 1: Icon + Nama District, Baris 2: Latitude, Longitude)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -151,23 +157,22 @@ class HistoryLampCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.koordinat.isNotEmpty ? item.koordinat : '-',
+                            _getDistrictName(),
                             style: const TextStyle(
                               color: Color(0xFF334155),
                               fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          if (item.lokasi.trim().isNotEmpty && item.lokasi.trim() != '-') ...[
-                            const SizedBox(height: 3),
-                            Text(
-                              item.lokasi,
-                              style: const TextStyle(
-                                color: Color(0xFF64748B),
-                                fontSize: 11.5,
-                              ),
+                          const SizedBox(height: 3),
+                          Text(
+                            _getCoordinates(),
+                            style: const TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
@@ -343,5 +348,35 @@ class HistoryLampCard extends StatelessWidget {
         ),
       );
     }
+  }
+
+  String _getDistrictName() {
+    final name = (item.districtName != null &&
+            item.districtName!.trim().isNotEmpty &&
+            item.districtName!.trim() != '-')
+        ? item.districtName!.trim()
+        : (item.installation?.districtName != null &&
+                item.installation!.districtName!.trim().isNotEmpty &&
+                item.installation!.districtName!.trim() != '-')
+            ? item.installation!.districtName!.trim()
+            : '-';
+    return name;
+  }
+
+  String _getCoordinates() {
+    final lat = item.latitude ?? item.installation?.latitude;
+    final lng = item.longitude ?? item.installation?.longitude;
+    if (lat != null &&
+        lng != null &&
+        lat.trim().isNotEmpty &&
+        lng.trim().isNotEmpty &&
+        lat.trim() != '-' &&
+        lng.trim() != '-') {
+      return '${lat.trim()}, ${lng.trim()}';
+    }
+    if (item.koordinat.trim().isNotEmpty && item.koordinat.trim() != '-') {
+      return item.koordinat.trim();
+    }
+    return '-';
   }
 }

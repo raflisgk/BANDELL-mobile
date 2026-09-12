@@ -6,12 +6,15 @@ class HistoryLampModel {
   final int userId;
   final int projectId;
   final int? areaId;
+  final String? districtName;
   final String kode;
   final String jenis;
   final String status;
   final bool isVerified;
   final String lokasi;
   final String koordinat;
+  final String? latitude;
+  final String? longitude;
   final String fotoCount;
   final String waktu;
   final DateTime? tanggal;
@@ -28,12 +31,15 @@ class HistoryLampModel {
     required this.userId,
     required this.projectId,
     this.areaId,
+    this.districtName,
     required this.kode,
     required this.jenis,
     required this.status,
     required this.isVerified,
     required this.lokasi,
     required this.koordinat,
+    this.latitude,
+    this.longitude,
     required this.fotoCount,
     required this.waktu,
     this.tanggal,
@@ -150,6 +156,21 @@ class HistoryLampModel {
         instModel?.idLcu ??
         instModel?.lampCode;
 
+    final lat = json['latitude']?.toString() ?? instModel?.latitude;
+    final lng = json['longitude']?.toString() ?? instModel?.longitude;
+
+    String? distName;
+    if (json['district'] is Map) {
+      distName = json['district']['name']?.toString() ??
+          json['district']['district_name']?.toString();
+    } else if (json['district_name'] != null) {
+      distName = json['district_name']?.toString();
+    } else if (json['area_name'] != null) {
+      distName = json['area_name']?.toString();
+    } else if (instModel?.districtName != null) {
+      distName = instModel!.districtName;
+    }
+
     return HistoryLampModel(
       idHistory: parsedId,
       userId: json['user_id'] is int
@@ -159,6 +180,7 @@ class HistoryLampModel {
           ? json['project_id']
           : int.tryParse(json['project_id']?.toString() ?? '0') ?? 0,
       areaId: parsedAreaId,
+      districtName: distName,
       idLcu: json['id_lcu']?.toString() ?? rawLcu,
       kode: rawLcu ?? '',
       jenis: lampTypeName,
@@ -169,9 +191,11 @@ class HistoryLampModel {
           json['location']?.toString() ??
           '',
       koordinat: json['koordinat']?.toString() ??
-          (json['latitude'] != null && json['longitude'] != null
-              ? '${json['latitude']}, ${json['longitude']}'
+          (lat != null && lng != null && lat.isNotEmpty && lng.isNotEmpty
+              ? '$lat, $lng'
               : ''),
+      latitude: lat,
+      longitude: lng,
       fotoCount: json['foto_count']?.toString() ??
           (json['photos'] is List
               ? '${(json['photos'] as List).length} Foto Lampu'
@@ -193,6 +217,9 @@ class HistoryLampModel {
       'user_id': userId,
       'project_id': projectId,
       'area_id': areaId,
+      'district_name': districtName,
+      'latitude': latitude,
+      'longitude': longitude,
       'id_lcu': idLcu ?? kode,
       'kode': kode,
       'jenis': jenis,

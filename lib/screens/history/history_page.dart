@@ -63,6 +63,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 userId: item.userId,
                 projectId: item.projectId,
                 areaId: item.areaId,
+                districtName: item.districtName,
                 kode: item.kode.isNotEmpty
                     ? item.kode
                     : (item.idLcu ?? '-'),
@@ -71,6 +72,8 @@ class _HistoryPageState extends State<HistoryPage> {
                 isVerified: item.isVerified,
                 lokasi: item.lokasi,
                 koordinat: item.koordinat,
+                latitude: item.latitude,
+                longitude: item.longitude,
                 fotoCount: item.fotoCount,
                 waktu: item.waktu,
                 tanggal: item.tanggal,
@@ -183,6 +186,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     userId: item.userId,
                     projectId: item.projectId,
                     areaId: item.areaId,
+                    districtName: item.districtName,
                     kode: item.kode.isNotEmpty
                         ? item.kode
                         : (item.idLcu ?? '-'),
@@ -191,6 +195,8 @@ class _HistoryPageState extends State<HistoryPage> {
                     isVerified: item.isVerified,
                     lokasi: item.lokasi,
                     koordinat: item.koordinat,
+                    latitude: item.latitude,
+                    longitude: item.longitude,
                     fotoCount: item.fotoCount,
                     waktu: item.waktu,
                     tanggal: item.tanggal,
@@ -284,7 +290,12 @@ class _HistoryPageState extends State<HistoryPage> {
       items = items.where((item) {
         return item.kode.toLowerCase().contains(query) ||
             (item.idLcu != null && item.idLcu!.toLowerCase().contains(query)) ||
+            (item.districtName != null &&
+                item.districtName!.toLowerCase().contains(query)) ||
+            (item.installation?.districtName != null &&
+                item.installation!.districtName!.toLowerCase().contains(query)) ||
             item.lokasi.toLowerCase().contains(query) ||
+            item.koordinat.toLowerCase().contains(query) ||
             item.jenis.toLowerCase().contains(query);
       }).toList();
     }
@@ -387,7 +398,7 @@ class _HistoryPageState extends State<HistoryPage> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,7 +474,7 @@ class _HistoryPageState extends State<HistoryPage> {
               // Filter Horizontal Pills (Hari Ini, 7 Hari, 1 Bulan, Pilih Tanggal)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 child: Row(
                   children: [
                     _buildFilterPill('Hari Ini'),
@@ -609,18 +620,11 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                 )
               else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final item = filtered[index];
-                    return HistoryLampCard(
-                      item: item,
-                      onTap: () => _handleCardTap(item),
-                    );
-                  },
-                ),
+                for (final item in filtered)
+                  HistoryLampCard(
+                    item: item,
+                    onTap: () => _handleCardTap(item),
+                  ),
 
               const SizedBox(height: 16),
             ],

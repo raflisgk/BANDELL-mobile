@@ -23,6 +23,7 @@ class DetailLampuPage extends StatefulWidget {
   final String? lampType;
   final String? wattage;
   final String? status;
+  final String? districtName;
   final String? latitude;
   final String? longitude;
   final String? panelCode;
@@ -42,6 +43,7 @@ class DetailLampuPage extends StatefulWidget {
     this.lampType,
     this.wattage,
     this.status,
+    this.districtName,
     this.latitude,
     this.longitude,
     this.panelCode,
@@ -232,9 +234,16 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       return value;
     })();
 
-    final coords = (inst?.latitude != null &&
-            inst?.longitude != null)
-        ? '${inst!.latitude}, ${inst.longitude}'
+    final effectiveDistrictName =
+        inst?.districtName ?? widget.districtName;
+    final effectiveLatitude =
+        inst?.latitude ?? widget.latitude;
+    final effectiveLongitude =
+        inst?.longitude ?? widget.longitude;
+
+    final coords = (effectiveLatitude != null &&
+            effectiveLongitude != null)
+        ? '$effectiveLatitude, $effectiveLongitude'
         : (widget.latitude != null && widget.longitude != null
             ? '${widget.latitude}, ${widget.longitude}'
             : null);
@@ -269,7 +278,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,6 +321,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                     LampuHeaderCard(
                       code: code,
                       isTersimpan: isTersimpan,
+                      updatedAt: inst?.updatedAt ??
+                          (effectiveUpdatedAt != null
+                              ? DateTime.tryParse(effectiveUpdatedAt)
+                              : null),
                     ),
 
                     const SizedBox(height: 20),
@@ -327,8 +340,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                     ),
                     const SizedBox(height: 10),
                     LokasiCard(
+                      districtName: effectiveDistrictName,
+                      latitude: effectiveLatitude,
+                      longitude: effectiveLongitude,
                       coordinates: coords,
-                      address: widget.address,
                     ),
 
                     const SizedBox(height: 20),

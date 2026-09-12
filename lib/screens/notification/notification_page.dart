@@ -113,23 +113,53 @@ class _NotificationPageState extends State<NotificationPage> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
+    final sorted = List<NotificationItem>.from(_notifications)
+      ..sort((a, b) {
+        final aDate = a.assignedAt ?? DateTime(1970);
+        final bDate = b.assignedAt ?? DateTime(1970);
+        return bDate.compareTo(aDate);
+      });
+
     final terbaruList = <NotificationItem>[];
     final sebelumnyaList = <NotificationItem>[];
 
-    for (final item in _notifications) {
+    for (final item in sorted) {
       final dt = item.assignedAt?.toLocal();
-      if (dt != null && (dt.isAfter(today) || now.difference(dt).inHours < 24)) {
-        terbaruList.add(item);
-      } else if (item.isUnread) {
+      if (dt == null) {
         terbaruList.add(item);
       } else {
-        sebelumnyaList.add(item);
+        final itemDay = DateTime(dt.year, dt.month, dt.day);
+        final isToday = itemDay == today;
+        final isWithin24Hours = now.difference(dt).inHours < 24 && !now.difference(dt).isNegative;
+
+        if (isToday || isWithin24Hours || item.isUnread) {
+          terbaruList.add(item);
+        } else {
+          sebelumnyaList.add(item);
+        }
       }
     }
 
-    // Jika semua notifikasi adalah tanggal sebelumnya, pastikan yang teratas tetap muncul di TERBARU
+    // Jika tidak ada yang masuk TERBARU (misal seluruh notifikasi berasal dari hari sebelumnya),
+    // pindahkan kelompok tanggal paling baru ke TERBARU agar section TERBARU tetap menampilkan penugasan teranyar.
     if (terbaruList.isEmpty && sebelumnyaList.isNotEmpty) {
-      terbaruList.add(sebelumnyaList.removeAt(0));
+      final latestDate = sebelumnyaList.first.assignedAt?.toLocal();
+      if (latestDate != null) {
+        final latestDay = DateTime(latestDate.year, latestDate.month, latestDate.day);
+        final itemsToMove = sebelumnyaList
+            .where((item) {
+              final dt = item.assignedAt?.toLocal();
+              if (dt == null) return true;
+              return DateTime(dt.year, dt.month, dt.day) == latestDay;
+            })
+            .toList();
+        for (final item in itemsToMove) {
+          sebelumnyaList.remove(item);
+          terbaruList.add(item);
+        }
+      } else {
+        terbaruList.add(sebelumnyaList.removeAt(0));
+      }
     }
 
     return Scaffold(
@@ -176,7 +206,7 @@ class _NotificationPageState extends State<NotificationPage> {
           // 2. Konten Notifikasi
           Expanded(
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
                 vertical: 16.0,

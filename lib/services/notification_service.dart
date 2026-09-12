@@ -21,7 +21,7 @@ class NotificationService {
           .toList();
     } catch (e) {
       debugPrint('NotificationService getNotifications error: $e');
-      return <NotificationModel>[];
+      rethrow;
     }
   }
 

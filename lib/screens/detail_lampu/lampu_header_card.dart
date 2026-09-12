@@ -1,17 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../utils/app_colors.dart';
 
 class LampuHeaderCard extends StatelessWidget {
   final String code;
-  final bool isTersimpan;
-  final String? updatedAt;
+  final bool? isTersimpan;
+  final dynamic updatedAt;
 
   const LampuHeaderCard({
     super.key,
     required this.code,
-    required this.isTersimpan,
+    this.isTersimpan,
     this.updatedAt,
   });
+
+  String _formatUpdatedAt() {
+    DateTime? date;
+    if (updatedAt is DateTime) {
+      date = updatedAt as DateTime;
+    } else if (updatedAt is String &&
+        (updatedAt as String).trim().isNotEmpty &&
+        (updatedAt as String).trim() != '-') {
+      date = DateTime.tryParse((updatedAt as String).trim());
+    }
+
+    if (date == null) {
+      return 'Diperbarui -';
+    }
+
+    final localDate = date.toLocal();
+    String formatted;
+    try {
+      formatted = DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(localDate);
+    } catch (_) {
+      formatted = DateFormat('dd MMM yyyy, HH:mm').format(localDate);
+    }
+
+    return 'Diperbarui $formatted';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,79 +59,38 @@ class LampuHeaderCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.lightbulb_rounded,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        code.isNotEmpty ? code : '-',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Lamp Record',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              // Status Badge
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isTersimpan
-                      ? AppColors.successLight
-                      : AppColors.warningLight,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: const Icon(
+                  Icons.lightbulb_rounded,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      isTersimpan
-                          ? Icons.check_circle_outline_rounded
-                          : Icons.warning_amber_rounded,
-                      color:
-                          isTersimpan ? AppColors.success : AppColors.warning,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
                     Text(
-                      isTersimpan ? 'Tersimpan' : 'Belum Lengkap',
+                      code.isNotEmpty ? code : '-',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Lamp Record',
                       style: TextStyle(
-                        color: isTersimpan
-                            ? AppColors.success
-                            : AppColors.warning,
+                        color: AppColors.textSecondary,
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -121,15 +106,13 @@ class LampuHeaderCard extends StatelessWidget {
           Row(
             children: [
               const Icon(
-                Icons.history_rounded,
+                Icons.sync_rounded,
                 color: AppColors.textSecondary,
                 size: 16,
               ),
               const SizedBox(width: 6),
               Text(
-                (updatedAt != null && updatedAt!.isNotEmpty && updatedAt != '-')
-                    ? updatedAt!
-                    : 'Diperbarui 20 Mei 2025, 14:30',
+                _formatUpdatedAt(),
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,

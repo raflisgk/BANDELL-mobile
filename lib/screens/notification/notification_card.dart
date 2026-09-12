@@ -111,20 +111,28 @@ class NotificationItem {
     final local = dt.toLocal();
     final diff = now.difference(local);
 
-    if (diff.inHours < 1 ||
-        (now.day == local.day &&
-            now.month == local.month &&
-            now.year == local.year)) {
+    if (diff.isNegative || diff.inSeconds < 60) {
       return 'Baru saja';
-    } else if (now.difference(DateTime(local.year, local.month, local.day)).inDays == 1) {
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes} menit yang lalu';
+    }
+
+    final today = DateTime(now.year, now.month, now.day);
+    final notifDay = DateTime(local.year, local.month, local.day);
+    final daysDiff = today.difference(notifDay).inDays;
+
+    if (daysDiff == 0) {
+      final hours = diff.inHours;
+      return '$hours jam yang lalu';
+    } else if (daysDiff == 1) {
       return 'Kemarin';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours} jam yang lalu';
+    } else if (daysDiff > 1 && daysDiff < 7) {
+      return '$daysDiff hari yang lalu';
     } else {
       try {
-        return DateFormat('dd MMM', 'id_ID').format(local);
+        return DateFormat('dd MMM yyyy', 'id_ID').format(local);
       } catch (_) {
-        return DateFormat('dd MMM').format(local);
+        return DateFormat('dd MMM yyyy').format(local);
       }
     }
   }
@@ -155,7 +163,9 @@ class NotificationItem {
     return NotificationItem(
       id: model.id,
       title: title,
-      time: model.time.isNotEmpty ? model.time : formatHeaderTime(model.assignedAt),
+      time: model.assignedAt != null
+          ? formatHeaderTime(model.assignedAt)
+          : (model.time.isNotEmpty ? model.time : 'Baru saja'),
       content: model.content,
       projectName: model.projectName,
       districtName: model.districtName,
@@ -233,7 +243,7 @@ class NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool showBlueDot = isTerbaru || notification.isUnread;
+    final bool showBlueDot = isTerbaru;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -305,7 +315,7 @@ class NotificationCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                showBlueDot ? 'Baru saja' : notification.time,
+                                notification.time,
                                 textAlign: TextAlign.right,
                                 style: TextStyle(
                                   color: showBlueDot
