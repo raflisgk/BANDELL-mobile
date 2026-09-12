@@ -498,27 +498,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ),
-        Positioned(
-          right: 2,
-          bottom: 2,
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: const Color(0xFF084B83),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white,
-                width: 2,
-              ),
-            ),
-            child: const Icon(
-              Icons.edit_rounded,
-              color: Colors.white,
-              size: 14,
-            ),
-          ),
-        ),
       ],
     );
   }
