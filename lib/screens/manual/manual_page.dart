@@ -6,10 +6,12 @@ import '../../services/installation_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/custom_feedback_message.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
 import '../../widgets/pop_up_sukses.dart';
 import '../../widgets/tombol_simpan_data.dart';
+import '../lamp/lamp_page.dart';
 
 class ManualPage extends StatefulWidget {
   final int? idProject;
@@ -85,12 +87,9 @@ class _ManualPageState extends State<ManualPage> {
 
   void _handleTambahFoto() {
     if (_photos.length >= 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Maksimal 4 foto sudah tercapai'),
-          backgroundColor: Color(0xFFEF4444),
-          duration: Duration(seconds: 1),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Maksimal 4 foto sudah tercapai.',
       );
       return;
     }
@@ -192,25 +191,13 @@ class _ManualPageState extends State<ManualPage> {
         setState(() {
           _photos.add(image.path);
         });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Foto ${_photos.length} berhasil ditambahkan'),
-              backgroundColor: AppColors.primary,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengambil foto: $e'),
-            backgroundColor: const Color(0xFFEF4444),
-            duration: const Duration(seconds: 2),
-          ),
+        CustomFeedbackMessage.showError(
+          context,
+          'Gagal mengambil foto.',
         );
       }
     }
@@ -229,13 +216,37 @@ class _ManualPageState extends State<ManualPage> {
         ProjectService.selectedProject?.status == 'closed' ||
             ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tidak dapat menyimpan data. Project telah Selesai.'),
-          backgroundColor: Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Tidak dapat menyimpan data. Project telah Selesai.',
+      );
+      return;
+    }
+
+    final projectId =
+        widget.idProject ?? ProjectService.selectedProject?.idProject;
+    if (projectId == null || projectId <= 0) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Project belum dipilih.',
+      );
+      return;
+    }
+
+    final areaId = widget.idArea ?? 0;
+    if (areaId <= 0) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Area operasional belum dipilih.',
+      );
+      return;
+    }
+
+    final userId = AuthService.currentUser?.idUser ?? 0;
+    if (userId <= 0) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Sesi pengguna tidak valid. Silakan login kembali.',
       );
       return;
     }
@@ -245,41 +256,47 @@ class _ManualPageState extends State<ManualPage> {
     final longitude = _longitudeController.text.trim();
 
     if (barcode.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ID Barcode wajib diisi'),
-          backgroundColor: Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'ID Barcode wajib diisi.',
+      );
+      _barcodeFocusNode.requestFocus();
+      return;
+    }
+
+    if (barcode.length > 12) {
+      CustomFeedbackMessage.showError(
+        context,
+        'ID Barcode (LCU) maksimal 12 karakter.',
       );
       _barcodeFocusNode.requestFocus();
       return;
     }
 
     if (latitude.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Latitude wajib diisi'),
-          backgroundColor: Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Latitude wajib diisi.',
       );
       _latitudeFocusNode.requestFocus();
       return;
     }
 
     if (longitude.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Longitude wajib diisi'),
-          backgroundColor: Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Longitude wajib diisi.',
       );
       _longitudeFocusNode.requestFocus();
+      return;
+    }
+
+    if (_panelCodeController.text.trim().length > 12) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Kode panel maksimal 12 karakter.',
+      );
+      _panelCodeFocusNode.requestFocus();
       return;
     }
 
@@ -290,23 +307,22 @@ class _ManualPageState extends State<ManualPage> {
     try {
       final installationData = InstallationModel(
         idInstallation: 0,
-        idProject: widget.idProject ?? ProjectService.selectedProject?.idProject,
-        idUser: AuthService.currentUser?.idUser ?? 0,
-        idArea: widget.idArea ?? 0,
+        idProject: projectId,
+        idUser: userId,
+        idArea: areaId,
         lampTypeId: widget.lampTypeId,
-
         lampCode: barcode,
         lampType: widget.lampType ?? '',
         latitude: latitude,
         longitude: longitude,
         panelCode: _panelCodeController.text.trim().isNotEmpty
-        ? _panelCodeController.text.trim()
-          : null,
-         photos: List.from(_photos),
-          inputMethod: 'Manual',
-          status: 'Tersimpan',
-          createdAt: DateTime.now(),
-);
+            ? _panelCodeController.text.trim()
+            : null,
+        photos: List.from(_photos),
+        inputMethod: 'Manual',
+        status: 'Tersimpan',
+        createdAt: DateTime.now(),
+      );
 
       await InstallationService().createInstallation(installationData);
 
@@ -314,6 +330,12 @@ class _ManualPageState extends State<ManualPage> {
         setState(() {
           _isSubmitting = false;
         });
+
+        CustomFeedbackMessage.showSuccess(
+          context,
+          'Data berhasil disimpan',
+        );
+
         _showSuccessDialog(barcode);
       }
     } catch (e) {
@@ -322,13 +344,10 @@ class _ManualPageState extends State<ManualPage> {
         setState(() {
           _isSubmitting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal menyimpan data pendataan. Silakan coba lagi.'),
-            backgroundColor: Color(0xFFEF4444),
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 2),
-          ),
+        final errorMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        CustomFeedbackMessage.showError(
+          context,
+          errorMsg.isNotEmpty ? errorMsg : 'Data gagal disimpan',
         );
       }
     }
@@ -345,21 +364,14 @@ class _ManualPageState extends State<ManualPage> {
       context,
       lampCode: lampCode,
       onAddData: () {
-        _barcodeController.clear();
-        _panelCodeController.clear();
-        _latitudeController.clear();
-        _longitudeController.clear();
-        setState(() {
-          _photos.clear();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('Form direset. Siap memasukkan data lampu berikutnya.'),
-            backgroundColor: AppColors.primary,
-            duration: Duration(seconds: 2),
-          ),
+        Navigator.popUntil(
+          context,
+          (route) =>
+              route.settings.name == LampPage.routeName || route.isFirst,
         );
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
       },
     );
   }
@@ -475,6 +487,8 @@ class _ManualPageState extends State<ManualPage> {
                     ),
 
                     const SizedBox(height: 20),
+
+
 
                     // 5. TOMBOL SIMPAN DATA (SHARED WIDGET)
                     TombolSimpanData(

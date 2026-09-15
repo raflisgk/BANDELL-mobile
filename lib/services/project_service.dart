@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/project_model.dart';
 import 'api_service.dart';
+import 'auth_service.dart';
 
 class ProjectService {
   static ProjectModel? selectedProject;
@@ -15,37 +16,41 @@ class ProjectService {
     return _projects.map((project) => project.name).toList();
   }
 
-  /// Mengambil semua project dari Laravel
-  Future<List<ProjectModel>> getProjects() async {
-    final response = await http.get(
-      Uri.parse('${ApiService.baseUrl}/projects'),
-      headers: ApiService.defaultHeaders,
-    );
+  /// Mengambil project yang ditugaskan kepada teknisi dari Laravel API
+  /// Endpoint sumber utama: GET /api/project-assignments?user_id={user_id}
+  Future<List<ProjectModel>> getProjects([int? userId]) async {
+    final targetUserId = userId ?? AuthService.currentUser?.idUser;
 
-    debugPrint('PROJECT STATUS: ${response.statusCode}');
-    debugPrint('PROJECT BODY: ${response.body}');
-
-    if (response.statusCode != 200) {
-      throw Exception('Gagal mengambil data project.');
+    if (targetUserId == null || targetUserId <= 0) {
+      debugPrint('ProjectService: user_id tidak valid ($targetUserId), daftar project kosong.');
+      _projects = [];
+      return [];
     }
 
-    final responseData = jsonDecode(response.body);
+    try {
+      final rawList = await ApiService.getProjectAssignments(targetUserId);
 
-    final List data = responseData['data'] ?? [];
+      // Ambil objek project dari setiap assignment dan hilangkan duplikasi berdasarkan project.id
+      final Map<int, ProjectModel> uniqueProjects = {};
 
-    final projects = data
-        .map(
-          (item) => ProjectModel.fromJson(
-            item as Map<String, dynamic>,
-          ),
-        )
-        .toList();
+      for (final item in rawList) {
+        if (item is Map<String, dynamic> && item['project'] is Map<String, dynamic>) {
+          final project = ProjectModel.fromJson(
+            item['project'] as Map<String, dynamic>,
+          );
+          uniqueProjects[project.id] = project;
+        }
+      }
 
-    projects.sort((a, b) => a.id.compareTo(b.id));
+      final projects = uniqueProjects.values.toList();
+      projects.sort((a, b) => a.id.compareTo(b.id));
 
-    _projects = projects;
-
-    return projects;
+      _projects = projects;
+      return projects;
+    } catch (e) {
+      debugPrint('Error getting assigned projects: $e');
+      rethrow;
+    }
   }
 
   /// Ambil project berdasarkan ID
@@ -76,11 +81,10 @@ class ProjectService {
   }
 
   /// Mengambil area berdasarkan project
-  Future<List<dynamic>> getAreas(int projectId, {int? userId}) async {
-    final query = userId != null ? '?user_id=$userId' : '';
+  Future<List<dynamic>> getAreas(int projectId) async {
     final response = await http.get(
       Uri.parse(
-        '${ApiService.baseUrl}/projects/$projectId/areas$query',
+        '${ApiService.baseUrl}/projects/$projectId/areas',
       ),
       headers: ApiService.defaultHeaders,
     );

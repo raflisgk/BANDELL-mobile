@@ -140,27 +140,6 @@ class _NotificationPageState extends State<NotificationPage> {
       }
     }
 
-    // Jika tidak ada yang masuk TERBARU (misal seluruh notifikasi berasal dari hari sebelumnya),
-    // pindahkan kelompok tanggal paling baru ke TERBARU agar section TERBARU tetap menampilkan penugasan teranyar.
-    if (terbaruList.isEmpty && sebelumnyaList.isNotEmpty) {
-      final latestDate = sebelumnyaList.first.assignedAt?.toLocal();
-      if (latestDate != null) {
-        final latestDay = DateTime(latestDate.year, latestDate.month, latestDate.day);
-        final itemsToMove = sebelumnyaList
-            .where((item) {
-              final dt = item.assignedAt?.toLocal();
-              if (dt == null) return true;
-              return DateTime(dt.year, dt.month, dt.day) == latestDay;
-            })
-            .toList();
-        for (final item in itemsToMove) {
-          sebelumnyaList.remove(item);
-          terbaruList.add(item);
-        }
-      } else {
-        terbaruList.add(sebelumnyaList.removeAt(0));
-      }
-    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -311,18 +290,63 @@ class _NotificationPageState extends State<NotificationPage> {
                       )
                     // Notification List
                     else ...[
-                      // Section 1: TERBARU
+                      // =========================
+                      // SECTION TERBARU
+                      // =========================
                       if (terbaruList.isNotEmpty) ...[
-                        const Text(
-                          'TERBARU',
-                          style: TextStyle(
-                            color: Color(0xFF556987),
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.6,
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: 4,
+                            right: 4,
+                            bottom: 12,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'TERBARU',
+                                style: TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+
+                              // Jumlah notifikasi belum dibaca
+                              Builder(
+                                builder: (context) {
+                                  final unreadCount = terbaruList
+                                      .where((item) => item.isUnread)
+                                      .length;
+
+                                  if (unreadCount == 0) {
+                                    return const Text(
+                                      'Sudah dibaca',
+                                      style: TextStyle(
+                                        color: Color(0xFF94A3B8),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    );
+                                  }
+
+                                  return Text(
+                                    '$unreadCount Belum Dibaca',
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 12),
+
+                        // Card TERBARU
                         ...terbaruList.map(
                           (item) => NotificationCard(
                             notification: item,
@@ -330,21 +354,47 @@ class _NotificationPageState extends State<NotificationPage> {
                             onTap: () => _handleNotificationTap(item),
                           ),
                         ),
-                        const SizedBox(height: 14),
+
+                        const SizedBox(height: 18),
                       ],
 
-                      // Section 2: SEBELUMNYA
+                      // =========================
+                      // SECTION SEBELUMNYA
+                      // =========================
                       if (sebelumnyaList.isNotEmpty) ...[
-                        const Text(
-                          'SEBELUMNYA',
-                          style: TextStyle(
-                            color: Color(0xFF556987),
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.6,
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: 4,
+                            right: 4,
+                            bottom: 12,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'SEBELUMNYA',
+                                style: TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+
+                              const Text(
+                                'Sudah dibaca',
+                                style: TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 12),
+
+                        // Card SEBELUMNYA
                         ...sebelumnyaList.map(
                           (item) => NotificationCard(
                             notification: item,

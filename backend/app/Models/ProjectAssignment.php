@@ -14,7 +14,6 @@ class ProjectAssignment extends Model
 
     protected $fillable = [
         'project_id',
-        'district_id',
         'user_id',
         'notes',
         'assigned_at',
@@ -30,11 +29,6 @@ class ProjectAssignment extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class, 'project_id');
-    }
-
-    public function district(): BelongsTo
-    {
-        return $this->belongsTo(District::class, 'district_id');
     }
 
     public function user(): BelongsTo

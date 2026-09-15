@@ -25,6 +25,7 @@ class _LoginPageState extends State<LoginPage>
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
   bool _isLoading = false;
+  String? _errorMessage;
 
   late final AnimationController _animController;
   late final Animation<double> _logoFadeAnimation;
@@ -37,6 +38,8 @@ class _LoginPageState extends State<LoginPage>
     super.initState();
     _usernameFocusNode.addListener(_onFocusChange);
     _passwordFocusNode.addListener(_onFocusChange);
+    _usernameController.addListener(_clearErrorOnTyping);
+    _passwordController.addListener(_clearErrorOnTyping);
 
     _animController = AnimationController(
       vsync: this,
@@ -89,6 +92,14 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
+  void _clearErrorOnTyping() {
+    if (_errorMessage != null) {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
+  }
+
   void _onFocusChange() {
     setState(() {});
   }
@@ -96,6 +107,8 @@ class _LoginPageState extends State<LoginPage>
   @override
   void dispose() {
     _animController.dispose();
+    _usernameController.removeListener(_clearErrorOnTyping);
+    _passwordController.removeListener(_clearErrorOnTyping);
     _usernameController.dispose();
     _passwordController.dispose();
     _usernameFocusNode.removeListener(_onFocusChange);
@@ -118,70 +131,66 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
- Future<void> _handleLogin() async {
-  if (_isLoading) return;
+  Future<void> _handleLogin() async {
+    if (_isLoading) return;
 
-  final email = _usernameController.text.trim();
-  final password = _passwordController.text.trim();
+    setState(() {
+      _errorMessage = null;
+    });
 
-  if (email.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Silakan masukkan email dan password.'),
-        backgroundColor: Color(0xFFDC2626),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    return;
-  }
+    final email = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
 
-  setState(() {
-    _isLoading = true;
-  });
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _errorMessage = 'Silakan masukkan email dan password.';
+      });
+      return;
+    }
 
-  try {
-    await ApiService.login(
-      email: email,
-      password: password,
-    );
+    setState(() {
+      _isLoading = true;
+    });
 
-    if (_rememberMe) {
-      await SecureCredentialService.saveCredentials(
+    try {
+      await ApiService.login(
         email: email,
         password: password,
       );
-    } else {
-      await SecureCredentialService.clearCredentials();
+
+      if (_rememberMe) {
+        await SecureCredentialService.saveCredentials(
+          email: email,
+          password: password,
+        );
+      } else {
+        await SecureCredentialService.clearCredentials();
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      AppNavigator.pushAndRemoveUntil(
+        context,
+        const AreaOperasionalPage(),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      String errorMsg = e.toString().replaceFirst('Exception: ', '').trim();
+      if (errorMsg.isEmpty) {
+        errorMsg = 'Email atau password salah.';
+      }
+
+      setState(() {
+        _isLoading = false;
+        _errorMessage = errorMsg;
+      });
     }
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    AppNavigator.pushAndRemoveUntil(
-      context,
-      const AreaOperasionalPage(),
-    );
-  } catch (e) {
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          e.toString().replaceFirst('Exception: ', ''),
-        ),
-        backgroundColor: const Color(0xFFDC2626),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
-}
 
   void _handleForgotPassword() {
     debugPrint('Lupa password clicked');
@@ -403,6 +412,8 @@ class _LoginPageState extends State<LoginPage>
                               });
                             },
                           ),
+
+                          _buildErrorMessage(),
 
                           const SizedBox(height: 14),
 
@@ -630,6 +641,59 @@ class _LoginPageState extends State<LoginPage>
               constraints: const BoxConstraints(),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage() {
+    if (_errorMessage == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10.0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14.0,
+          vertical: 9.0,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF2F2),
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: const Color(0xFFFECACA),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Color(0xFFDC2626),
+              size: 18,
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(
+                  color: Color(0xFF991B1B),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  height: 1.25,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -53,20 +53,22 @@ class AppNavigator {
   }
 
   /// Push route with MaterialPageRoute (fast & responsive, no zoom/slide/fade delay)
-  static Future<T?> push<T>(BuildContext context, Widget page) {
+  static Future<T?> push<T>(BuildContext context, Widget page, {RouteSettings? settings}) {
     return Navigator.push<T>(
       context,
       MaterialPageRoute<T>(
+        settings: settings,
         builder: (_) => page,
       ),
     );
   }
 
   /// Push replacement with MaterialPageRoute
-  static Future<T?> pushReplacement<T>(BuildContext context, Widget page) {
+  static Future<T?> pushReplacement<T>(BuildContext context, Widget page, {RouteSettings? settings}) {
     return Navigator.pushReplacement<T, dynamic>(
       context,
       MaterialPageRoute<T>(
+        settings: settings,
         builder: (_) => page,
       ),
     );

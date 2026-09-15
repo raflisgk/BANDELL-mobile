@@ -17,7 +17,6 @@ class NotificationController extends Controller
 
         $notifications = ProjectAssignment::with([
             'project',
-            'district',
         ])
             ->where('user_id', $validated['user_id'])
             ->orderByDesc('assigned_at')
@@ -27,9 +26,9 @@ class NotificationController extends Controller
                     'id' => $assignment->id,
                     'project_id' => $assignment->project_id,
                     'project_name' => $assignment->project?->name ?? '-',
-                    'district_name' => $assignment->district?->name ?? '-',
                     'notes' => $assignment->notes,
-                    'assigned_at' => $assignment->assigned_at?->toIso8601String() ?? $assignment->created_at?->toIso8601String(),
+                    'assigned_at' => $assignment->assigned_at?->toIso8601String()
+                        ?? $assignment->created_at?->toIso8601String(),
                 ];
             });
 

@@ -14,14 +14,6 @@ class InstallationController extends Controller
 {
     public function destroy(Installation $installation): JsonResponse
     {
-        // Area nonaktif tidak boleh diubah/dihapus.
-        if ($installation->district && $installation->district->status !== 'aktif') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data pada area nonaktif tidak dapat dihapus.',
-            ], 403);
-        }
-
         $installation->photos()->delete();
         $installation->delete();
 
@@ -67,14 +59,6 @@ class InstallationController extends Controller
                 'success' => false,
                 'message' => 'Area operasional tidak sesuai dengan project.',
             ], 422);
-        }
-
-        // Area nonaktif tidak boleh menerima data baru.
-        if ($district->status !== 'aktif') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Area operasional sedang nonaktif dan tidak dapat menerima data baru.',
-            ], 403);
         }
 
         $installation = DB::transaction(function () use ($request, $validated) {
@@ -130,17 +114,6 @@ class InstallationController extends Controller
         Request $request,
         Installation $installation
     ): JsonResponse {
-        // Area nonaktif tidak boleh diedit.
-        if (
-            $installation->district &&
-            $installation->district->status !== 'aktif'
-        ) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data pada area nonaktif tidak dapat diedit.',
-            ], 403);
-        }
-
         $validated = $request->validate([
             'project_id' => [
                 'sometimes',
@@ -219,14 +192,6 @@ class InstallationController extends Controller
                 'success' => false,
                 'message' => 'Area operasional tidak sesuai dengan project.',
             ], 422);
-        }
-
-        // Area tujuan harus aktif.
-        if ($district->status !== 'aktif') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Area operasional sedang nonaktif dan tidak dapat diedit.',
-            ], 403);
         }
 
         $installation->update([

@@ -7,7 +7,9 @@ import 'package:http/http.dart' as http;
 import '../models/history_lamp_model.dart';
 import '../models/installation_model.dart';
 import 'api_service.dart';
+import 'auth_service.dart';
 import 'lamp_type_service.dart';
+import 'project_service.dart';
 
 class InstallationService {
   /// Simpan data pemasangan lampu baru ke Laravel API
@@ -31,56 +33,69 @@ class InstallationService {
     // DATA INSTALLATION
     // =========================
 
-    request.fields['project_id'] =
-        installation.idProject?.toString() ?? '';
+    final resolvedProjectId = (installation.idProject != null && installation.idProject! > 0)
+        ? installation.idProject
+        : ProjectService.selectedProject?.idProject;
+    request.fields['project_id'] = resolvedProjectId?.toString() ?? '';
 
-    request.fields['user_id'] =
-        installation.idUser?.toString() ?? '';
+    final resolvedUserId = (installation.idUser != null && installation.idUser! > 0)
+        ? installation.idUser
+        : AuthService.currentUser?.idUser;
+    request.fields['user_id'] = resolvedUserId?.toString() ?? '';
 
-    request.fields['lamp_type_id'] =
-        installation.lampTypeId?.toString() ?? '';
+    // Lamp Type ID dengan auto-resolution dari nama jika id belum tersedia
+    int? resolvedLampTypeId = (installation.lampTypeId != null && installation.lampTypeId! > 0)
+        ? installation.lampTypeId
+        : null;
+    if (resolvedLampTypeId == null && installation.lampType.isNotEmpty) {
+      try {
+        final types = await LampTypeService().getLampTypes();
+        final match = types.firstWhere(
+          (t) => t.name.toLowerCase() == installation.lampType.toLowerCase(),
+        );
+        resolvedLampTypeId = match.id;
+      } catch (_) {
+        // Fallback
+      }
+    }
+    request.fields['lamp_type_id'] = resolvedLampTypeId?.toString() ?? '';
 
-    request.fields['district_id'] =
-        installation.idArea.toString();
+    request.fields['district_id'] = installation.idArea.toString();
 
-    request.fields['id_lcu'] =
-    installation.lampCode;
+    request.fields['id_lcu'] = installation.lampCode.trim();
 
     // Laravel menerima: realtime / manual
-    request.fields['input_method'] =
-        (installation.inputMethod ?? '').toLowerCase();
+    final method = (installation.inputMethod ?? 'realtime').trim().toLowerCase();
+    request.fields['input_method'] = method == 'real-time' ? 'realtime' : method;
 
-    request.fields['latitude'] =
-        installation.latitude ?? '';
+    request.fields['latitude'] = installation.latitude ?? '';
 
-    request.fields['longitude'] =
-        installation.longitude ?? '';
+    request.fields['longitude'] = installation.longitude ?? '';
 
     if (installation.panelCode != null &&
         installation.panelCode!.trim().isNotEmpty) {
-      request.fields['code_panel'] =
-          installation.panelCode!.trim();
+      request.fields['code_panel'] = installation.panelCode!.trim();
     }
 
     if (installation.notes != null &&
         installation.notes!.trim().isNotEmpty) {
-      request.fields['address'] =
-          installation.notes!.trim();
+      request.fields['address'] = installation.notes!.trim();
     }
 
     // installed_at menggunakan tanggal instalasi
     if (installation.installedAt != null) {
-      request.fields['installed_at'] =
-          installation.installedAt!
-              .toIso8601String()
-              .split('T')
-              .first;
+      request.fields['installed_at'] = installation.installedAt!
+          .toIso8601String()
+          .split('T')
+          .first;
     } else if (installation.createdAt != null) {
+      request.fields['installed_at'] = installation.createdAt!
+          .toIso8601String()
+          .split('T')
+          .first;
+    } else {
       request.fields['installed_at'] =
-          installation.createdAt!
-              .toIso8601String()
-              .split('T')
-              .first;
+          DateTime.now().toIso8601String().split('T').first;
     }
 
     // =========================
@@ -436,20 +451,26 @@ class InstallationService {
     Map<String, dynamic> responseData,
     String defaultMessage,
   ) {
-    if (responseData['message'] != null &&
-        responseData['message'].toString().trim().isNotEmpty) {
-      return responseData['message'].toString();
-    }
-
     if (responseData['errors'] is Map) {
       final errors = responseData['errors'] as Map;
       if (errors.isNotEmpty) {
-        final firstVal = errors.values.first;
-        if (firstVal is List && firstVal.isNotEmpty) {
-          return firstVal.first.toString();
+        final messages = <String>[];
+        for (final entry in errors.entries) {
+          if (entry.value is List && (entry.value as List).isNotEmpty) {
+            messages.addAll((entry.value as List).map((e) => e.toString()));
+          } else if (entry.value != null) {
+            messages.add(entry.value.toString());
+          }
         }
-        return firstVal.toString();
+        if (messages.isNotEmpty) {
+          return messages.join('\n');
+        }
       }
+    }
+
+    if (responseData['message'] != null &&
+        responseData['message'].toString().trim().isNotEmpty) {
+      return responseData['message'].toString().trim();
     }
 
     return defaultMessage;

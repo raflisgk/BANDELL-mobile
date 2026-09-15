@@ -25,8 +25,19 @@ class NotificationService {
     }
   }
 
+  static final Set<int> _readNotificationIds = <int>{};
+
+  /// Mengecek apakah notifikasi sudah dibaca secara lokal
+  static bool isReadLocally(int id) => _readNotificationIds.contains(id);
+
+  /// Menandai notifikasi telah dibaca secara lokal
+  static void markLocallyAsRead(int id) {
+    _readNotificationIds.add(id);
+  }
+
   /// Menandai notifikasi telah dibaca secara lokal (state)
   Future<bool> markAsRead(int idNotification) async {
+    markLocallyAsRead(idNotification);
     return true;
   }
 }

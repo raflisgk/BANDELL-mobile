@@ -17,7 +17,6 @@ class ProjectAssignmentController extends Controller
 
         $assignments = ProjectAssignment::with([
             'project',
-            'district',
         ])
             ->where('user_id', $request->user_id)
             ->orderBy('project_id')

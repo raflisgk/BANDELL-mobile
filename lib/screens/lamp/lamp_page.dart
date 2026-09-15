@@ -27,6 +27,8 @@ class LampTypeItem {
 }
 
 class LampPage extends StatefulWidget {
+  static const String routeName = '/lamp_page';
+
   final int? idProject;
   final int? idArea;
   final String? areaName;
@@ -160,6 +162,7 @@ class _LampPageState extends State<LampPage> {
         lampType: item.name,
         lampTypeId: item.id,
       ),
+      settings: const RouteSettings(name: MetodePendataanPage.routeName),
     );
     if (mounted) {
       _loadLampTypes();

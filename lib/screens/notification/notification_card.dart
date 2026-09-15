@@ -9,7 +9,6 @@ class NotificationItem {
   final String time;
   final String content;
   final String? projectName;
-  final String? districtName;
   final String? notes;
   final DateTime? assignedAt;
   final IconData? icon;
@@ -25,7 +24,6 @@ class NotificationItem {
     required this.time,
     required this.content,
     this.projectName,
-    this.districtName,
     this.notes,
     this.assignedAt,
     this.icon,
@@ -37,33 +35,20 @@ class NotificationItem {
   });
 
   String get displayTitle {
-    if (title.isNotEmpty &&
-        title != 'Penugasan Project' &&
-        title != 'Penugasan Proyek' &&
-        title != 'Notifikasi Penugasan') {
-      return title;
-    }
     return 'Penugasan Baru Diterima';
-  }
-
-  bool get hasAssignmentDetails {
-    final hasProj = projectName != null &&
-        projectName!.trim().isNotEmpty &&
-        projectName!.trim() != '-' &&
-        projectName!.trim().toLowerCase() != 'null';
-    final hasDist = districtName != null &&
-        districtName!.trim().isNotEmpty &&
-        districtName!.trim() != '-' &&
-        districtName!.trim().toLowerCase() != 'null';
-    return hasProj || hasDist;
   }
 
   String? get cleanNotes {
     if (notes == null) return null;
+
     final trimmed = notes!.trim();
-    if (trimmed.isEmpty || trimmed == '-' || trimmed.toLowerCase() == 'null') {
+
+    if (trimmed.isEmpty ||
+        trimmed == '-' ||
+        trimmed.toLowerCase() == 'null') {
       return null;
     }
+
     return trimmed;
   }
 
@@ -73,40 +58,36 @@ class NotificationItem {
         projectName!.trim() != '-' &&
         projectName!.trim().toLowerCase() != 'null';
 
-    final hasDist = districtName != null &&
-        districtName!.trim().isNotEmpty &&
-        districtName!.trim() != '-' &&
-        districtName!.trim().toLowerCase() != 'null';
-
-    if (hasProj && hasDist) {
-      return 'Anda telah ditugaskan untuk proyek ${projectName!.trim()} di Area ${districtName!.trim()}.';
-    } else if (hasProj) {
-      return 'Anda telah ditugaskan untuk proyek ${projectName!.trim()}.';
-    } else if (hasDist) {
-      return 'Anda telah ditugaskan di Area ${districtName!.trim()}.';
-    } else {
-      if (content.isNotEmpty && !content.startsWith('Project:')) {
-        return content;
-      }
-      return 'Anda telah ditugaskan untuk proyek baru.';
+    if (hasProj && assignedAt != null) {
+      return 'Anda telah ditugaskan untuk proyek ${projectName!.trim()} pada tanggal $formattedDate.';
     }
+
+    if (hasProj) {
+      return 'Anda telah ditugaskan untuk proyek ${projectName!.trim()}.';
+    }
+
+    if (content.isNotEmpty && !content.startsWith('Project:')) {
+      return content;
+    }
+
+    return 'Anda telah ditugaskan untuk proyek baru.';
   }
 
   String get formattedDate {
     if (assignedAt == null) return '';
+
     try {
-      return DateFormat('dd MMMM yyyy', 'id_ID').format(assignedAt!.toLocal());
+      return DateFormat(
+        'dd/MM/yyyy',
+      ).format(assignedAt!.toLocal());
     } catch (_) {
-      try {
-        return DateFormat('dd MMMM yyyy').format(assignedAt!.toLocal());
-      } catch (_) {
-        return assignedAt!.toIso8601String().split('T').first;
-      }
+      return assignedAt!.toLocal().toIso8601String().split('T').first;
     }
   }
 
   static String formatHeaderTime(DateTime? dt) {
     if (dt == null) return 'Baru saja';
+
     final now = DateTime.now();
     final local = dt.toLocal();
     final diff = now.difference(local);
@@ -118,7 +99,12 @@ class NotificationItem {
     }
 
     final today = DateTime(now.year, now.month, now.day);
-    final notifDay = DateTime(local.year, local.month, local.day);
+    final notifDay = DateTime(
+      local.year,
+      local.month,
+      local.day,
+    );
+
     final daysDiff = today.difference(notifDay).inDays;
 
     if (daysDiff == 0) {
@@ -128,47 +114,45 @@ class NotificationItem {
       return 'Kemarin';
     } else if (daysDiff > 1 && daysDiff < 7) {
       return '$daysDiff hari yang lalu';
-    } else {
-      try {
-        return DateFormat('dd MMM yyyy', 'id_ID').format(local);
-      } catch (_) {
-        return DateFormat('dd MMM yyyy').format(local);
-      }
+    }
+
+    try {
+      return DateFormat(
+        'dd MMM yyyy',
+      ).format(local);
+    } catch (_) {
+      return local.toIso8601String().split('T').first;
     }
   }
 
   static String resolveSection(DateTime? dt) {
     if (dt == null) return 'TERBARU';
+
     final now = DateTime.now();
     final local = dt.toLocal();
-    if (now.day == local.day && now.month == local.month && now.year == local.year) {
-      return 'TERBARU';
-    }
+
     final diff = now.difference(local);
-    if (diff.inHours < 24) {
+
+    if (diff.isNegative || diff.inHours < 24) {
       return 'TERBARU';
     }
+
     return 'SEBELUMNYA';
   }
 
-  factory NotificationItem.fromModel(NotificationModel model) {
-    final rawTitle = model.title;
-    final title = (rawTitle.isEmpty ||
-            rawTitle == 'Penugasan Project' ||
-            rawTitle == 'Penugasan Proyek' ||
-            rawTitle == 'Notifikasi Penugasan')
-        ? 'Penugasan Baru Diterima'
-        : rawTitle;
-
+  factory NotificationItem.fromModel(
+    NotificationModel model,
+  ) {
     return NotificationItem(
       id: model.id,
-      title: title,
+      title: 'Penugasan Baru Diterima',
       time: model.assignedAt != null
           ? formatHeaderTime(model.assignedAt)
-          : (model.time.isNotEmpty ? model.time : 'Baru saja'),
+          : (model.time.isNotEmpty
+              ? model.time
+              : 'Baru saja'),
       content: model.content,
       projectName: model.projectName,
-      districtName: model.districtName,
       notes: model.notes,
       assignedAt: model.assignedAt,
       isUnread: model.isUnread,
@@ -177,38 +161,46 @@ class NotificationItem {
     );
   }
 
-  factory NotificationItem.fromJson(Map<String, dynamic> json) {
-    final bool unread = json['is_unread'] == true ||
+  factory NotificationItem.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final bool unread =
+        json['is_unread'] == true ||
         json['is_read'] == false ||
-        json['read_at'] == null;
-    DateTime? assignedDate;
-    if (json['assigned_at'] != null) {
-      assignedDate = DateTime.tryParse(json['assigned_at'].toString());
-    }
+        json['is_read'] == 0 ||
+        (json.containsKey('read_at') && json['read_at'] == null);
 
-    final rawTitle = json['title']?.toString();
-    final title = (rawTitle == null ||
-            rawTitle.isEmpty ||
-            rawTitle == 'Penugasan Project' ||
-            rawTitle == 'Penugasan Proyek' ||
-            rawTitle == 'Notifikasi Penugasan')
-        ? 'Penugasan Baru Diterima'
-        : rawTitle;
+    DateTime? assignedDate;
+
+    if (json['assigned_at'] != null) {
+      assignedDate = DateTime.tryParse(
+        json['assigned_at'].toString(),
+      );
+    }
 
     return NotificationItem(
       id: json['id'] is int
           ? json['id']
-          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      title: title,
-      time: json['time'] ?? formatHeaderTime(assignedDate),
-      content: json['content'] ?? json['message'] ?? '',
-      projectName: json['project_name']?.toString() ?? json['project']?['name']?.toString(),
-      districtName: json['district_name']?.toString() ?? json['district']?['name']?.toString(),
+          : int.tryParse(
+                json['id']?.toString() ?? '0',
+              ) ??
+              0,
+      title: 'Penugasan Baru Diterima',
+      time: json['time']?.toString() ??
+          formatHeaderTime(assignedDate),
+      content: json['content']?.toString() ??
+          json['message']?.toString() ??
+          '',
+      projectName:
+          json['project_name']?.toString() ??
+          json['project']?['name']?.toString(),
       notes: json['notes']?.toString(),
       assignedAt: assignedDate,
       isUnread: unread,
-      section: json['section'] ?? resolveSection(assignedDate),
-      boldText: json['bold_text'],
+      section:
+          json['section']?.toString() ??
+          resolveSection(assignedDate),
+      boldText: json['bold_text']?.toString(),
     );
   }
 
@@ -219,7 +211,6 @@ class NotificationItem {
       'time': time,
       'content': content,
       'project_name': projectName,
-      'district_name': districtName,
       'notes': notes,
       'assigned_at': assignedAt?.toIso8601String(),
       'is_unread': isUnread,
@@ -243,18 +234,19 @@ class NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool showBlueDot = isTerbaru;
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 16.0),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2EAF4), width: 1.2),
+        border: Border.all(
+          color: const Color(0xFFE1EAF5),
+          width: 1,
+        ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 16,
+            color: Color(0x08000000),
+            blurRadius: 12,
             offset: Offset(0, 4),
           ),
         ],
@@ -266,93 +258,114 @@ class NotificationCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 18.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(
+              18,
+              18,
+              18,
+              20,
+            ),
+            child: Stack(
               children: [
-                // 1. Icon Circle Badge
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE8F1FC),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.assignment_rounded,
-                      color: AppColors.primary,
-                      size: 24,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ICON
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF3FF),
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.assignment_outlined,
+                          color: AppColors.primary,
+                          size: 32,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(width: 14),
+                    const SizedBox(width: 16),
 
-                // 2. Content Details Column
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header Row: Title & Time / Status Indicator
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                    // CONTENT
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
                         children: [
-                          Expanded(
+                          // TITLE
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              right: 18,
+                            ),
                             child: Text(
                               notification.displayTitle,
                               style: const TextStyle(
-                                color: Color(0xFF0F172A),
-                                fontSize: 15.5,
+                                color: Color(0xFF172033),
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: -0.2,
+                                height: 1.25,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+
+                          const SizedBox(height: 8),
+
+                          // DESCRIPTION
+                          _buildDescription(),
+
+                          const SizedBox(height: 12),
+
+                          // TIME
                           Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              const Icon(
+                                Icons.access_time_rounded,
+                                color: AppColors.primary,
+                                size: 17,
+                              ),
+                              const SizedBox(width: 6),
                               Text(
                                 notification.time,
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                  color: showBlueDot
-                                      ? AppColors.primary
-                                      : const Color(0xFF64748B),
+                                style: const TextStyle(
+                                  color: AppColors.primary,
                                   fontSize: 13,
-                                  fontWeight: showBlueDot
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              if (showBlueDot) ...[
-                                const SizedBox(width: 6),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
+
+                          // NOTES
+                          if (notification.cleanNotes != null) ...[
+                            const SizedBox(height: 14),
+                            _buildNotes(),
+                          ],
                         ],
                       ),
-
-                      const SizedBox(height: 6),
-
-                      // Description Message / Assignment Details
-                      if (notification.hasAssignmentDetails)
-                        _buildAssignmentDetails()
-                      else
-                        _buildMessageText(),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+
+                // BLUE DOT
+                if (isTerbaru && notification.isUnread)
+                  Positioned(
+                    top: 1,
+                    right: 1,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFEAF3FF),
+                          width: 3,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -361,118 +374,96 @@ class NotificationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAssignmentDetails() {
-    final description = notification.formattedDescription;
-    final notes = notification.cleanNotes;
+  Widget _buildDescription() {
+    final project = notification.projectName?.trim();
+    final date = notification.formattedDate;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          description,
-          style: const TextStyle(
-            color: Color(0xFF475569),
-            fontSize: 13.5,
-            height: 1.45,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        if (notes != null && notes.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.description_outlined,
-                  size: 15,
-                  color: Color(0xFF64748B),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Catatan: ',
-                          style: TextStyle(
-                            color: Color(0xFF64748B),
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        TextSpan(
-                          text: notes,
-                          style: const TextStyle(
-                            color: Color(0xFF0F172A),
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
+    final hasProject = project != null &&
+        project.isNotEmpty &&
+        project != '-';
 
-  Widget _buildMessageText() {
-    const regularStyle = TextStyle(
-      color: Color(0xFF64748B),
-      fontSize: 12.5,
-      height: 1.4,
-    );
-
-    const boldStyle = TextStyle(
-      color: Color(0xFF1E293B),
-      fontSize: 12.5,
-      fontWeight: FontWeight.bold,
-      height: 1.4,
-    );
-
-    final content = notification.content;
-
-    // Check for markdown bold syntax: **keyword**
-    if (content.contains('**')) {
-      final List<TextSpan> spans = [];
-      final parts = content.split('**');
-      for (int i = 0; i < parts.length; i++) {
-        if (parts[i].isEmpty) continue;
-        if (i % 2 == 1) {
-          spans.add(TextSpan(text: parts[i], style: boldStyle));
-        } else {
-          spans.add(TextSpan(text: parts[i], style: regularStyle));
-        }
-      }
-      return Text.rich(TextSpan(children: spans));
-    }
-
-    // Check for boldText property
-    final boldText = notification.boldText;
-    if (boldText != null && boldText.isNotEmpty && content.contains(boldText)) {
-      final parts = content.split(boldText);
-      return Text.rich(
-        TextSpan(
-          style: regularStyle,
-          children: [
-            TextSpan(text: parts[0]),
-            TextSpan(text: boldText, style: boldStyle),
-            if (parts.length > 1) TextSpan(text: parts[1]),
-          ],
+    if (!hasProject) {
+      return Text(
+        notification.content,
+        style: const TextStyle(
+          color: Color(0xFF64748B),
+          fontSize: 14.5,
+          height: 1.5,
         ),
       );
     }
 
-    return Text(content, style: regularStyle);
+    return Text.rich(
+      TextSpan(
+        style: const TextStyle(
+          color: Color(0xFF64748B),
+          fontSize: 14.5,
+          height: 1.5,
+        ),
+        children: [
+          const TextSpan(
+            text: 'Anda telah ditugaskan untuk proyek ',
+          ),
+          TextSpan(
+            text: project,
+            style: const TextStyle(
+              color: Color(0xFF172033),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (date.isNotEmpty)
+            TextSpan(
+              text: ' pada tanggal $date.',
+            )
+          else
+            const TextSpan(
+              text: '.',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotes() {
+    final notes = notification.cleanNotes!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F6FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFD9E9FF),
+          width: 1,
+        ),
+      ),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            const TextSpan(
+              text: 'Catatan: ',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(
+              text: notes,
+              style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 14,
+                height: 1.45,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

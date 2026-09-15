@@ -2,8 +2,6 @@ class NotificationModel {
   final int id;
   final int? projectId;
   final String projectName;
-  final int? districtId;
-  final String districtName;
   final String? notes;
   final DateTime? assignedAt;
   final String title;
@@ -17,8 +15,6 @@ class NotificationModel {
     required this.id,
     this.projectId,
     this.projectName = '-',
-    this.districtId,
-    this.districtName = '-',
     this.notes,
     this.assignedAt,
     this.title = 'Penugasan Baru Diterima',
@@ -33,9 +29,6 @@ class NotificationModel {
     final buffer = StringBuffer();
     if (projectName.isNotEmpty && projectName != '-') {
       buffer.writeln('Project: $projectName');
-    }
-    if (districtName.isNotEmpty && districtName != '-') {
-      buffer.writeln('Area: $districtName');
     }
     if (notes != null && notes!.isNotEmpty && notes != '-') {
       buffer.writeln('Catatan: $notes');
@@ -57,10 +50,6 @@ class NotificationModel {
         json['project']?['name']?.toString() ??
         '-';
 
-    final districtName = json['district_name']?.toString() ??
-        json['district']?['name']?.toString() ??
-        '-';
-
     final rawNotes = json['notes']?.toString() ??
         json['content']?.toString() ??
         json['message']?.toString();
@@ -78,10 +67,6 @@ class NotificationModel {
           ? json['project_id']
           : int.tryParse(json['project_id']?.toString() ?? ''),
       projectName: projectName,
-      districtId: json['district_id'] is int
-          ? json['district_id']
-          : int.tryParse(json['district_id']?.toString() ?? ''),
-      districtName: districtName,
       notes: notes,
       assignedAt: assignedDate,
       title: (json['title'] == null ||
@@ -93,7 +78,7 @@ class NotificationModel {
       isUnread: json['is_unread'] == true ||
           json['is_read'] == false ||
           json['is_read'] == 0 ||
-          json['read_at'] == null,
+          (json.containsKey('read_at') && json['read_at'] == null),
       type: json['type']?.toString(),
       boldText: json['bold_text']?.toString(),
       createdAt: json['created_at'] != null
@@ -107,8 +92,6 @@ class NotificationModel {
       'id': id,
       'project_id': projectId,
       'project_name': projectName,
-      'district_id': districtId,
-      'district_name': districtName,
       'notes': notes,
       'assigned_at': assignedAt?.toIso8601String(),
       'title': title,

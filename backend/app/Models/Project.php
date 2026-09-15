@@ -29,13 +29,17 @@ class Project extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'project_assignments', 'project_id', 'user_id')
-            ->withPivot([
-                'district_id',
-                'notes',
-                'assigned_at',
-            ])
-            ->withTimestamps();
+        return $this->belongsToMany(
+            User::class,
+            'project_assignments',
+            'project_id',
+            'user_id'
+        )
+        ->withPivot([
+            'notes',
+            'assigned_at',
+        ])
+        ->withTimestamps();
     }
 
     public function installations(): HasMany

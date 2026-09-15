@@ -7,6 +7,8 @@ import '../manual/manual_page.dart';
 import '../realtime/realtime_page.dart';
 
 class MetodePendataanPage extends StatelessWidget {
+  static const String routeName = '/metode_pendataan';
+
   final int? idProject;
   final int? idArea;
   final String? areaName;
@@ -39,15 +41,15 @@ class MetodePendataanPage extends StatelessWidget {
       return;
     }
     debugPrint('Realtime dipilih');
-    AppNavigator.push(
+    AppNavigator.pushReplacement(
       context,
       RealtimePage(
-    idProject: idProject,
-    idArea: idArea,
-    areaName: areaName,
-    lampType: lampType,
-    lampTypeId: lampTypeId,
-),
+        idProject: idProject,
+        idArea: idArea,
+        areaName: areaName,
+        lampType: lampType,
+        lampTypeId: lampTypeId,
+      ),
     );
   }
 
@@ -68,15 +70,15 @@ class MetodePendataanPage extends StatelessWidget {
       return;
     }
     debugPrint('Manual dipilih');
-    AppNavigator.push(
+    AppNavigator.pushReplacement(
       context,
       ManualPage(
-    idProject: idProject,
-    idArea: idArea,
-    areaName: areaName,
-    lampType: lampType,
-    lampTypeId: lampTypeId,
-),
+        idProject: idProject,
+        idArea: idArea,
+        areaName: areaName,
+        lampType: lampType,
+        lampTypeId: lampTypeId,
+      ),
     );
   }
 

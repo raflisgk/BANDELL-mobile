@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../../models/area_model.dart';
 import '../../models/project_model.dart';
-import '../../services/auth_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -30,6 +28,8 @@ class AreaOperasionalPage extends StatefulWidget {
 class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   final ProjectService _projectService = ProjectService();
   Timer? _refreshTimer;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   List<ProjectModel> _projects = [];
   ProjectModel? _selectedProject;
@@ -56,6 +56,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -66,37 +67,47 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
       if (!mounted) return;
 
+      if (projects.isEmpty) {
+        ProjectService.selectedProject = null;
+        setState(() {
+          _projects = [];
+          _selectedProject = null;
+          _areas = [];
+        });
+        return;
+      }
+
       ProjectModel? currentSelected = _selectedProject;
       if (currentSelected != null) {
         final matches = projects.where((p) => p.id == currentSelected!.id);
         if (matches.isNotEmpty) {
           currentSelected = matches.first;
           ProjectService.selectedProject = currentSelected;
+        } else {
+          currentSelected = projects.first;
+          ProjectService.selectedProject = currentSelected;
         }
+      } else {
+        currentSelected = projects.first;
+        ProjectService.selectedProject = currentSelected;
       }
 
-      List<Map<String, dynamic>> updatedAreas = _areas;
-      if (currentSelected != null) {
-        final userId = AuthService.currentUser?.idUser;
-        final areas = await _projectService.getAreas(currentSelected.id, userId: userId);
-        updatedAreas = areas.map<Map<String, dynamic>>((area) {
-          return {
-            'id': area['id'],
-            'name': area['name']?.toString() ?? '',
-            'status': area['status']?.toString() ?? 'aktif',
-            'assigned_at': area['assigned_at']?.toString(),
-          };
-        }).toList();
-      }
+      final areas = await _projectService.getAreas(currentSelected.id);
+      final updatedAreas = areas.map<Map<String, dynamic>>((area) {
+        return {
+          'id': area['id'],
+          'name': area['name']?.toString() ?? '',
+          'status': area['status']?.toString() ?? 'aktif',
+          'assigned_at': area['assigned_at']?.toString(),
+        };
+      }).toList();
 
       if (!mounted) return;
 
       setState(() {
         _projects = projects;
-        if (currentSelected != null) {
-          _selectedProject = currentSelected;
-          _areas = updatedAreas;
-        }
+        _selectedProject = currentSelected;
+        _areas = updatedAreas;
       });
     } catch (e) {
       debugPrint('Auto refresh error in AreaOperasionalPage: $e');
@@ -116,6 +127,17 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
       if (!mounted) return;
 
+      if (projects.isEmpty) {
+        ProjectService.selectedProject = null;
+        setState(() {
+          _projects = [];
+          _selectedProject = null;
+          _areas = [];
+          _isLoadingProjects = false;
+        });
+        return;
+      }
+
       setState(() {
         _projects = projects;
         _isLoadingProjects = false;
@@ -129,6 +151,8 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
         if (matchingProject.isNotEmpty) {
           _selectProject(matchingProject.first);
+        } else {
+          _selectProject(projects.first);
         }
       } else if (ProjectService.selectedProject != null) {
         final matchingProject = projects.where(
@@ -161,8 +185,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     });
 
     try {
-      final userId = AuthService.currentUser?.idUser;
-      final areas = await _projectService.getAreas(project.id, userId: userId);
+      final areas = await _projectService.getAreas(project.id);
 
       if (!mounted) return;
 
@@ -213,11 +236,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   }
 
   void _handleCardTap(Map<String, dynamic> area) async {
-    final status = area['status']?.toString().toLowerCase() ?? 'aktif';
-    if (status == 'nonaktif') {
-      return;
-    }
-
     final int areaId = int.tryParse(
           area['id'].toString(),
         ) ??
@@ -236,11 +254,82 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         idArea: areaId,
         areaName: areaName,
       ),
+      settings: const RouteSettings(name: LampPage.routeName),
     );
 
     if (mounted) {
       _refreshData();
     }
+  }
+
+  List<Map<String, dynamic>> get _filteredAreas {
+    if (_searchQuery.trim().isEmpty) {
+      return _areas;
+    }
+    final query = _searchQuery.toLowerCase().trim();
+    return _areas.where((area) {
+      final name = area['name']?.toString().toLowerCase() ?? '';
+      return name.contains(query);
+    }).toList();
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFCBD5E1),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 14,
+        ),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: 'Cari area operasional',
+          hintStyle: const TextStyle(
+            color: Color(0xFF94A3B8),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: Color(0xFF64748B),
+            size: 22,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: Color(0xFF64748B),
+                    size: 18,
+                  ),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -256,6 +345,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
           children: [
             AppTopBar(
               selectedValue: _selectedProject?.name,
+              title: _projects.isEmpty ? 'Belum Ada Proyek' : null,
               dropdownItems: projectNames,
               onDropdownChanged: _onProjectSelected,
               showBackButton: false,
@@ -268,242 +358,339 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
             ),
 
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+              child: ListView(
+                physics: const ClampingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
+                  horizontal: 28.0,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
+                children: [
+                  const SizedBox(height: 16),
 
-                    const Text(
-                      'Pilih Area Operasional',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.3,
-                      ),
+                  const Text(
+                    'Pilih Area Operasional',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.3,
                     ),
+                  ),
 
-                    const SizedBox(height: 4),
+                  const SizedBox(height: 4),
 
-                    const Text(
-                      'Berikut area operasional tersedia untuk Anda.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                      ),
+                  const Text(
+                    'Berikut area operasional tersedia untuk Anda.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
                     ),
+                  ),
 
+                  const SizedBox(height: 18),
+
+                  if (_projects.isNotEmpty) ...[
+                    _buildSearchBar(),
                     const SizedBox(height: 20),
+                  ],
 
-                    // Loading project
-                    if (_isLoadingProjects)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 40,
+                  // Loading project
+                  if (_isLoadingProjects)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 40,
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
                         ),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      )
+                      ),
+                    )
 
-                    // Error project
-                    else if (_errorMessage != null)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.border,
+                  // Error project
+                  else if (_errorMessage != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.border,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: AppColors.error,
                           ),
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 48,
-                              color: AppColors.error,
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Gagal Mengambil Data Project',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
                             ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Gagal Mengambil Data Project',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _loadProjects,
-                              child: const Text('Coba Lagi'),
-                            ),
-                          ],
-                        ),
-                      )
-
-                    // Belum memilih project
-                    else if (_selectedProject == null)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 48,
-                          horizontal: 20,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.border,
                           ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: AppColors.shadowColor,
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFEFF6FF),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.arrow_upward_rounded,
-                                size: 30,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            const Text(
-                              'Silakan Pilih Project Terlebih Dahulu',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Gunakan menu dropdown di bagian atas layar untuk menentukan project.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-
-                    // Loading area
-                    else if (_isLoadingAreas)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 40,
-                        ),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      )
-
-                    // Tidak ada area
-                    else if (_areas.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 44,
-                          horizontal: 20,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.border,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.map_outlined,
-                              size: 48,
+                          const SizedBox(height: 8),
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
                               color: AppColors.textSecondary,
                             ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Belum Ada Area Operasional',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Project "${_selectedProject!.name}" belum memiliki area operasional.',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadProjects,
+                            child: const Text('Coba Lagi'),
+                          ),
+                        ],
+                      ),
+                    )
 
-                    // Area dari database
-                    else
-                      ..._areas.map(
-                        (area) => Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: 14.0,
+                  // Empty State: Assignment project kosong
+                  else if (_projects.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 36,
+                        horizontal: 24,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // [ ILUSTRASI ORANG BEKERJA DI PROYEK ]
+                          Image.asset(
+                            'assets/images/empty_project.png',
+                            height: 180,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFEFF6FF),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.engineering_outlined,
+                                  size: 40,
+                                  color: AppColors.primary,
+                                ),
+                              );
+                            },
                           ),
-                          child: AreaOperasionalCard(
-                            title: area['name']?.toString() ?? '',
-                            location: _selectedProject?.name ?? '-',
-                            dateRange: AreaModel.formatAssignedAt(
-                              area['assigned_at']?.toString(),
+                          const SizedBox(height: 20),
+
+                          // Judul
+                          const Text(
+                            'Belum ada proyek',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.2,
                             ),
-                            status: area['status']?.toString() ?? 'aktif',
-                            onTap: (area['status']?.toString().toLowerCase() ==
-                                    'nonaktif')
-                                ? null
-                                : () => _handleCardTap(area),
                           ),
+                          const SizedBox(height: 8),
+
+                          // Penjelasan
+                          const Text(
+                            'Saat ini belum ada proyek yang ditugaskan kepada Anda.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+
+                  // Belum memilih project
+                  else if (_selectedProject == null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 48,
+                        horizontal: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.border,
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: AppColors.shadowColor,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEFF6FF),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_upward_rounded,
+                              size: 30,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Silakan Pilih Project Terlebih Dahulu',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Gunakan menu dropdown di bagian atas layar untuk menentukan project.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+
+                  // Loading area
+                  else if (_isLoadingAreas)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 40,
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    )
+
+                  // Tidak ada area
+                  else if (_areas.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 44,
+                        horizontal: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.border,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.map_outlined,
+                            size: 48,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Belum Ada Area Operasional',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Project "${_selectedProject!.name}" belum memiliki area operasional.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+
+                  // Hasil search kosong
+                  else if (_filteredAreas.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 36,
+                        horizontal: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.border,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.search_off_rounded,
+                            size: 44,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Area Tidak Ditemukan',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tidak ada area yang cocok dengan "$_searchQuery".',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+
+                  // Area dari database
+                  else
+                    for (final area in _filteredAreas)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: 12.0,
+                        ),
+                        child: AreaOperasionalCard(
+                          title: area['name']?.toString() ?? '',
+                          onTap: () => _handleCardTap(area),
                         ),
                       ),
 
-                    const SizedBox(height: 16),
-                  ],
-                ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
           ],

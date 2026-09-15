@@ -8,6 +8,7 @@ import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/custom_feedback_message.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
 import '../../widgets/pop_up_sukses.dart';
@@ -15,7 +16,6 @@ import '../../widgets/tombol_simpan_data.dart';
 import 'realtime_barcode.dart';
 import 'realtime_location.dart';
 import 'scan_barcode_page.dart';
-import '../metode_pendataan/metode_pendataan_page.dart';
 
 class RealtimePage extends StatefulWidget {
   final int? idProject;
@@ -96,15 +96,6 @@ class _RealtimePageState extends State<RealtimePage> {
       setState(() {
         _scannedBarcode = result.trim();
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Barcode berhasil discan: $_scannedBarcode'),
-            backgroundColor: AppColors.primary,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
     }
   }
 
@@ -118,16 +109,14 @@ class _RealtimePageState extends State<RealtimePage> {
       final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Layanan lokasi (GPS) tidak aktif.'),
-              backgroundColor: Color(0xFFDC2626),
-            ),
+          setState(() {
+            _isLoadingLocation = false;
+          });
+          CustomFeedbackMessage.showError(
+            context,
+            'Layanan lokasi (GPS) tidak aktif.',
           );
         }
-        setState(() {
-          _isLoadingLocation = false;
-        });
         return;
       }
 
@@ -136,32 +125,28 @@ class _RealtimePageState extends State<RealtimePage> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Izin akses lokasi ditolak.'),
-                backgroundColor: Color(0xFFDC2626),
-              ),
+            setState(() {
+              _isLoadingLocation = false;
+            });
+            CustomFeedbackMessage.showError(
+              context,
+              'Izin akses lokasi ditolak.',
             );
           }
-          setState(() {
-            _isLoadingLocation = false;
-          });
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Izin lokasi ditolak secara permanen.'),
-              backgroundColor: Color(0xFFDC2626),
-            ),
+          setState(() {
+            _isLoadingLocation = false;
+          });
+          CustomFeedbackMessage.showError(
+            context,
+            'Izin lokasi ditolak secara permanen.',
           );
         }
-        setState(() {
-          _isLoadingLocation = false;
-        });
         return;
       }
 
@@ -177,13 +162,6 @@ class _RealtimePageState extends State<RealtimePage> {
           _longitudeController.text = position.longitude.toStringAsFixed(6);
           _isLoadingLocation = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Lokasi berhasil diperbarui dari GPS.'),
-            backgroundColor: Color(0xFF16A34A),
-            duration: Duration(seconds: 2),
-          ),
-        );
       }
     } catch (e) {
       debugPrint('Error getting GPS location: $e');
@@ -191,11 +169,9 @@ class _RealtimePageState extends State<RealtimePage> {
         setState(() {
           _isLoadingLocation = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengambil lokasi: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-          ),
+        CustomFeedbackMessage.showError(
+          context,
+          'Gagal mengambil lokasi GPS.',
         );
       }
     }
@@ -203,12 +179,9 @@ class _RealtimePageState extends State<RealtimePage> {
 
   void _handleTambahFoto() {
     if (_photos.length >= 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Maksimal 4 foto sudah tercapai'),
-          backgroundColor: Color(0xFFEF4444),
-          duration: Duration(seconds: 1),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Maksimal 4 foto sudah tercapai.',
       );
       return;
     }
@@ -310,25 +283,13 @@ class _RealtimePageState extends State<RealtimePage> {
         setState(() {
           _photos.add(image.path);
         });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Foto ${_photos.length} berhasil ditambahkan'),
-              backgroundColor: AppColors.primary,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengambil foto: $e'),
-            backgroundColor: const Color(0xFFEF4444),
-            duration: const Duration(seconds: 2),
-          ),
+        CustomFeedbackMessage.showError(
+          context,
+          'Gagal mengambil foto.',
         );
       }
     }
@@ -349,32 +310,80 @@ class _RealtimePageState extends State<RealtimePage> {
         ProjectService.selectedProject?.status == 'closed' ||
             ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tidak dapat menyimpan data. Project telah Selesai.'),
-          backgroundColor: Color(0xFFDC2626),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Tidak dapat menyimpan data. Project telah Selesai.',
+      );
+      return;
+    }
+
+    final projectId =
+        widget.idProject ?? ProjectService.selectedProject?.idProject;
+    if (projectId == null || projectId <= 0) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Project belum dipilih.',
+      );
+      return;
+    }
+
+    final areaId = widget.idArea ?? 0;
+    if (areaId <= 0) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Area operasional belum dipilih.',
+      );
+      return;
+    }
+
+    final userId = AuthService.currentUser?.idUser ?? 0;
+    if (userId <= 0) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Sesi pengguna tidak valid. Silakan login kembali.',
+      );
+      return;
+    }
+
+    final lampTypeId = widget.lampTypeId;
+    if ((lampTypeId == null || lampTypeId <= 0) &&
+        (widget.lampType == null || widget.lampType!.trim().isEmpty)) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Jenis lampu belum dipilih.',
       );
       return;
     }
 
     if (_scannedBarcode == null || _scannedBarcode!.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan scan barcode terlebih dahulu.'),
-          backgroundColor: Color(0xFFDC2626),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Silakan scan barcode terlebih dahulu.',
       );
       return;
     }
 
-    if (_latitudeController.text.isEmpty ||
-        _longitudeController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan ambil koordinat lokasi (GPS).'),
-          backgroundColor: Color(0xFFDC2626),
-        ),
+    if (_scannedBarcode!.trim().length > 12) {
+      CustomFeedbackMessage.showError(
+        context,
+        'ID Barcode (LCU) maksimal 12 karakter.',
+      );
+      return;
+    }
+
+    if (_latitudeController.text.trim().isEmpty ||
+        _longitudeController.text.trim().isEmpty) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Silakan ambil koordinat lokasi (GPS).',
+      );
+      return;
+    }
+
+    if (_panelCodeController.text.trim().length > 12) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Kode panel maksimal 12 karakter.',
       );
       return;
     }
@@ -385,25 +394,23 @@ class _RealtimePageState extends State<RealtimePage> {
 
     try {
       final installationData = InstallationModel(
-    idInstallation: 0,
-    idProject: widget.idProject ?? ProjectService.selectedProject?.idProject,
-    idUser: AuthService.currentUser?.idUser ?? 0,
-    idArea: widget.idArea ?? 0,
-
-    lampTypeId: widget.lampTypeId,
-
-    lampCode: _scannedBarcode!,
-    lampType: widget.lampType ?? '',
-    latitude: _latitudeController.text.trim(),
-    longitude: _longitudeController.text.trim(),
-    panelCode: _panelCodeController.text.trim().isNotEmpty
-      ? _panelCodeController.text.trim()
-      : null,
-    photos: List.from(_photos),
-    inputMethod: 'Realtime',
-    status: 'Tersimpan',
-    createdAt: DateTime.now(),
-  );
+        idInstallation: 0,
+        idProject: projectId,
+        idUser: userId,
+        idArea: areaId,
+        lampTypeId: lampTypeId,
+        lampCode: _scannedBarcode!.trim(),
+        lampType: widget.lampType ?? '',
+        latitude: _latitudeController.text.trim(),
+        longitude: _longitudeController.text.trim(),
+        panelCode: _panelCodeController.text.trim().isNotEmpty
+            ? _panelCodeController.text.trim()
+            : null,
+        photos: List.from(_photos),
+        inputMethod: 'Realtime',
+        status: 'Tersimpan',
+        createdAt: DateTime.now(),
+      );
 
       await InstallationService().createInstallation(installationData);
 
@@ -412,22 +419,18 @@ class _RealtimePageState extends State<RealtimePage> {
           _isSubmitting = false;
         });
 
+        CustomFeedbackMessage.showSuccess(
+          context,
+          'Data berhasil disimpan',
+        );
+
         PopUpSukses.show(
           context,
           lampCode: _scannedBarcode!,
           onAddData: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => MetodePendataanPage(
-                  idProject: widget.idProject,
-                  idArea: widget.idArea,
-                  areaName: widget.areaName,
-                  lampType: widget.lampType,
-                  lampTypeId: widget.lampTypeId,
-                ),
-              ),
-            );
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
           },
         );
       }
@@ -437,11 +440,10 @@ class _RealtimePageState extends State<RealtimePage> {
         setState(() {
           _isSubmitting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal menyimpan data pendataan. Silakan coba lagi.'),
-            backgroundColor: Color(0xFFDC2626),
-          ),
+        final errorMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        CustomFeedbackMessage.showError(
+          context,
+          errorMsg.isNotEmpty ? errorMsg : 'Data gagal disimpan',
         );
       }
     }

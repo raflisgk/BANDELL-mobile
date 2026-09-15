@@ -6,7 +6,7 @@ import 'auth_service.dart';
 
 class ApiService {
   /// Base URL endpoint Laravel backend API
-  static const String baseUrl = 'http://192.168.1.128:8000/api';
+  static const String baseUrl = 'http://192.168.1.44:8000/api';
 
   /// Token session untuk autentikasi Bearer Token (opsional, jika digunakan)
   static String? _authToken;
@@ -121,6 +121,33 @@ class ApiService {
 
     debugPrint('DEBUG NOTIFICATION STATUS: ${response.statusCode}');
     debugPrint('DEBUG NOTIFICATION BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> &&
+          decoded['success'] == true &&
+          decoded['data'] is List) {
+        return decoded['data'] as List<dynamic>;
+      }
+    }
+
+    return [];
+  }
+
+  /// Endpoint untuk mengambil assignment project teknisi berdasarkan user_id
+  static Future<List<dynamic>> getProjectAssignments(int userId) async {
+    final uri = Uri.parse('$baseUrl/project-assignments?user_id=$userId');
+
+    debugPrint('DEBUG USER ID FOR ASSIGNMENTS: $userId');
+    debugPrint('DEBUG PROJECT ASSIGNMENTS URL: $uri');
+
+    final response = await http.get(
+      uri,
+      headers: defaultHeaders,
+    );
+
+    debugPrint('DEBUG PROJECT ASSIGNMENTS STATUS: ${response.statusCode}');
+    debugPrint('DEBUG PROJECT ASSIGNMENTS BODY: ${response.body}');
 
     if (response.statusCode == 200) {
       final dynamic decoded = jsonDecode(response.body);
