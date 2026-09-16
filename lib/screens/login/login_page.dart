@@ -15,7 +15,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -32,6 +32,9 @@ class _LoginPageState extends State<LoginPage>
   late final Animation<double> _logoScaleAnimation;
   late final Animation<double> _formFadeAnimation;
   late final Animation<Offset> _formSlideAnimation;
+
+  late final AnimationController _shakeController;
+  late final Animation<double> _shakeAnimation;
 
   @override
   void initState() {
@@ -73,6 +76,23 @@ class _LoginPageState extends State<LoginPage>
       ),
     );
 
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    _shakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -8.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -8.0, end: 8.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 8.0, end: -6.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 6.0, end: -3.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -3.0, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _shakeController,
+      curve: Curves.easeInOut,
+    ));
+
     _animController.forward();
     _loadSavedCredentials();
   }
@@ -107,6 +127,7 @@ class _LoginPageState extends State<LoginPage>
   @override
   void dispose() {
     _animController.dispose();
+    _shakeController.dispose();
     _usernameController.removeListener(_clearErrorOnTyping);
     _passwordController.removeListener(_clearErrorOnTyping);
     _usernameController.dispose();
@@ -145,6 +166,7 @@ class _LoginPageState extends State<LoginPage>
       setState(() {
         _errorMessage = 'Silakan masukkan email dan password.';
       });
+      _shakeController.forward(from: 0.0);
       return;
     }
 
@@ -177,18 +199,58 @@ class _LoginPageState extends State<LoginPage>
         context,
         const AreaOperasionalPage(),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (!mounted) return;
 
-      String errorMsg = e.toString().replaceFirst('Exception: ', '').trim();
-      if (errorMsg.isEmpty) {
-        errorMsg = 'Email atau password salah.';
+      debugPrint('LOGIN ERROR: $e');
+      debugPrint('LOGIN STACKTRACE: $stackTrace');
+
+      String displayMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+
+      if (e is ApiException) {
+        displayMessage = e.message;
+      } else {
+        final errorStr = e.toString().toLowerCase();
+        if (errorStr.contains('timeout')) {
+          displayMessage = 'Koneksi ke server timeout.';
+        } else if (errorStr.contains('socket') ||
+            errorStr.contains('clientexception') ||
+            errorStr.contains('connection abort') ||
+            errorStr.contains('connection refused') ||
+            errorStr.contains('network is unreachable') ||
+            errorStr.contains('failed host lookup')) {
+          displayMessage = 'Koneksi ke server gagal.';
+        } else if (errorStr.contains('500') ||
+            errorStr.contains('server error') ||
+            errorStr.contains('internal server')) {
+          displayMessage = 'Terjadi kesalahan pada server.';
+        } else if (errorStr.contains('401') ||
+            errorStr.contains('email atau password salah') ||
+            errorStr.contains('unauthorized')) {
+          displayMessage = 'Email atau password salah.';
+        }
+      }
+
+      // Strict sanitization: ensure NO raw technical details leak to the UI
+      final lower = displayMessage.toLowerCase();
+      if (lower.contains('clientexception') ||
+          lower.contains('socketexception') ||
+          lower.contains('os error') ||
+          lower.contains('errno') ||
+          lower.contains('address') ||
+          lower.contains('port') ||
+          lower.contains('http://') ||
+          lower.contains('https://') ||
+          lower.contains('exception:') ||
+          lower.contains('stack trace')) {
+        displayMessage = 'Koneksi ke server gagal.';
       }
 
       setState(() {
         _isLoading = false;
-        _errorMessage = errorMsg;
+        _errorMessage = displayMessage;
       });
+      _shakeController.forward(from: 0.0);
     }
   }
 
@@ -386,6 +448,8 @@ class _LoginPageState extends State<LoginPage>
                         children: [
                           const SizedBox(height: 8),
 
+                          _buildErrorMessage(),
+
                           // Username Field Container
                           _buildInputFieldContainer(
                             icon: Icons.person_outline_rounded,
@@ -393,6 +457,7 @@ class _LoginPageState extends State<LoginPage>
                             hint: 'Masukkan username',
                             controller: _usernameController,
                             focusNode: _usernameFocusNode,
+                            hasError: _errorMessage != null,
                           ),
 
                           const SizedBox(height: 16),
@@ -406,14 +471,13 @@ class _LoginPageState extends State<LoginPage>
                             focusNode: _passwordFocusNode,
                             isPassword: true,
                             isPasswordVisible: _isPasswordVisible,
+                            hasError: _errorMessage != null,
                             onTogglePasswordVisibility: () {
                               setState(() {
                                 _isPasswordVisible = !_isPasswordVisible;
                               });
                             },
                           ),
-
-                          _buildErrorMessage(),
 
                           const SizedBox(height: 14),
 
@@ -562,9 +626,15 @@ class _LoginPageState extends State<LoginPage>
     required FocusNode focusNode,
     bool isPassword = false,
     bool isPasswordVisible = false,
+    bool hasError = false,
     VoidCallback? onTogglePasswordVisibility,
   }) {
     final isFocused = focusNode.hasFocus;
+
+    final borderColor = hasError
+        ? const Color(0xFFEF4444)
+        : (isFocused ? AppColors.primary : AppColors.border);
+    final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -572,8 +642,8 @@ class _LoginPageState extends State<LoginPage>
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isFocused ? AppColors.primary : AppColors.border,
-          width: isFocused ? 1.5 : 1.0,
+          color: borderColor,
+          width: borderWidth,
         ),
         boxShadow: const [
           BoxShadow(
@@ -651,48 +721,26 @@ class _LoginPageState extends State<LoginPage>
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 10.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14.0,
-          vertical: 9.0,
-        ),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEF2F2),
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(
-            color: const Color(0xFFFECACA),
-            width: 1.0,
+      padding: const EdgeInsets.only(bottom: 8.0, left: 2.0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: AnimatedBuilder(
+          animation: _shakeAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(_shakeAnimation.value, 0),
+              child: child,
+            );
+          },
+          child: Text(
+            _errorMessage!,
+            style: const TextStyle(
+              color: Color(0xFFFF6B6B),
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.1,
+            ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              color: Color(0xFFDC2626),
-              size: 18,
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(
-                  color: Color(0xFF991B1B),
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  height: 1.25,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

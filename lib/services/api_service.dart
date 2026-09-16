@@ -1,8 +1,21 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import 'auth_service.dart';
+
+/// Clean custom exception class that shields the UI from raw system errors
+class ApiException implements Exception {
+  final String message;
+  final int? statusCode;
+
+  const ApiException(this.message, {this.statusCode});
+
+  @override
+  String toString() => message;
+}
 
 class ApiService {
   /// Base URL endpoint Laravel backend API
@@ -71,12 +84,14 @@ class ApiService {
   static Map<String, String> get defaultHeaders => {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Connection': 'close',
         if (_authToken != null) 'Authorization': 'Bearer $_authToken',
       };
 
   /// Headers untuk upload multipart (file/foto)
   static Map<String, String> get multipartHeaders => {
         'Accept': 'application/json',
+        'Connection': 'close',
         if (_authToken != null) 'Authorization': 'Bearer $_authToken',
       };
 
@@ -85,26 +100,111 @@ class ApiService {
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/login'),
-      headers: defaultHeaders,
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
+    final http.Response response;
+    try {
+      response = await http
+          .post(
+            Uri.parse('$baseUrl/login'),
+            headers: defaultHeaders,
+            body: jsonEncode({
+              'email': email,
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException catch (e) {
+      debugPrint('LOGIN TIMEOUT EXCEPTION: $e');
+      throw const ApiException('Koneksi ke server timeout.');
+    } on http.ClientException catch (e) {
+      debugPrint('LOGIN CLIENT EXCEPTION: $e');
+      throw const ApiException('Koneksi ke server gagal.');
+    } on SocketException catch (e) {
+      debugPrint('LOGIN SOCKET EXCEPTION: $e');
+      throw const ApiException('Koneksi ke server gagal.');
+    } catch (e) {
+      debugPrint('LOGIN NETWORK EXCEPTION: $e');
+      throw const ApiException('Koneksi ke server gagal.');
+    }
+
+    debugPrint('LOGIN STATUS CODE: ${response.statusCode}');
+    debugPrint('LOGIN BODY: ${response.body}');
+
+    Map<String, dynamic>? data;
+    try {
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        data = decoded;
+      }
+    } catch (e) {
+      debugPrint('LOGIN JSON PARSE ERROR: $e');
+    }
+
+    if (response.statusCode == 200) {
+      if (data != null && data['user'] != null) {
+        AuthService.currentUser =
+            UserModel.fromJson(data['user'] as Map<String, dynamic>);
+      }
+      return data ?? {};
+    }
+
+    // 401: Kredensial tidak valid
+    if (response.statusCode == 401) {
+      throw const ApiException(
+        'Email atau password salah.',
+        statusCode: 401,
+      );
+    }
+
+    // 422: Validasi input gagal dari backend
+    if (response.statusCode == 422) {
+      String validationMsg = 'Format email atau password tidak valid.';
+      if (data != null) {
+        if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
+          final firstKey = (data['errors'] as Map).keys.first;
+          final firstVal = (data['errors'] as Map)[firstKey];
+          if (firstVal is List && firstVal.isNotEmpty) {
+            final raw = firstVal.first.toString();
+            if (raw.toLowerCase().contains('email')) {
+              validationMsg = 'Format email tidak valid.';
+            } else if (raw.toLowerCase().contains('password')) {
+              validationMsg = 'Password harus diisi.';
+            } else {
+              validationMsg = raw;
+            }
+          }
+        } else if (data['message'] != null) {
+          final rawMsg = data['message'].toString();
+          if (rawMsg.toLowerCase().contains('email')) {
+            validationMsg = 'Format email tidak valid.';
+          } else {
+            validationMsg = rawMsg;
+          }
+        }
+      }
+      throw ApiException(validationMsg, statusCode: 422);
+    }
+
+    // 500+: Server error
+    if (response.statusCode >= 500) {
+      throw ApiException(
+        'Terjadi kesalahan pada server.',
+        statusCode: response.statusCode,
+      );
+    }
+
+    // Status code lainnya
+    final safeMsg = data?['message']?.toString();
+    final bool isSafe = safeMsg != null &&
+        safeMsg.isNotEmpty &&
+        !safeMsg.toLowerCase().contains('exception') &&
+        !safeMsg.toLowerCase().contains('error') &&
+        !safeMsg.contains('(') &&
+        !safeMsg.contains('{');
+
+    throw ApiException(
+      isSafe ? safeMsg : 'Terjadi kesalahan. Silakan coba lagi.',
+      statusCode: response.statusCode,
     );
-
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode != 200) {
-      throw Exception(data['message'] ?? 'Login gagal.');
-    }
-
-    if (data is Map<String, dynamic> && data['user'] != null) {
-      AuthService.currentUser = UserModel.fromJson(data['user'] as Map<String, dynamic>);
-    }
-
-    return data;
   }
 
   /// Endpoint untuk mengambil notifikasi penugasan project berdasarkan user_id

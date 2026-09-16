@@ -41,7 +41,7 @@ class MetodePendataanPage extends StatelessWidget {
       return;
     }
     debugPrint('Realtime dipilih');
-    AppNavigator.pushReplacement(
+    AppNavigator.push(
       context,
       RealtimePage(
         idProject: idProject,
@@ -70,7 +70,7 @@ class MetodePendataanPage extends StatelessWidget {
       return;
     }
     debugPrint('Manual dipilih');
-    AppNavigator.pushReplacement(
+    AppNavigator.push(
       context,
       ManualPage(
         idProject: idProject,

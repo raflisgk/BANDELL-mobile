@@ -5,6 +5,7 @@ import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/custom_feedback_message.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
 import 'barcode_card.dart';
 import 'dialog_hapus_lampu.dart';
@@ -130,14 +131,9 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         ProjectService.selectedProject?.status == 'closed' ||
             ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Project telah Selesai. Pengeditan dinonaktifkan (Read-Only).',
-          ),
-          backgroundColor: Color(0xFF64748B),
-          duration: Duration(seconds: 2),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Project telah Selesai. Pengeditan dinonaktifkan (Read-Only).',
       );
       return;
     }
@@ -168,14 +164,9 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         ProjectService.selectedProject?.status == 'closed' ||
             ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Project telah Selesai. Penghapusan dinonaktifkan (Read-Only).',
-          ),
-          backgroundColor: Color(0xFF64748B),
-          duration: Duration(seconds: 2),
-        ),
+      CustomFeedbackMessage.showError(
+        context,
+        'Project telah Selesai. Penghapusan dinonaktifkan (Read-Only).',
       );
       return;
     }
@@ -191,11 +182,31 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           if (dialogContext.mounted) {
             Navigator.pop(dialogContext);
           }
-          if (_effectiveId != null) {
-            await InstallationService().deleteInstallation(_effectiveId!);
+          if (_effectiveId == null) {
+            if (mounted) {
+              CustomFeedbackMessage.showError(
+                context,
+                'ID data tidak valid.',
+              );
+            }
+            return;
           }
-          if (mounted) {
-            Navigator.pop(context);
+
+          try {
+            await InstallationService().deleteInstallation(_effectiveId!);
+            if (mounted) {
+              Navigator.pop(context, {'deleted': true, 'id': _effectiveId});
+            }
+          } catch (e) {
+            debugPrint('Error deleting installation: $e');
+            if (mounted) {
+              final errorMsg =
+                  e.toString().replaceFirst('Exception: ', '').trim();
+              CustomFeedbackMessage.showError(
+                context,
+                errorMsg.isNotEmpty ? errorMsg : 'Data gagal dihapus',
+              );
+            }
           }
         },
       ),

@@ -49,7 +49,6 @@ class User extends Authenticatable
             'user_id',
             'project_id'
         )->withPivot([
-            'district_id',
             'notes',
             'assigned_at',
         ])->withTimestamps();

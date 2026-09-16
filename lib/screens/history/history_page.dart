@@ -7,6 +7,7 @@ import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/bottom_navbar.dart';
+import '../../widgets/custom_feedback_message.dart';
 import '../area_operasional/area_operasional_page.dart';
 import '../detail_lampu/detail_lampu_page.dart';
 import '../profile/profile_page.dart';
@@ -351,7 +352,7 @@ class _HistoryPageState extends State<HistoryPage> {
         ? item.idLcu!
         : (item.kode.trim().isNotEmpty ? item.kode : '-');
 
-    await AppNavigator.push(
+    final result = await AppNavigator.push(
       context,
       DetailLampuPage(
         idInstallation: item.idHistory,
@@ -373,6 +374,23 @@ class _HistoryPageState extends State<HistoryPage> {
         panelCode: item.panelCode,
       ),
     );
+
+    if (result is Map && result['deleted'] == true) {
+      final int? deletedId = result['id'];
+      if (mounted) {
+        setState(() {
+          _historyItems.removeWhere((h) =>
+              (deletedId != null &&
+                  (h.idHistory == deletedId ||
+                      h.installation?.idInstallation == deletedId)));
+        });
+        CustomFeedbackMessage.showSuccess(
+          context,
+          'Data berhasil dihapus',
+        );
+      }
+      return;
+    }
 
     if (mounted) {
       _loadHistory();

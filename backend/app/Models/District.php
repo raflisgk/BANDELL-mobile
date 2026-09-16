@@ -37,13 +37,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
             return $this->belongsTo(Project::class, 'project_id');
         }
 
-        /**
-         * Get the project assignments for this district.
-         */
-        public function projectAssignments(): HasMany
-        {
-            return $this->hasMany(ProjectAssignment::class, 'district_id');
-        }
 
         /**
          * Get the installations located in this district.

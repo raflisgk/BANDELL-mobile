@@ -5,6 +5,7 @@ import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/bottom_navbar.dart';
+import '../../widgets/custom_feedback.dart';
 import '../area_operasional/area_operasional_page.dart';
 import '../history/history_page.dart';
 import '../login/login_page.dart';
@@ -104,20 +105,14 @@ class _ProfilePageState extends State<ProfilePage> {
           _activeEditField = ProfileEditField.none;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Nomor Telepon berhasil disimpan'),
-            backgroundColor: AppColors.primary,
-            duration: Duration(seconds: 2),
-          ),
+        CustomFeedback.showSuccess(
+          context,
+          'Nomor HP berhasil diperbarui',
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal menyimpan nomor telepon'),
-            backgroundColor: Color(0xFFDC2626),
-            duration: Duration(seconds: 2),
-          ),
+        CustomFeedback.showError(
+          context,
+          'Nomor HP gagal diperbarui',
         );
       }
     }

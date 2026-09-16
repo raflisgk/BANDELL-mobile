@@ -11,7 +11,7 @@ import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
 import '../../widgets/pop_up_sukses.dart';
 import '../../widgets/tombol_simpan_data.dart';
-import '../lamp/lamp_page.dart';
+import '../metode_pendataan/metode_pendataan_page.dart';
 
 class ManualPage extends StatefulWidget {
   final int? idProject;
@@ -366,12 +366,8 @@ class _ManualPageState extends State<ManualPage> {
       onAddData: () {
         Navigator.popUntil(
           context,
-          (route) =>
-              route.settings.name == LampPage.routeName || route.isFirst,
+          ModalRoute.withName(MetodePendataanPage.routeName),
         );
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
       },
     );
   }

@@ -16,6 +16,7 @@ import '../../widgets/tombol_simpan_data.dart';
 import 'realtime_barcode.dart';
 import 'realtime_location.dart';
 import 'scan_barcode_page.dart';
+import '../metode_pendataan/metode_pendataan_page.dart';
 
 class RealtimePage extends StatefulWidget {
   final int? idProject;
@@ -428,9 +429,10 @@ class _RealtimePageState extends State<RealtimePage> {
           context,
           lampCode: _scannedBarcode!,
           onAddData: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
+            Navigator.popUntil(
+              context,
+              ModalRoute.withName(MetodePendataanPage.routeName),
+            );
           },
         );
       }
