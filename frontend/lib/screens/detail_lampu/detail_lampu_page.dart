@@ -5,7 +5,7 @@ import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
-import '../../widgets/custom_feedback_message.dart';
+import '../../widgets/custom_feedback.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
 import 'barcode_card.dart';
 import 'dialog_hapus_lampu.dart';
@@ -72,9 +72,11 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
   Future<void> _refreshDetail() async {
     final id = _effectiveId;
+    debugPrint('DETAIL REFRESH ID: $id');
     if (id == null || id <= 0) return;
     try {
       final updated = await InstallationService().getInstallationDetail(id);
+      debugPrint('DETAIL REFRESH RESULT PHOTOS: ${updated?.photos}');
       if (updated != null && mounted) {
         setState(() {
           _currentInstallation = updated;

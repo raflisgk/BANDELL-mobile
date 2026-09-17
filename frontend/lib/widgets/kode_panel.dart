@@ -42,25 +42,34 @@ class KodePanel extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              displayTitle,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      displayTitle,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isOptional && !displayTitle.contains('(Opsional)')) ...[
+                    const SizedBox(width: 6),
+                    const Text(
+                      '(Opsional)',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            if (isOptional && !displayTitle.contains('(Opsional)')) ...[
-              const SizedBox(width: 6),
-              const Text(
-                '(Opsional)',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
           ],
         ),
         const SizedBox(height: 4),

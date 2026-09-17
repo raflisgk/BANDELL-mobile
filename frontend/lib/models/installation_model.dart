@@ -1,3 +1,5 @@
+import '../services/api_service.dart';
+
 class InstallationModel {
   final int idInstallation;
   final int? idProject;
@@ -63,15 +65,23 @@ class InstallationModel {
 
     if (json['photos'] is List) {
       parsedPhotos = (json['photos'] as List).map((e) {
+        String raw = '';
         if (e is Map) {
-          final path = e['photo_path'] ?? e['url'] ?? e['path'];
-          if (path != null) return path.toString();
+          final path = e['photo_path'] ?? e['url'] ?? e['path'] ?? e['file_path'];
+          if (path != null) raw = path.toString();
+        } else {
+          raw = e.toString();
         }
-        return e.toString();
-      }).toList();
+        return ApiService.resolvePhotoUrl(raw);
+      }).where((s) => s.isNotEmpty).toList();
     } else if (json['photo_url'] != null &&
         json['photo_url'].toString().isNotEmpty) {
-      parsedPhotos = [json['photo_url'].toString()];
+      final resolved = ApiService.resolvePhotoUrl(json['photo_url'].toString());
+      if (resolved.isNotEmpty) parsedPhotos = [resolved];
+    } else if (json['photo_path'] != null &&
+        json['photo_path'].toString().isNotEmpty) {
+      final resolved = ApiService.resolvePhotoUrl(json['photo_path'].toString());
+      if (resolved.isNotEmpty) parsedPhotos = [resolved];
     }
 
     int? parseInt(dynamic value) {
@@ -185,9 +195,9 @@ class InstallationModel {
   return value.toString();
 })(),
 
-      photoUrl:
-          json['photo_url']?.toString() ??
-          (parsedPhotos.isNotEmpty ? parsedPhotos.first : null),
+      photoUrl: json['photo_url'] != null
+          ? ApiService.resolvePhotoUrl(json['photo_url'].toString())
+          : (parsedPhotos.isNotEmpty ? parsedPhotos.first : null),
 
       notes:
           json['notes']?.toString() ??

@@ -1,53 +1,76 @@
-# Mobile Teknisi
+# BANDELL Mobile Teknisi & API System
 
-Aplikasi mobile untuk Teknisi berbasis Flutter (Android).
+Repository terintegrasi untuk sistem operasional pendataan pemasangan lampu/panel PJU BANDELL.
 
-## Alur Aplikasi
-`Login` → `Project` → `Area Operasional` → `Daftar Lampu` → `Tambah Data` → `Realtime/Manual` → `Detail Lampu` → `Edit/Hapus`
-
-## Struktur Folder & File
+## Struktur Project
 
 ```text
 mobile_teknisi/
 │
-├── android/
+├── frontend/           # Aplikasi Mobile Flutter (Android) untuk Teknisi Lapangan
+│   ├── android/
+│   ├── assets/
+│   ├── lib/
+│   ├── test/
+│   ├── windows/
+│   ├── pubspec.yaml
+│   └── README.md
 │
-├── assets/
-│   ├── images/
-│   └── icons/
+├── backend/            # Headless REST API berbasis Laravel
+│   ├── app/
+│   ├── bootstrap/
+│   ├── config/
+│   ├── database/
+│   ├── public/
+│   ├── resources/
+│   ├── routes/
+│   ├── storage/
+│   ├── tests/
+│   ├── vendor/
+│   ├── artisan
+│   └── composer.json
 │
-├── lib/
-│   ├── main.dart
-│   │
-│   ├── screens/
-│   │   ├── login_page.dart
-│   │   ├── project_page.dart
-│   │   ├── area_page.dart
-│   │   ├── lamp_page.dart
-│   │   ├── metode_pendataan_page.dart
-│   │   ├── scan_barcode_page.dart
-│   │   ├── form_pendataan_page.dart
-│   │   └── detail_lampu_page.dart
-│   │
-│   ├── widgets/
-│   │   ├── project_card.dart
-│   │   ├── area_card.dart
-│   │   ├── lamp_card.dart
-│   │   └── custom_button.dart
-│   │
-│   ├── models/
-│   │   ├── user_model.dart
-│   │   ├── project_model.dart
-│   │   ├── area_model.dart
-│   │   └── installation_model.dart
-│   │
-│   ├── services/
-│   │   └── api_service.dart
-│   │
-│   └── utils/
-│       ├── app_colors.dart
-│       └── app_constants.dart
+├── postman/            # Postman Collections, Environments, dan API specs
+│   ├── collections/
+│   ├── documents/
+│   ├── environments/
+│   ├── flows/
+│   ├── globals/
+│   ├── mocks/
+│   └── specs/
 │
-├── pubspec.yaml
-└── README.md
+├── docs/               # Dokumentasi Teknis Project
+│   ├── api/            # Spesifikasi dan dokumentasi endpoint
+│   ├── database/       # Skema dan relasi database
+│   └── diagrams/       # Diagram alur & arsitektur
+│
+└── README.md           # Dokumentasi Utama
 ```
+
+---
+
+## Panduan Memulai
+
+### 1. Menjalankan Backend (Laravel API)
+```bash
+cd backend
+php artisan serve --host=0.0.0.0 --port=8000
+```
+- Endpoint root: `http://localhost:8000/`
+- API Base URL: `http://localhost:8000/api`
+
+### 2. Menjalankan Frontend (Flutter Mobile Teknisi)
+```bash
+cd frontend
+flutter pub get
+flutter run
+```
+
+Untuk build release APK:
+```bash
+cd frontend
+flutter build apk --release
+```
+
+### 3. Testing API (Postman)
+Buka aplikasi Postman dan import workspace/collection yang tersedia di folder `postman/`.

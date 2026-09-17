@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../area_operasional/area_operasional_page.dart';
 import '../../services/api_service.dart';
-
 import '../../services/secure_credential_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -175,7 +175,7 @@ class _LoginPageState extends State<LoginPage>
     });
 
     try {
-      await ApiService.login(
+      final loginResult = await ApiService.login(
         email: email,
         password: password,
       );
@@ -187,6 +187,15 @@ class _LoginPageState extends State<LoginPage>
         );
       } else {
         await SecureCredentialService.clearCredentials();
+      }
+
+      if (loginResult['user'] != null) {
+        await SecureCredentialService.setSession(
+          isLoggedIn: true,
+          userDataJson: jsonEncode(loginResult['user']),
+        );
+      } else {
+        await SecureCredentialService.setSession(isLoggedIn: true);
       }
 
       if (!mounted) return;
@@ -326,7 +335,7 @@ class _LoginPageState extends State<LoginPage>
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: availableHeight > 0 ? availableHeight : 600,

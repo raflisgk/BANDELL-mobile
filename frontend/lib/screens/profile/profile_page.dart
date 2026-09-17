@@ -11,6 +11,7 @@ import '../history/history_page.dart';
 import '../login/login_page.dart';
 import '../notification/notification_page.dart';
 import 'editable_profile_item.dart';
+import '../../services/secure_credential_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -100,6 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
 
       if (success) {
+        _editFocusNode.unfocus();
         setState(() {
           _phone = newValue;
           _activeEditField = ProfileEditField.none;
@@ -119,6 +121,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _cancelEditing() {
+    _editFocusNode.unfocus();
     setState(() {
       _activeEditField = ProfileEditField.none;
     });
@@ -205,8 +208,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         AuthService.currentUser = null;
+                        await SecureCredentialService.setSession(isLoggedIn: false);
+                        if (!dialogContext.mounted) return;
                         Navigator.pop(dialogContext);
                         AppNavigator.pushAndRemoveUntil(
                           context,
@@ -241,35 +246,42 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF0072CE), // Bright vibrant blue
-            Color(0xFF265C8C), // Muted deeper blue
-          ],
+    final double keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+    final bool isKeyboardOpen = keyboardInset > 0;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF265C8C),
+      resizeToAvoidBottomInset: true,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0072CE), // Bright vibrant blue
+              Color(0xFF265C8C), // Muted deeper blue
+            ],
+          ),
         ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Column(
-            children: [
-              AppTopBar(
-                showDropdown: false,
-                showBackButton: false,
-                onNotificationPressed: _handleNotification,
-                iconColor: Colors.white,
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
+        child: SafeArea(
+          bottom: !isKeyboardOpen,
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              children: [
+                AppTopBar(
+                  showDropdown: false,
+                  showBackButton: false,
+                  onNotificationPressed: _handleNotification,
+                  iconColor: Colors.white,
+                ),
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
 
                       // Header Title & Subtitle
                       const Center(
@@ -318,6 +330,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 Text(
                                   _name,
                                   textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: AppColors.textPrimary,
                                     fontSize: 19,
@@ -329,6 +343,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 Text(
                                   _role,
                                   textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Color(0xFF64748B),
                                     fontSize: 13,
@@ -348,11 +364,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                       color: Color(0xFF64748B),
                                     ),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      _email,
-                                      style: const TextStyle(
-                                        color: Color(0xFF64748B),
-                                        fontSize: 12.5,
+                                    Flexible(
+                                      child: Text(
+                                        _email,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Color(0xFF64748B),
+                                          fontSize: 12.5,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -367,11 +387,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                       color: Color(0xFF64748B),
                                     ),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      _phone,
-                                      style: const TextStyle(
-                                        color: Color(0xFF64748B),
-                                        fontSize: 12.5,
+                                    Flexible(
+                                      child: Text(
+                                        _phone,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Color(0xFF64748B),
+                                          fontSize: 12.5,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -451,15 +475,17 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-        bottomNavigationBar: BottomNavbar(
-          currentIndex: 2,
-          onTap: _handleNavTap,
-        ),
       ),
+      bottomNavigationBar: isKeyboardOpen
+          ? null
+          : BottomNavbar(
+              currentIndex: 2,
+              onTap: _handleNavTap,
+            ),
     );
   }
 

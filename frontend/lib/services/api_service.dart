@@ -21,6 +21,71 @@ class ApiService {
   /// Base URL endpoint Laravel backend API
   static const String baseUrl = 'http://192.168.1.44:8000/api';
 
+  /// Returns the base URL for public storage files (e.g. http://192.168.1.44:8000/storage)
+  static String get storageBaseUrl {
+    final uri = Uri.tryParse(baseUrl);
+    if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
+      final portPart = uri.hasPort ? ':${uri.port}' : '';
+      return '${uri.scheme}://${uri.host}$portPart/storage';
+    }
+    return 'http://192.168.1.44:8000/storage';
+  }
+
+  /// Converts any photo path or partial URL into a fully-qualified, accessible URL for the mobile device.
+  static String resolvePhotoUrl(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return '';
+    }
+
+    String path = raw.trim().replaceAll(r'\', '/');
+
+    // If already an absolute local file on device, leave it alone
+    if (path.startsWith('/') &&
+        !path.startsWith('/storage') &&
+        !path.startsWith('/installations')) {
+      return path;
+    }
+    if (RegExp(r'^[a-zA-Z]:[/\\]').hasMatch(path)) {
+      return path;
+    }
+
+    final baseStorage = storageBaseUrl;
+
+    // If it's already an HTTP / HTTPS URL:
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      // Replace localhost or 127.0.0.1 with the actual host from baseUrl
+      if (path.contains('localhost') || path.contains('127.0.0.1')) {
+        final parsed = Uri.tryParse(path);
+        final baseUri = Uri.tryParse(baseUrl);
+        if (parsed != null && baseUri != null) {
+          path = parsed.replace(
+            scheme: baseUri.scheme,
+            host: baseUri.host,
+            port: baseUri.hasPort ? baseUri.port : null,
+          ).toString();
+        }
+      }
+      return path;
+    }
+
+    // Strip leading slashes
+    while (path.startsWith('/')) {
+      path = path.substring(1);
+    }
+
+    // Strip 'public/' if present
+    if (path.startsWith('public/')) {
+      path = path.substring('public/'.length);
+    }
+
+    // Strip 'storage/' if present so we don't end up with /storage/storage/
+    if (path.startsWith('storage/')) {
+      path = path.substring('storage/'.length);
+    }
+
+    return '$baseStorage/$path';
+  }
+
   /// Token session untuk autentikasi Bearer Token (opsional, jika digunakan)
   static String? _authToken;
 

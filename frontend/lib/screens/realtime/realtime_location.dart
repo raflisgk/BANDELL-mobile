@@ -8,6 +8,7 @@ class RealtimeLocationSection extends StatelessWidget {
   final FocusNode? longitudeFocusNode;
   final bool isLoadingLocation;
   final VoidCallback onGetLocation;
+  final String? errorMessage;
 
   const RealtimeLocationSection({
     super.key,
@@ -17,6 +18,7 @@ class RealtimeLocationSection extends StatelessWidget {
     this.longitudeFocusNode,
     required this.isLoadingLocation,
     required this.onGetLocation,
+    this.errorMessage,
   });
 
   @override
@@ -27,6 +29,19 @@ class RealtimeLocationSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0, left: 2.0),
+            child: Text(
+              errorMessage!,
+              style: const TextStyle(
+                color: Color(0xFFEF4444),
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ),
         // Section Header
         Row(
           children: [
@@ -79,12 +94,14 @@ class RealtimeLocationSection extends StatelessWidget {
             controller: latitudeController,
             focusNode: latitudeFocusNode,
             hint: 'Latitude',
+            hasError: errorMessage != null,
           ),
           const SizedBox(height: 10),
           _buildInputField(
             controller: longitudeController,
             focusNode: longitudeFocusNode,
             hint: 'Longitude',
+            hasError: errorMessage != null,
           ),
         ] else ...[
           // STATE 1: Show Get Location Button (Green) when location is empty
@@ -170,16 +187,22 @@ class RealtimeLocationSection extends StatelessWidget {
     required TextEditingController controller,
     FocusNode? focusNode,
     required String hint,
+    bool hasError = false,
   }) {
     final bool isFocused = focusNode?.hasFocus ?? false;
+
+    final borderColor = hasError
+        ? const Color(0xFFEF4444)
+        : (isFocused ? AppColors.primary : AppColors.border);
+    final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
 
     return Container(
       decoration: BoxDecoration(
         color: isFocused ? Colors.white : AppColors.inputBackground,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isFocused ? AppColors.primary : AppColors.border,
-          width: isFocused ? 1.5 : 1,
+          color: borderColor,
+          width: borderWidth,
         ),
       ),
       child: TextField(

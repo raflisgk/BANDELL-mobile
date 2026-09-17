@@ -31,25 +31,31 @@ class BottomNavbar extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(
-              index: 0,
-              icon: Icons.cases_outlined,
-              label: 'Proyek',
-            ),
-            _buildNavItem(
-              index: 1,
-              icon: Icons.lightbulb_outline_rounded,
-              label: 'Riwayat',
-            ),
-            _buildNavItem(
-              index: 2,
-              icon: Icons.person_outline_rounded,
-              label: 'Profil',
-            ),
-          ],
-        ),
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Expanded(
+                child: _buildNavItem(
+                  index: 0,
+                  icon: Icons.cases_outlined,
+                  label: 'Proyek',
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
+                  index: 1,
+                  icon: Icons.lightbulb_outline_rounded,
+                  label: 'Riwayat',
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
+                  index: 2,
+                  icon: Icons.person_outline_rounded,
+                  label: 'Profil',
+                ),
+              ),
+            ],
+          ),
       ),
     ),
   );

@@ -4,7 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
-import '../../widgets/custom_feedback_message.dart';
+import '../../widgets/custom_feedback.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
 
 
@@ -208,11 +208,15 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final double topSpacing = screenHeight < 700 ? 28.0 : 48.0;
+    final double midSpacing = screenHeight < 700 ? 36.0 : 60.0;
+
     return Scaffold(
       backgroundColor: AppColors.scanBackgroundDark,
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
@@ -252,13 +256,13 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                   ],
                 ),
 
-                const SizedBox(height: 56),
+                SizedBox(height: topSpacing),
 
                 // SCANNER
                 _buildScannerFrame(),
 
                 // JARAK DARI SCANNER KE TEKS
-                const SizedBox(height: 90),
+                SizedBox(height: midSpacing),
 
                 // INSTRUCTION
                 const Text(
@@ -463,17 +467,22 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
 
 
   Widget _buildScannerFrame() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // OUTER FRAME
-        Container(
-          width: 310,
-          height: 310,
-          decoration: const BoxDecoration(),
-          child: Stack(
-            children: [
-              // TOP LEFT
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double frameSize = constraints.maxWidth.clamp(200.0, 310.0);
+        final double cameraSize = (frameSize - 24.0).clamp(160.0, 286.0);
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // OUTER FRAME
+            Container(
+              width: frameSize,
+              height: frameSize,
+              decoration: const BoxDecoration(),
+              child: Stack(
+                children: [
+                  // TOP LEFT
               Positioned(
                 top: 0,
                 left: 0,
@@ -578,8 +587,8 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
 
         // LIVE CAMERA
         Container(
-          width: 286,
-          height: 286,
+          width: cameraSize,
+          height: cameraSize,
           decoration: BoxDecoration(
             color: Colors.black,
             borderRadius: BorderRadius.circular(14),
@@ -674,5 +683,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
         ),
       ],
     );
+  },
+);
   }
 }

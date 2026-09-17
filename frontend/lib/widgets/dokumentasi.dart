@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../utils/app_colors.dart';
 
 class Dokumentasi extends StatelessWidget {
@@ -35,21 +36,30 @@ class Dokumentasi extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Dokumentasi',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 6),
-            const Text(
-              '(Opsional)',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w400,
+            Expanded(
+              child: Row(
+                children: const [
+                  Flexible(
+                    child: Text(
+                      'Dokumentasi',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    '(Opsional)',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -68,14 +78,15 @@ class Dokumentasi extends StatelessWidget {
         // Photo Thumbnails & Add Photo Button Row
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           child: Row(
             children: [
               // Render Added Photo Thumbnails
               ...List.generate(photos.length, (index) {
-                final photoItem = photos[index];
-                final bool isNetwork = photoItem.startsWith('http://') ||
-                    photoItem.startsWith('https://');
+                final rawPhotoItem = photos[index];
+                final resolvedPhoto = ApiService.resolvePhotoUrl(rawPhotoItem);
+                final bool isNetwork = resolvedPhoto.startsWith('http://') ||
+                    resolvedPhoto.startsWith('https://');
 
                 return Padding(
                   padding: const EdgeInsets.only(right: 10),
@@ -97,16 +108,29 @@ class Dokumentasi extends StatelessWidget {
                           borderRadius: BorderRadius.circular(11),
                           child: isNetwork
                               ? Image.network(
-                                  photoItem,
+                                  resolvedPhoto,
                                   width: 84,
                                   height: 84,
                                   fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return const Center(
+                                      child: SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                   errorBuilder: (context, error, stackTrace) {
                                     return _buildErrorThumbnail();
                                   },
                                 )
                               : Image.file(
-                                  File(photoItem),
+                                  File(resolvedPhoto),
                                   width: 84,
                                   height: 84,
                                   fit: BoxFit.cover,

@@ -58,6 +58,7 @@ class PopUpSukses extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
       ),
       child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
           child: Column(

@@ -13,6 +13,8 @@ class SecureCredentialService {
   static const String _keyRememberMe = 'auth_remember_me';
   static const String _keyEmail = 'auth_saved_email';
   static const String _keyPassword = 'auth_saved_password';
+  static const String _keyIsLoggedIn = 'auth_is_logged_in';
+  static const String _keyUserData = 'auth_user_data';
 
   /// Save login credentials securely
   static Future<void> saveCredentials({
@@ -42,6 +44,30 @@ class SecureCredentialService {
     }
 
     return null;
+  }
+
+  /// Mark session as active or inactive and optionally cache user JSON
+  static Future<void> setSession({
+    required bool isLoggedIn,
+    String? userDataJson,
+  }) async {
+    await _storage.write(key: _keyIsLoggedIn, value: isLoggedIn ? 'true' : 'false');
+    if (userDataJson != null) {
+      await _storage.write(key: _keyUserData, value: userDataJson);
+    } else if (!isLoggedIn) {
+      await _storage.delete(key: _keyUserData);
+    }
+  }
+
+  /// Check whether an active session exists
+  static Future<bool> isSessionActive() async {
+    final val = await _storage.read(key: _keyIsLoggedIn);
+    return val == 'true';
+  }
+
+  /// Retrieve cached user data JSON string if available
+  static Future<String?> getUserData() async {
+    return await _storage.read(key: _keyUserData);
   }
 
   /// Delete saved credentials completely

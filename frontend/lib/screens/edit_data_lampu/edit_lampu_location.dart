@@ -10,6 +10,7 @@ class EditLampuLocation extends StatelessWidget {
   final FocusNode? alamatFocusNode;
   final bool isLoadingLocation;
   final VoidCallback? onGetLocation;
+  final String? errorMessage;
 
   const EditLampuLocation({
     super.key,
@@ -21,6 +22,7 @@ class EditLampuLocation extends StatelessWidget {
     this.alamatFocusNode,
     this.isLoadingLocation = false,
     this.onGetLocation,
+    this.errorMessage,
   });
 
   @override
@@ -28,6 +30,19 @@ class EditLampuLocation extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0, left: 2.0),
+            child: Text(
+              errorMessage!,
+              style: const TextStyle(
+                color: Color(0xFFEF4444),
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ),
         // 1. LOKASI KOORDINAT
         _buildSectionHeader(
           icon: Icons.language_rounded,
@@ -39,12 +54,14 @@ class EditLampuLocation extends StatelessWidget {
           controller: latitudeController,
           focusNode: latitudeFocusNode,
           hint: '-6.2088',
+          hasError: errorMessage != null,
         ),
         const SizedBox(height: 12),
         _buildCustomTextField(
           controller: longitudeController,
           focusNode: longitudeFocusNode,
           hint: '106.8456',
+          hasError: errorMessage != null,
         ),
       ],
     );
@@ -102,16 +119,22 @@ class EditLampuLocation extends StatelessWidget {
     required FocusNode focusNode,
     required String hint,
     IconData? prefixIcon,
+    bool hasError = false,
   }) {
     final isFocused = focusNode.hasFocus;
+
+    final borderColor = hasError
+        ? const Color(0xFFEF4444)
+        : (isFocused ? AppColors.borderFocused : AppColors.border);
+    final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isFocused ? AppColors.borderFocused : AppColors.border,
-          width: isFocused ? 1.5 : 1.0,
+          color: borderColor,
+          width: borderWidth,
         ),
       ),
       child: TextField(

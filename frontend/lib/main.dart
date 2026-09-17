@@ -1,10 +1,21 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'screens/login/login_page.dart';
+import 'screens/splash/splash_page.dart';
 import 'utils/page_transitions.dart';
+
+class LocalDevHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = LocalDevHttpOverrides();
 
   await initializeDateFormatting('id_ID', null);
 
@@ -29,7 +40,7 @@ class MyApp extends StatelessWidget {
           },
         ),
       ),
-      home: const LoginPage(),
+      home: const SplashPage(),
     );
   }
 }

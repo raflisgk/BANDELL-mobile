@@ -126,9 +126,13 @@ class _PilihTanggalState extends State<PilihTanggal> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
           // Top Drag Handle Bar
           Center(
             child: Container(
@@ -298,7 +302,9 @@ class _PilihTanggalState extends State<PilihTanggal> {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildWeekdayHeader(String label, bool isWeekend) {

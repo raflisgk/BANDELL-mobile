@@ -8,7 +8,7 @@ import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
-import '../../widgets/custom_feedback_message.dart';
+import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
 import '../../widgets/pop_up_sukses.dart';
@@ -51,6 +51,7 @@ class _RealtimePageState extends State<RealtimePage> {
   bool _isLoadingLocation = false;
   bool _isSubmitting = false;
   final List<String> _photos = [];
+  String? _coordinateError;
 
   @override
   void initState() {
@@ -58,10 +59,44 @@ class _RealtimePageState extends State<RealtimePage> {
     _latitudeFocusNode.addListener(_onFocusChange);
     _longitudeFocusNode.addListener(_onFocusChange);
     _panelCodeFocusNode.addListener(_onFocusChange);
+    _latitudeController.addListener(_onCoordinateChanged);
+    _longitudeController.addListener(_onCoordinateChanged);
   }
 
   void _onFocusChange() {
     setState(() {});
+  }
+
+  void _onCoordinateChanged() {
+    if (_coordinateError != null) {
+      final lat = _latitudeController.text.trim();
+      final lng = _longitudeController.text.trim();
+      if (_isValidCoordinate(lat, lng)) {
+        setState(() {
+          _coordinateError = null;
+        });
+      }
+    }
+  }
+
+  bool _isLatitudeValid(String latStr) {
+    final text = latStr.replaceAll(',', '.').trim();
+    if (text.isEmpty) return false;
+    final lat = double.tryParse(text);
+    if (lat == null) return false;
+    return lat >= -90.0 && lat <= 90.0;
+  }
+
+  bool _isLongitudeValid(String lngStr) {
+    final text = lngStr.replaceAll(',', '.').trim();
+    if (text.isEmpty) return false;
+    final lng = double.tryParse(text);
+    if (lng == null) return false;
+    return lng >= -180.0 && lng <= 180.0;
+  }
+
+  bool _isValidCoordinate(String latStr, String lngStr) {
+    return _isLatitudeValid(latStr) && _isLongitudeValid(lngStr);
   }
 
   @override
@@ -73,6 +108,8 @@ class _RealtimePageState extends State<RealtimePage> {
     _latitudeFocusNode.removeListener(_onFocusChange);
     _longitudeFocusNode.removeListener(_onFocusChange);
     _panelCodeFocusNode.removeListener(_onFocusChange);
+    _latitudeController.removeListener(_onCoordinateChanged);
+    _longitudeController.removeListener(_onCoordinateChanged);
 
     _latitudeFocusNode.dispose();
     _longitudeFocusNode.dispose();
@@ -162,6 +199,7 @@ class _RealtimePageState extends State<RealtimePage> {
           _latitudeController.text = position.latitude.toStringAsFixed(6);
           _longitudeController.text = position.longitude.toStringAsFixed(6);
           _isLoadingLocation = false;
+          _coordinateError = null;
         });
       }
     } catch (e) {
@@ -372,13 +410,20 @@ class _RealtimePageState extends State<RealtimePage> {
       return;
     }
 
-    if (_latitudeController.text.trim().isEmpty ||
-        _longitudeController.text.trim().isEmpty) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Silakan ambil koordinat lokasi (GPS).',
-      );
+    final latitude = _latitudeController.text.trim();
+    final longitude = _longitudeController.text.trim();
+
+    if (!_isValidCoordinate(latitude, longitude)) {
+      setState(() {
+        _coordinateError = '⚠️ Koordinat tidak valid';
+      });
       return;
+    } else {
+      if (_coordinateError != null) {
+        setState(() {
+          _coordinateError = null;
+        });
+      }
     }
 
     if (_panelCodeController.text.trim().length > 12) {
@@ -386,6 +431,7 @@ class _RealtimePageState extends State<RealtimePage> {
         context,
         'Kode panel maksimal 12 karakter.',
       );
+      _panelCodeFocusNode.requestFocus();
       return;
     }
 
@@ -402,8 +448,8 @@ class _RealtimePageState extends State<RealtimePage> {
         lampTypeId: lampTypeId,
         lampCode: _scannedBarcode!.trim(),
         lampType: widget.lampType ?? '',
-        latitude: _latitudeController.text.trim(),
-        longitude: _longitudeController.text.trim(),
+        latitude: latitude.replaceAll(',', '.'),
+        longitude: longitude.replaceAll(',', '.'),
         panelCode: _panelCodeController.text.trim().isNotEmpty
             ? _panelCodeController.text.trim()
             : null,
@@ -442,7 +488,15 @@ class _RealtimePageState extends State<RealtimePage> {
         setState(() {
           _isSubmitting = false;
         });
-        final errorMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        String errorMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        final lower = errorMsg.toLowerCase();
+        if (lower.contains('sqlstate') ||
+            lower.contains('numeric value out of range') ||
+            lower.contains('queryexception') ||
+            lower.contains('connection: mysql') ||
+            lower.contains('database error')) {
+          errorMsg = 'Data gagal disimpan. Terjadi kesalahan pada server.';
+        }
         CustomFeedbackMessage.showError(
           context,
           errorMsg.isNotEmpty ? errorMsg : 'Data gagal disimpan',
@@ -456,15 +510,16 @@ class _RealtimePageState extends State<RealtimePage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: Column(
-          children: [
-            AppTopBar(
-              showDropdown: false,
-              onBackPressed: _handleBack,
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppTopBar(
+                showDropdown: false,
+                onBackPressed: _handleBack,
+              ),
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -516,6 +571,7 @@ class _RealtimePageState extends State<RealtimePage> {
                       longitudeFocusNode: _longitudeFocusNode,
                       isLoadingLocation: _isLoadingLocation,
                       onGetLocation: _handleGetLocation,
+                      errorMessage: _coordinateError,
                     ),
 
                     const SizedBox(height: 20),
@@ -553,8 +609,8 @@ class _RealtimePageState extends State<RealtimePage> {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

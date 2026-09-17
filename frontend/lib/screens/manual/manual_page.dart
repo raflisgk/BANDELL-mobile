@@ -6,7 +6,7 @@ import '../../services/installation_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
-import '../../widgets/custom_feedback_message.dart';
+import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
 import '../../widgets/pop_up_sukses.dart';
@@ -46,6 +46,7 @@ class _ManualPageState extends State<ManualPage> {
 
   bool _isSubmitting = false;
   final List<String> _photos = [];
+  String? _coordinateError;
 
   @override
   void initState() {
@@ -54,10 +55,44 @@ class _ManualPageState extends State<ManualPage> {
     _panelCodeFocusNode.addListener(_onFocusChange);
     _latitudeFocusNode.addListener(_onFocusChange);
     _longitudeFocusNode.addListener(_onFocusChange);
+    _latitudeController.addListener(_onCoordinateChanged);
+    _longitudeController.addListener(_onCoordinateChanged);
   }
 
   void _onFocusChange() {
     setState(() {});
+  }
+
+  void _onCoordinateChanged() {
+    if (_coordinateError != null) {
+      final lat = _latitudeController.text.trim();
+      final lng = _longitudeController.text.trim();
+      if (_isValidCoordinate(lat, lng)) {
+        setState(() {
+          _coordinateError = null;
+        });
+      }
+    }
+  }
+
+  bool _isLatitudeValid(String latStr) {
+    final text = latStr.replaceAll(',', '.').trim();
+    if (text.isEmpty) return false;
+    final lat = double.tryParse(text);
+    if (lat == null) return false;
+    return lat >= -90.0 && lat <= 90.0;
+  }
+
+  bool _isLongitudeValid(String lngStr) {
+    final text = lngStr.replaceAll(',', '.').trim();
+    if (text.isEmpty) return false;
+    final lng = double.tryParse(text);
+    if (lng == null) return false;
+    return lng >= -180.0 && lng <= 180.0;
+  }
+
+  bool _isValidCoordinate(String latStr, String lngStr) {
+    return _isLatitudeValid(latStr) && _isLongitudeValid(lngStr);
   }
 
   @override
@@ -71,6 +106,8 @@ class _ManualPageState extends State<ManualPage> {
     _panelCodeFocusNode.removeListener(_onFocusChange);
     _latitudeFocusNode.removeListener(_onFocusChange);
     _longitudeFocusNode.removeListener(_onFocusChange);
+    _latitudeController.removeListener(_onCoordinateChanged);
+    _longitudeController.removeListener(_onCoordinateChanged);
 
     _barcodeFocusNode.dispose();
     _panelCodeFocusNode.dispose();
@@ -273,22 +310,22 @@ class _ManualPageState extends State<ManualPage> {
       return;
     }
 
-    if (latitude.isEmpty) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Latitude wajib diisi.',
-      );
-      _latitudeFocusNode.requestFocus();
+    if (!_isValidCoordinate(latitude, longitude)) {
+      setState(() {
+        _coordinateError = '⚠️ Koordinat tidak valid';
+      });
+      if (!_isLatitudeValid(latitude)) {
+        _latitudeFocusNode.requestFocus();
+      } else {
+        _longitudeFocusNode.requestFocus();
+      }
       return;
-    }
-
-    if (longitude.isEmpty) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Longitude wajib diisi.',
-      );
-      _longitudeFocusNode.requestFocus();
-      return;
+    } else {
+      if (_coordinateError != null) {
+        setState(() {
+          _coordinateError = null;
+        });
+      }
     }
 
     if (_panelCodeController.text.trim().length > 12) {
@@ -313,8 +350,8 @@ class _ManualPageState extends State<ManualPage> {
         lampTypeId: widget.lampTypeId,
         lampCode: barcode,
         lampType: widget.lampType ?? '',
-        latitude: latitude,
-        longitude: longitude,
+        latitude: latitude.replaceAll(',', '.'),
+        longitude: longitude.replaceAll(',', '.'),
         panelCode: _panelCodeController.text.trim().isNotEmpty
             ? _panelCodeController.text.trim()
             : null,
@@ -344,7 +381,15 @@ class _ManualPageState extends State<ManualPage> {
         setState(() {
           _isSubmitting = false;
         });
-        final errorMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        String errorMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        final lower = errorMsg.toLowerCase();
+        if (lower.contains('sqlstate') ||
+            lower.contains('numeric value out of range') ||
+            lower.contains('queryexception') ||
+            lower.contains('connection: mysql') ||
+            lower.contains('database error')) {
+          errorMsg = 'Data gagal disimpan. Terjadi kesalahan pada server.';
+        }
         CustomFeedbackMessage.showError(
           context,
           errorMsg.isNotEmpty ? errorMsg : 'Data gagal disimpan',
@@ -377,15 +422,16 @@ class _ManualPageState extends State<ManualPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: Column(
-          children: [
-            AppTopBar(
-              showDropdown: false,
-              onBackPressed: _handleBack,
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppTopBar(
+                showDropdown: false,
+                onBackPressed: _handleBack,
+              ),
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -484,8 +530,6 @@ class _ManualPageState extends State<ManualPage> {
 
                     const SizedBox(height: 20),
 
-
-
                     // 5. TOMBOL SIMPAN DATA (SHARED WIDGET)
                     TombolSimpanData(
                       isLoading: _isSubmitting,
@@ -496,8 +540,8 @@ class _ManualPageState extends State<ManualPage> {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -594,6 +638,19 @@ class _ManualPageState extends State<ManualPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_coordinateError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0, left: 2.0),
+            child: Text(
+              _coordinateError!,
+              style: const TextStyle(
+                color: Color(0xFFEF4444),
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ),
         Row(
           children: [
             Container(
@@ -609,21 +666,30 @@ class _ManualPageState extends State<ManualPage> {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Lokasi Koordinat',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text(
-              '*',
-              style: TextStyle(
-                color: Color(0xFFEF4444),
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            const Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Lokasi Koordinat',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    '*',
+                    style: TextStyle(
+                      color: Color(0xFFEF4444),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -641,12 +707,16 @@ class _ManualPageState extends State<ManualPage> {
           controller: _latitudeController,
           focusNode: _latitudeFocusNode,
           hint: 'Latitude',
+          hasError: _coordinateError != null &&
+              !_isLatitudeValid(_latitudeController.text),
         ),
         const SizedBox(height: 10),
         _buildLocationInputField(
           controller: _longitudeController,
           focusNode: _longitudeFocusNode,
           hint: 'Longitude',
+          hasError: _coordinateError != null &&
+              !_isLongitudeValid(_longitudeController.text),
         ),
       ],
     );
@@ -656,16 +726,22 @@ class _ManualPageState extends State<ManualPage> {
     required TextEditingController controller,
     FocusNode? focusNode,
     required String hint,
+    bool hasError = false,
   }) {
     final bool isFocused = focusNode?.hasFocus ?? false;
+
+    final borderColor = hasError
+        ? const Color(0xFFEF4444)
+        : (isFocused ? AppColors.primary : AppColors.border);
+    final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
 
     return Container(
       decoration: BoxDecoration(
         color: isFocused ? Colors.white : AppColors.inputBackground,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isFocused ? AppColors.primary : AppColors.border,
-          width: isFocused ? 1.5 : 1,
+          color: borderColor,
+          width: borderWidth,
         ),
       ),
       child: TextField(

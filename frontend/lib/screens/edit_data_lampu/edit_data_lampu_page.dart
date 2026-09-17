@@ -55,6 +55,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   List<String> _lampTypeOptions = [];
 
   final List<String> _photos = [];
+  String? _coordinateError;
 
   @override
   void initState() {
@@ -105,8 +106,42 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _latitudeFocusNode.addListener(_onFocusChange);
     _alamatFocusNode.addListener(_onFocusChange);
     _tipeLampuFocusNode.addListener(_onFocusChange);
+    _latitudeController.addListener(_onCoordinateChanged);
+    _longitudeController.addListener(_onCoordinateChanged);
 
     _loadLampTypes();
+  }
+
+  void _onCoordinateChanged() {
+    if (_coordinateError != null) {
+      final lat = _latitudeController.text.trim();
+      final lng = _longitudeController.text.trim();
+      if (_isValidCoordinate(lat, lng)) {
+        setState(() {
+          _coordinateError = null;
+        });
+      }
+    }
+  }
+
+  bool _isLatitudeValid(String latStr) {
+    final text = latStr.replaceAll(',', '.').trim();
+    if (text.isEmpty) return false;
+    final lat = double.tryParse(text);
+    if (lat == null) return false;
+    return lat >= -90.0 && lat <= 90.0;
+  }
+
+  bool _isLongitudeValid(String lngStr) {
+    final text = lngStr.replaceAll(',', '.').trim();
+    if (text.isEmpty) return false;
+    final lng = double.tryParse(text);
+    if (lng == null) return false;
+    return lng >= -180.0 && lng <= 180.0;
+  }
+
+  bool _isValidCoordinate(String latStr, String lngStr) {
+    return _isLatitudeValid(latStr) && _isLongitudeValid(lngStr);
   }
 
   void _loadLampTypes() async {
@@ -138,6 +173,8 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _latitudeFocusNode.removeListener(_onFocusChange);
     _alamatFocusNode.removeListener(_onFocusChange);
     _tipeLampuFocusNode.removeListener(_onFocusChange);
+    _latitudeController.removeListener(_onCoordinateChanged);
+    _longitudeController.removeListener(_onCoordinateChanged);
 
     _kodeLampuFocusNode.dispose();
     _longitudeFocusNode.dispose();
@@ -295,6 +332,27 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   Future<void> _handleSubmit() async {
     if (_isSubmitting) return;
 
+    final latitude = _latitudeController.text.trim();
+    final longitude = _longitudeController.text.trim();
+
+    if (!_isValidCoordinate(latitude, longitude)) {
+      setState(() {
+        _coordinateError = '⚠️ Koordinat tidak valid';
+      });
+      if (!_isLatitudeValid(latitude)) {
+        _latitudeFocusNode.requestFocus();
+      } else {
+        _longitudeFocusNode.requestFocus();
+      }
+      return;
+    } else {
+      if (_coordinateError != null) {
+        setState(() {
+          _coordinateError = null;
+        });
+      }
+    }
+
     setState(() {
       _isSubmitting = true;
     });
@@ -305,8 +363,8 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
         idArea: 101,
         lampCode: _kodeLampuController.text.trim(),
         lampType: _tipeLampuController.text.trim(),
-        latitude: _latitudeController.text.trim(),
-        longitude: _longitudeController.text.trim(),
+        latitude: latitude.replaceAll(',', '.'),
+        longitude: longitude.replaceAll(',', '.'),
         notes: _alamatController.text.trim(),
         photos: List.from(_photos),
         status: 'Tersimpan',
@@ -460,6 +518,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
                               latitudeController: _latitudeController,
                               longitudeFocusNode: _longitudeFocusNode,
                               latitudeFocusNode: _latitudeFocusNode,
+                              errorMessage: _coordinateError,
                             ),
 
                       const SizedBox(height: 20),

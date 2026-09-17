@@ -7,7 +7,7 @@ import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/bottom_navbar.dart';
-import '../../widgets/custom_feedback_message.dart';
+import '../../widgets/custom_feedback.dart';
 import '../area_operasional/area_operasional_page.dart';
 import '../detail_lampu/detail_lampu_page.dart';
 import '../profile/profile_page.dart';
@@ -370,6 +370,7 @@ class _HistoryPageState extends State<HistoryPage> {
         updatedAt: item.updatedAt?.toIso8601String() ?? item.installation?.updatedAt?.toIso8601String(),
         wattage: '120W',
         installation: item.installation,
+        photos: item.installation?.photos,
         inputMethod: item.inputMethod,
         panelCode: item.panelCode,
       ),

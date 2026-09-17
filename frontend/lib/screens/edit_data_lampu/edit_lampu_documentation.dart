@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 import '../../utils/app_colors.dart';
 
 class EditLampuDocumentation extends StatelessWidget {
@@ -13,7 +15,10 @@ class EditLampuDocumentation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayPhotos = photos ?? [];
+    final displayPhotos = (photos ?? [])
+        .map((p) => ApiService.resolvePhotoUrl(p))
+        .where((p) => p.isNotEmpty)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,6 +118,10 @@ class EditLampuDocumentation extends StatelessWidget {
   }
 
   Widget _buildPhotoThumbnail(String url) {
+    final resolvedUrl = ApiService.resolvePhotoUrl(url);
+    final isNetwork = resolvedUrl.startsWith('http://') ||
+        resolvedUrl.startsWith('https://');
+
     return Container(
       width: 72,
       height: 72,
@@ -126,23 +135,48 @@ class EditLampuDocumentation extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(11),
-        child: Image.network(
-          url,
-          width: 72,
-          height: 72,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: const Color(0xFFE2EBF8),
-              child: const Center(
-                child: Icon(
-                  Icons.image_outlined,
-                  color: AppColors.primary,
-                  size: 26,
-                ),
+        child: isNetwork
+            ? Image.network(
+                resolvedUrl,
+                width: 72,
+                height: 72,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildPlaceholder(),
+              )
+            : Image.file(
+                File(resolvedUrl),
+                width: 72,
+                height: 72,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildPlaceholder(),
               ),
-            );
-          },
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: const Color(0xFFE2EBF8),
+      child: const Center(
+        child: Icon(
+          Icons.image_outlined,
+          color: AppColors.primary,
+          size: 26,
         ),
       ),
     );

@@ -68,9 +68,9 @@ class InstallationService {
     final method = (installation.inputMethod ?? 'realtime').trim().toLowerCase();
     request.fields['input_method'] = method == 'real-time' ? 'realtime' : method;
 
-    request.fields['latitude'] = installation.latitude ?? '';
+    request.fields['latitude'] = (installation.latitude ?? '').replaceAll(',', '.');
 
-    request.fields['longitude'] = installation.longitude ?? '';
+    request.fields['longitude'] = (installation.longitude ?? '').replaceAll(',', '.');
 
     if (installation.panelCode != null &&
         installation.panelCode!.trim().isNotEmpty) {
@@ -451,6 +451,8 @@ class InstallationService {
     Map<String, dynamic> responseData,
     String defaultMessage,
   ) {
+    String message = defaultMessage;
+
     if (responseData['errors'] is Map) {
       final errors = responseData['errors'] as Map;
       if (errors.isNotEmpty) {
@@ -463,16 +465,28 @@ class InstallationService {
           }
         }
         if (messages.isNotEmpty) {
-          return messages.join('\n');
+          message = messages.join('\n');
         }
       }
-    }
-
-    if (responseData['message'] != null &&
+    } else if (responseData['message'] != null &&
         responseData['message'].toString().trim().isNotEmpty) {
-      return responseData['message'].toString().trim();
+      message = responseData['message'].toString().trim();
     }
 
-    return defaultMessage;
+    final lower = message.toLowerCase();
+    if (lower.contains('sqlstate') ||
+        lower.contains('sql:') ||
+        lower.contains('syntax error') ||
+        lower.contains('numeric value out of range') ||
+        lower.contains('integrity constraint') ||
+        lower.contains('connection: mysql') ||
+        lower.contains('queryexception') ||
+        lower.contains('database error') ||
+        (lower.contains('table') && lower.contains("doesn't exist")) ||
+        lower.contains('column not found')) {
+      return 'Terjadi kesalahan pada server. Silakan coba lagi.';
+    }
+
+    return message;
   }
 }
