@@ -23,3 +23,4 @@ Route::delete('/installations/{installation}', [InstallationController::class, '
 Route::get('/notifications', [NotificationController::class, 'index']);
 Route::get('/profile', [ProfileController::class, 'show']);
 Route::put('/profile/phone', [ProfileController::class, 'updatePhone']);
+

@@ -167,6 +167,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         _selectProject(projects.first);
       }
     } catch (e) {
+      debugPrint('Error loadProjects in AreaOperasionalPage: $e');
       if (!mounted) return;
 
       setState(() {
@@ -407,48 +408,79 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                       ),
                     )
 
-                  // Error project
+                  // Error project (Koneksi Bermasalah) - Clean layout tanpa kotak pinggir
                   else if (_errorMessage != null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.border,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 36,
+                        horizontal: 24,
                       ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: AppColors.error,
+                          Image.asset(
+                            'assets/images/connection_error.png',
+                            height: 160,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFEFF6FF),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.wifi_off_rounded,
+                                  size: 40,
+                                  color: AppColors.primary,
+                                ),
+                              );
+                            },
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 20),
                           const Text(
-                            'Gagal Mengambil Data Project',
+                            'Koneksi Bermasalah',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
+                              letterSpacing: -0.2,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            _errorMessage!,
+                          const Text(
+                            'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba lagi.',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
+                              height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 24),
                           ElevatedButton(
                             onPressed: _loadProjects,
-                            child: const Text('Coba Lagi'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 36,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: const Text(
+                              'Coba Lagi',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),

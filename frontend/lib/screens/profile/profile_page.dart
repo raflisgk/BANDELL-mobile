@@ -211,8 +211,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       onPressed: () async {
                         AuthService.currentUser = null;
                         await SecureCredentialService.setSession(isLoggedIn: false);
-                        if (!dialogContext.mounted) return;
-                        Navigator.pop(dialogContext);
+                        if (dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                        }
+                        if (!mounted) return;
                         AppNavigator.pushAndRemoveUntil(
                           context,
                           const LoginPage(),

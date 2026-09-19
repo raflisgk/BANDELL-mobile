@@ -22,6 +22,7 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
+  final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   String _searchQuery = '';
@@ -234,6 +235,7 @@ class _HistoryPageState extends State<HistoryPage> {
     _refreshTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -352,6 +354,9 @@ class _HistoryPageState extends State<HistoryPage> {
         ? item.idLcu!
         : (item.kode.trim().isNotEmpty ? item.kode : '-');
 
+    final double currentOffset =
+        _scrollController.hasClients ? _scrollController.offset : 0.0;
+
     final result = await AppNavigator.push(
       context,
       DetailLampuPage(
@@ -389,12 +394,32 @@ class _HistoryPageState extends State<HistoryPage> {
           context,
           'Data berhasil dihapus',
         );
+        if (_scrollController.hasClients && currentOffset > 0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _scrollController.hasClients) {
+              _scrollController.jumpTo(
+                currentOffset.clamp(
+                    0.0, _scrollController.position.maxScrollExtent),
+              );
+            }
+          });
+        }
       }
       return;
     }
 
     if (mounted) {
-      _loadHistory();
+      if (_scrollController.hasClients && currentOffset > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _scrollController.hasClients) {
+            _scrollController.jumpTo(
+              currentOffset.clamp(
+                  0.0, _scrollController.position.maxScrollExtent),
+            );
+          }
+        });
+      }
+      _loadHistorySilently();
     }
   }
 
@@ -413,246 +438,275 @@ class _HistoryPageState extends State<HistoryPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: CustomScrollView(
+          controller: _scrollController,
+          key: const PageStorageKey<String>('history_custom_scroll_view'),
+          physics: const ClampingScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
 
-              // Header Title & Subtitle
-              const Text(
-                'Riwayat Pemasangan Lampu',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Daftar seluruh riwayat instalasi dan pemantauan lampu.',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Search Input Box
-              Container(
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F4FA),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.border,
-                    width: 1,
-                  ),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (val) {
-                    setState(() {
-                      _searchQuery = val;
-                    });
-                  },
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: 'Cari kode / jenis lampu...',
-                    hintStyle: TextStyle(
-                      color: AppColors.hintColor,
-                      fontSize: 14,
+                    // Header Title & Subtitle
+                    const Text(
+                      'Riwayat Pemasangan Lampu',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: AppColors.hintColor,
-                      size: 20,
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Daftar seluruh riwayat instalasi dan pemantauan lampu.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
+
+                    const SizedBox(height: 16),
+
+                    // Search Input Box
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F4FA),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) {
+                          setState(() {
+                            _searchQuery = val;
+                          });
+                        },
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Cari kode / jenis lampu...',
+                          hintStyle: TextStyle(
+                            color: AppColors.hintColor,
+                            fontSize: 14,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            color: AppColors.hintColor,
+                            size: 20,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
 
-              const SizedBox(height: 14),
+                    const SizedBox(height: 14),
 
-              // Filter Horizontal Pills (Hari Ini, 7 Hari, 1 Bulan, Pilih Tanggal)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const ClampingScrollPhysics(),
-                child: Row(
-                  children: [
-                    _buildFilterPill('Hari Ini'),
-                    const SizedBox(width: 8),
-                    _buildFilterPill('7 Hari'),
-                    const SizedBox(width: 8),
-                    _buildFilterPill('1 Bulan'),
-                    const SizedBox(width: 8),
-                    _buildFilterPill('Pilih Tanggal'),
+                    // Filter Horizontal Pills (Hari Ini, 7 Hari, 1 Bulan, Pilih Tanggal)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const ClampingScrollPhysics(),
+                      child: Row(
+                        children: [
+                          _buildFilterPill('Hari Ini'),
+                          const SizedBox(width: 8),
+                          _buildFilterPill('7 Hari'),
+                          const SizedBox(width: 8),
+                          _buildFilterPill('1 Bulan'),
+                          const SizedBox(width: 8),
+                          _buildFilterPill('Pilih Tanggal'),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Section Header: Terbaru & Daftar Lampu
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Text(
+                                  'Terbaru',
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.swap_vert_rounded,
+                                  size: 14,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Daftar Lampu',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '${filtered.length} Instalasi',
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14),
                   ],
                 ),
               ),
+            ),
 
-              const SizedBox(height: 20),
-
-              // Section Header: Terbaru & Daftar Lampu
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: const [
-                          Text(
-                            'Terbaru',
-                            style: TextStyle(
-                              color: Color(0xFF64748B),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(
-                            Icons.swap_vert_rounded,
-                            size: 14,
-                            color: Color(0xFF64748B),
-                          ),
-                        ],
+            // List of History Cards
+            if (_isLoading)
+              const SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                sliver: SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Daftar Lampu',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '${filtered.length} Instalasi',
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ],
+                ),
+              )
+            else if (_currentProject == null)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                sliver: SliverToBoxAdapter(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 40, horizontal: 20),
+                    child: Column(
+                      children: const [
+                        Icon(
+                          Icons.touch_app_outlined,
+                          size: 48,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'Pilih Project Terlebih Dahulu',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Gunakan dropdown di atas untuk melihat riwayat pada proyek tertentu.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else if (filtered.isEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                sliver: SliverToBoxAdapter(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 40, horizontal: 20),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.history_rounded,
+                          size: 48,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Belum Ada Riwayat Pendataan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _selectedFilter == 'Pilih Tanggal' &&
+                                  _rangeStartDate != null &&
+                                  _rangeEndDate != null
+                              ? 'Tidak ada riwayat dalam rentang ${_rangeStartDate!.day} ${PilihTanggal.monthNames[_rangeStartDate!.month - 1]} ${_rangeStartDate!.year} – ${_rangeEndDate!.day} ${PilihTanggal.monthNames[_rangeEndDate!.month - 1]} ${_rangeEndDate!.year}.'
+                              : 'Tidak ada riwayat untuk filter "$_selectedFilter" pada project "${_currentProject?.projectName}".',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                sliver: SliverList.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final item = filtered[index];
+                    return HistoryLampCard(
+                      item: item,
+                      onTap: () => _handleCardTap(item),
+                    );
+                  },
+                ),
               ),
 
-              const SizedBox(height: 14),
-
-              // List of History Cards
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                )
-              else if (_currentProject == null)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                  child: Column(
-                    children: const [
-                      Icon(
-                        Icons.touch_app_outlined,
-                        size: 48,
-                        color: AppColors.textSecondary,
-                      ),
-                      SizedBox(height: 12),
-                      Text(
-                        'Pilih Project Terlebih Dahulu',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Gunakan dropdown di atas untuk melihat riwayat pada proyek tertentu.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (filtered.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.history_rounded,
-                        size: 48,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Belum Ada Riwayat Pendataan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _selectedFilter == 'Pilih Tanggal' &&
-                                _rangeStartDate != null &&
-                                _rangeEndDate != null
-                            ? 'Tidak ada riwayat dalam rentang ${_rangeStartDate!.day} ${PilihTanggal.monthNames[_rangeStartDate!.month - 1]} ${_rangeStartDate!.year} – ${_rangeEndDate!.day} ${PilihTanggal.monthNames[_rangeEndDate!.month - 1]} ${_rangeEndDate!.year}.'
-                            : 'Tidak ada riwayat untuk filter "$_selectedFilter" pada project "${_currentProject?.projectName}".',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                for (final item in filtered)
-                  HistoryLampCard(
-                    item: item,
-                    onTap: () => _handleCardTap(item),
-                  ),
-
-              const SizedBox(height: 16),
-            ],
-          ),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 16),
+            ),
+          ],
         ),
       ),
-    ],
-  ),
-),
       bottomNavigationBar: BottomNavbar(
         currentIndex: 1,
         onTap: _handleNavTap,
