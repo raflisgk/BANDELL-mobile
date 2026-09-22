@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../../models/area_model.dart';
 import '../../models/project_model.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
@@ -34,7 +35,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   List<ProjectModel> _projects = [];
   ProjectModel? _selectedProject;
 
-  List<Map<String, dynamic>> _areas = [];
+  List<AreaModel> _areas = [];
 
   bool _isLoadingProjects = true;
   bool _isLoadingAreas = false;
@@ -93,14 +94,10 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
       }
 
       final areas = await _projectService.getAreas(currentSelected.id);
-      final updatedAreas = areas.map<Map<String, dynamic>>((area) {
-        return {
-          'id': area['id'],
-          'name': area['name']?.toString() ?? '',
-          'status': area['status']?.toString() ?? 'aktif',
-          'assigned_at': area['assigned_at']?.toString(),
-        };
-      }).toList();
+      final updatedAreas = areas
+          .whereType<Map<String, dynamic>>()
+          .map((area) => AreaModel.fromJson(area))
+          .toList();
 
       if (!mounted) return;
 
@@ -191,14 +188,10 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
       if (!mounted) return;
 
       setState(() {
-        _areas = areas.map<Map<String, dynamic>>((area) {
-          return {
-            'id': area['id'],
-            'name': area['name']?.toString() ?? '',
-            'status': area['status']?.toString() ?? 'aktif',
-            'assigned_at': area['assigned_at']?.toString(),
-          };
-        }).toList();
+        _areas = areas
+            .whereType<Map<String, dynamic>>()
+            .map((area) => AreaModel.fromJson(area))
+            .toList();
 
         _isLoadingAreas = false;
       });
@@ -236,13 +229,9 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     await _loadProjects();
   }
 
-  void _handleCardTap(Map<String, dynamic> area) async {
-    final int areaId = int.tryParse(
-          area['id'].toString(),
-        ) ??
-        0;
-
-    final String areaName = area['name']?.toString() ?? '';
+  void _handleCardTap(AreaModel area) async {
+    final int areaId = area.idArea;
+    final String areaName = area.areaName;
 
     debugPrint(
       'Area selected: $areaName (ID: $areaId)',
@@ -263,14 +252,13 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     }
   }
 
-  List<Map<String, dynamic>> get _filteredAreas {
+  List<AreaModel> get _filteredAreas {
     if (_searchQuery.trim().isEmpty) {
       return _areas;
     }
     final query = _searchQuery.toLowerCase().trim();
     return _areas.where((area) {
-      final name = area['name']?.toString().toLowerCase() ?? '';
-      return name.contains(query);
+      return area.areaName.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -716,7 +704,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                           bottom: 12.0,
                         ),
                         child: AreaOperasionalCard(
-                          title: area['name']?.toString() ?? '',
+                          title: area.areaName,
                           onTap: () => _handleCardTap(area),
                         ),
                       ),

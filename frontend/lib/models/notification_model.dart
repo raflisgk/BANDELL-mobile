@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class NotificationModel {
   final int id;
   final int? projectId;
@@ -6,7 +8,7 @@ class NotificationModel {
   final DateTime? assignedAt;
   final String title;
   final String time;
-  final bool isUnread;
+  bool isUnread;
   final String? type;
   final String? boldText;
   final DateTime? createdAt;
@@ -24,6 +26,26 @@ class NotificationModel {
     this.boldText,
     this.createdAt,
   });
+
+  String get displayTitle => title.isNotEmpty ? title : 'Penugasan Baru Diterima';
+
+  String? get cleanNotes {
+    if (notes == null) return null;
+    final trimmed = notes!.trim();
+    if (trimmed.isEmpty || trimmed == '-' || trimmed.toLowerCase() == 'null') {
+      return null;
+    }
+    return trimmed;
+  }
+
+  String get formattedDate {
+    if (assignedAt == null) return '';
+    try {
+      return DateFormat('dd/MM/yyyy').format(assignedAt!.toLocal());
+    } catch (_) {
+      return assignedAt!.toLocal().toIso8601String().split('T').first;
+    }
+  }
 
   String get content {
     final buffer = StringBuffer();

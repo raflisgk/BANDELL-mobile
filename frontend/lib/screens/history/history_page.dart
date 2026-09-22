@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../models/history_lamp_model.dart';
 import '../../models/project_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/installation_service.dart';
@@ -30,7 +31,7 @@ class _HistoryPageState extends State<HistoryPage> {
   DateTime? _rangeStartDate;
   DateTime? _rangeEndDate;
   String? _selectedProject;
-  List<HistoryLampItem> _historyItems = [];
+  List<HistoryLampModel> _historyItems = [];
   bool _isLoading = false;
   Timer? _refreshTimer;
 
@@ -59,37 +60,8 @@ class _HistoryPageState extends State<HistoryPage> {
         endDate: endDate,
       );
       if (!mounted) return;
-      final newItems = history
-          .map((item) => HistoryLampItem(
-                idHistory: item.idHistory,
-                userId: item.userId,
-                projectId: item.projectId,
-                areaId: item.areaId,
-                districtName: item.districtName,
-                kode: item.kode.isNotEmpty
-                    ? item.kode
-                    : (item.idLcu ?? '-'),
-                jenis: item.jenis,
-                status: item.status,
-                isVerified: item.isVerified,
-                lokasi: item.lokasi,
-                koordinat: item.koordinat,
-                latitude: item.latitude,
-                longitude: item.longitude,
-                fotoCount: item.fotoCount,
-                waktu: item.waktu,
-                tanggal: item.tanggal,
-                installedAt: item.installedAt,
-                createdAt: item.createdAt,
-                updatedAt: item.updatedAt,
-                inputMethod: item.inputMethod,
-                panelCode: item.panelCode,
-                idLcu: item.idLcu ?? (item.kode.isNotEmpty ? item.kode : null),
-                installation: item.installation,
-              ))
-          .toList();
       setState(() {
-        _historyItems = newItems;
+        _historyItems = history;
       });
     } catch (e) {
       debugPrint('Auto refresh error in HistoryPage: $e');
@@ -182,35 +154,7 @@ class _HistoryPageState extends State<HistoryPage> {
       );
       if (mounted) {
         setState(() {
-          _historyItems = history
-              .map((item) => HistoryLampItem(
-                    idHistory: item.idHistory,
-                    userId: item.userId,
-                    projectId: item.projectId,
-                    areaId: item.areaId,
-                    districtName: item.districtName,
-                    kode: item.kode.isNotEmpty
-                        ? item.kode
-                        : (item.idLcu ?? '-'),
-                    jenis: item.jenis,
-                    status: item.status,
-                    isVerified: item.isVerified,
-                    lokasi: item.lokasi,
-                    koordinat: item.koordinat,
-                    latitude: item.latitude,
-                    longitude: item.longitude,
-                    fotoCount: item.fotoCount,
-                    waktu: item.waktu,
-                    tanggal: item.tanggal,
-                    installedAt: item.installedAt,
-                    createdAt: item.createdAt,
-                    updatedAt: item.updatedAt,
-                    inputMethod: item.inputMethod,
-                    panelCode: item.panelCode,
-                    idLcu: item.idLcu ?? (item.kode.isNotEmpty ? item.kode : null),
-                    installation: item.installation,
-                  ))
-              .toList();
+          _historyItems = history;
           _isLoading = false;
         });
       }
@@ -264,7 +208,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return null;
   }
 
-  bool _matchesDateFilter(HistoryLampItem item, String filter) {
+  bool _matchesDateFilter(HistoryLampModel item, String filter) {
     final (startDate, endDate) = _getDateRangeForFilter(filter);
     if (startDate == null && endDate == null) return true;
 
@@ -283,7 +227,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return true;
   }
 
-  List<HistoryLampItem> get _filteredItems {
+  List<HistoryLampModel> get _filteredItems {
     var items = _historyItems
         .where((item) => _matchesDateFilter(item, _selectedFilter))
         .toList();
@@ -349,7 +293,7 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  void _handleCardTap(HistoryLampItem item) async {
+  void _handleCardTap(HistoryLampModel item) async {
     final effectiveCode = (item.idLcu != null && item.idLcu!.trim().isNotEmpty)
         ? item.idLcu!
         : (item.kode.trim().isNotEmpty ? item.kode : '-');

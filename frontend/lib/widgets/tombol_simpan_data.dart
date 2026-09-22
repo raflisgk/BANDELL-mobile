@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import '../utils/app_colors.dart';
 
 class TombolSimpanData extends StatelessWidget {

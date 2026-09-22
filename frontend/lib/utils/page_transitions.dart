@@ -13,16 +13,6 @@ class InstantPageRoute<T> extends PageRouteBuilder<T> {
         );
 }
 
-/// Kept for backward compatibility - now instant (zero delay)
-class SmoothTabRoute<T> extends InstantPageRoute<T> {
-  SmoothTabRoute({required super.page, super.settings});
-}
-
-/// Kept for backward compatibility - now instant (zero delay)
-class SmoothSlideRoute<T> extends InstantPageRoute<T> {
-  SmoothSlideRoute({required super.page, super.settings});
-}
-
 /// Fast, instant page transitions builder for theme-wide consistency (no slide, no fade, no zoom, no bounce)
 class FastPageTransitionsBuilder extends PageTransitionsBuilder {
   const FastPageTransitionsBuilder();
@@ -38,9 +28,6 @@ class FastPageTransitionsBuilder extends PageTransitionsBuilder {
     return child;
   }
 }
-
-/// Backward compatibility alias
-typedef SmoothPageTransitionsBuilder = FastPageTransitionsBuilder;
 
 /// Navigation helpers for ultra-fast, responsive routing (sat-set like Instagram)
 class AppNavigator {

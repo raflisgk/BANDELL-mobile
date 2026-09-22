@@ -4,24 +4,16 @@ import '../../utils/app_colors.dart';
 class EditLampuLocation extends StatelessWidget {
   final TextEditingController longitudeController;
   final TextEditingController latitudeController;
-  final TextEditingController? alamatController;
   final FocusNode longitudeFocusNode;
   final FocusNode latitudeFocusNode;
-  final FocusNode? alamatFocusNode;
-  final bool isLoadingLocation;
-  final VoidCallback? onGetLocation;
   final String? errorMessage;
 
   const EditLampuLocation({
     super.key,
     required this.longitudeController,
     required this.latitudeController,
-    this.alamatController,
     required this.longitudeFocusNode,
     required this.latitudeFocusNode,
-    this.alamatFocusNode,
-    this.isLoadingLocation = false,
-    this.onGetLocation,
     this.errorMessage,
   });
 

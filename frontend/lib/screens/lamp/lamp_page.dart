@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../models/lamp_type_model.dart';
 import '../../services/lamp_type_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
@@ -11,20 +12,6 @@ import '../metode_pendataan/metode_pendataan_page.dart';
 import '../notification/notification_page.dart';
 import '../profile/profile_page.dart';
 import 'lamp_type_card.dart';
-
-class LampTypeItem {
-  final int id;
-  final String name;
-  final String description;
-  final IconData icon;
-
-  const LampTypeItem({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.icon,
-  });
-}
 
 class LampPage extends StatefulWidget {
   static const String routeName = '/lamp_page';
@@ -48,7 +35,7 @@ class _LampPageState extends State<LampPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int _currentNavIndex = 0;
-  List<LampTypeItem> _lampTypes = [];
+  List<LampTypeModel> _lampTypes = [];
   bool _isLoading = false;
   Timer? _refreshTimer;
 
@@ -67,16 +54,8 @@ class _LampPageState extends State<LampPage> {
     try {
       final types = await LampTypeService().getLampTypes();
       if (!mounted) return;
-      final newItems = types
-          .map((item) => LampTypeItem(
-                id: item.id,
-                name: item.name,
-                description: item.description,
-                icon: Icons.lightbulb_outline_rounded,
-              ))
-          .toList();
       setState(() {
-        _lampTypes = newItems;
+        _lampTypes = types;
       });
     } catch (e) {
       debugPrint('Auto refresh error in LampPage: $e');
@@ -88,14 +67,7 @@ class _LampPageState extends State<LampPage> {
     final types = await LampTypeService().getLampTypes();
     if (mounted) {
       setState(() {
-        _lampTypes = types
-            .map((item) => LampTypeItem(
-                  id: item.id,
-                  name: item.name,
-                  description: item.description,
-                  icon: Icons.lightbulb_outline_rounded,
-                ))
-            .toList();
+        _lampTypes = types;
         _isLoading = false;
       });
     }
@@ -115,7 +87,7 @@ class _LampPageState extends State<LampPage> {
     super.dispose();
   }
 
-  List<LampTypeItem> get _filteredLampTypes {
+  List<LampTypeModel> get _filteredLampTypes {
     if (_searchQuery.isEmpty) {
       return _lampTypes;
     }
@@ -131,7 +103,7 @@ class _LampPageState extends State<LampPage> {
     }
   }
 
-  void _handleLampTypeTap(LampTypeItem item) {
+  void _handleLampTypeTap(LampTypeModel item) {
     final bool isProjectClosed =
         ProjectService.selectedProject?.status == 'closed' ||
             ProjectService.selectedProject?.status == 'selesai';
@@ -151,7 +123,7 @@ class _LampPageState extends State<LampPage> {
     _handleNavigateToInputMethod(item);
   }
 
-  void _handleNavigateToInputMethod(LampTypeItem item) async {
+  void _handleNavigateToInputMethod(LampTypeModel item) async {
     await AppNavigator.push(
       context,
       MetodePendataanPage(
@@ -347,7 +319,7 @@ class _LampPageState extends State<LampPage> {
                       child: LampTypeCard(
                         name: item.name,
                         description: item.description,
-                        icon: item.icon,
+                        icon: Icons.lightbulb_outline_rounded,
                         onTap: () => _handleLampTypeTap(item),
                       ),
                     )),

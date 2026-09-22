@@ -19,7 +19,7 @@ class ApiException implements Exception {
 
 class ApiService {
   /// Base URL endpoint Laravel backend API
-  static const String baseUrl = 'http://192.168.1.19:8000/api';
+  static const String baseUrl = 'http://192.168.1.110:8000/api';
 
   /// Returns the base URL for public storage files (e.g. http://192.168.1.44:8000/storage)
   static String get storageBaseUrl {
@@ -28,7 +28,7 @@ class ApiService {
       final portPart = uri.hasPort ? ':${uri.port}' : '';
       return '${uri.scheme}://${uri.host}$portPart/storage';
     }
-    return 'http://192.168.1.19:8000/storage';
+    return 'http://192.168.1.110:8000/storage';
   }
 
   /// Converts any photo path or partial URL into a fully-qualified, accessible URL for the mobile device.

@@ -10,6 +10,7 @@ import 'api_service.dart';
 import 'auth_service.dart';
 import 'lamp_type_service.dart';
 import 'project_service.dart';
+import '../utils/image_compress_helper.dart';
 
 class InstallationService {
   /// Simpan data pemasangan lampu baru ke Laravel API
@@ -109,9 +110,11 @@ class InstallationService {
 
       final file = File(photoPath);
       if (file.existsSync()) {
+        final compressedPath =
+            await ImageCompressHelper.compressImage(photoPath);
         final photo = await http.MultipartFile.fromPath(
           'photos[]',
-          photoPath,
+          compressedPath,
         );
         request.files.add(photo);
       }
@@ -307,9 +310,11 @@ class InstallationService {
 
       final file = File(photoPath);
       if (file.existsSync()) {
+        final compressedPath =
+            await ImageCompressHelper.compressImage(photoPath);
         final photo = await http.MultipartFile.fromPath(
           'photos[]',
-          photoPath,
+          compressedPath,
         );
         request.files.add(photo);
       }

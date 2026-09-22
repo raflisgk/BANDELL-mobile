@@ -3,87 +3,17 @@ import 'package:intl/intl.dart';
 import '../../models/notification_model.dart';
 import '../../utils/app_colors.dart';
 
-class NotificationItem {
-  final int id;
-  final String title;
-  final String time;
-  final String content;
-  final String? projectName;
-  final String? notes;
-  final DateTime? assignedAt;
-  final IconData? icon;
-  final Color? iconColor;
-  final Color? iconBackgroundColor;
-  bool isUnread;
-  final String section;
-  final String? boldText;
+class NotificationCard extends StatelessWidget {
+  final NotificationModel notification;
+  final VoidCallback? onTap;
+  final bool isTerbaru;
 
-  NotificationItem({
-    required this.id,
-    required this.title,
-    required this.time,
-    required this.content,
-    this.projectName,
-    this.notes,
-    this.assignedAt,
-    this.icon,
-    this.iconColor,
-    this.iconBackgroundColor,
-    this.isUnread = false,
-    this.section = 'TERBARU',
-    this.boldText,
+  const NotificationCard({
+    super.key,
+    required this.notification,
+    this.onTap,
+    this.isTerbaru = false,
   });
-
-  String get displayTitle {
-    return 'Penugasan Baru Diterima';
-  }
-
-  String? get cleanNotes {
-    if (notes == null) return null;
-
-    final trimmed = notes!.trim();
-
-    if (trimmed.isEmpty ||
-        trimmed == '-' ||
-        trimmed.toLowerCase() == 'null') {
-      return null;
-    }
-
-    return trimmed;
-  }
-
-  String get formattedDescription {
-    final hasProj = projectName != null &&
-        projectName!.trim().isNotEmpty &&
-        projectName!.trim() != '-' &&
-        projectName!.trim().toLowerCase() != 'null';
-
-    if (hasProj && assignedAt != null) {
-      return 'Anda telah ditugaskan untuk proyek ${projectName!.trim()} pada tanggal $formattedDate.';
-    }
-
-    if (hasProj) {
-      return 'Anda telah ditugaskan untuk proyek ${projectName!.trim()}.';
-    }
-
-    if (content.isNotEmpty && !content.startsWith('Project:')) {
-      return content;
-    }
-
-    return 'Anda telah ditugaskan untuk proyek baru.';
-  }
-
-  String get formattedDate {
-    if (assignedAt == null) return '';
-
-    try {
-      return DateFormat(
-        'dd/MM/yyyy',
-      ).format(assignedAt!.toLocal());
-    } catch (_) {
-      return assignedAt!.toLocal().toIso8601String().split('T').first;
-    }
-  }
 
   static String formatHeaderTime(DateTime? dt) {
     if (dt == null) return 'Baru saja';
@@ -117,9 +47,7 @@ class NotificationItem {
     }
 
     try {
-      return DateFormat(
-        'dd MMM yyyy',
-      ).format(local);
+      return DateFormat('dd MMM yyyy').format(local);
     } catch (_) {
       return local.toIso8601String().split('T').first;
     }
@@ -139,98 +67,6 @@ class NotificationItem {
 
     return 'SEBELUMNYA';
   }
-
-  factory NotificationItem.fromModel(
-    NotificationModel model,
-  ) {
-    return NotificationItem(
-      id: model.id,
-      title: 'Penugasan Baru Diterima',
-      time: model.assignedAt != null
-          ? formatHeaderTime(model.assignedAt)
-          : (model.time.isNotEmpty
-              ? model.time
-              : 'Baru saja'),
-      content: model.content,
-      projectName: model.projectName,
-      notes: model.notes,
-      assignedAt: model.assignedAt,
-      isUnread: model.isUnread,
-      section: resolveSection(model.assignedAt),
-      boldText: model.boldText,
-    );
-  }
-
-  factory NotificationItem.fromJson(
-    Map<String, dynamic> json,
-  ) {
-    final bool unread =
-        json['is_unread'] == true ||
-        json['is_read'] == false ||
-        json['is_read'] == 0 ||
-        (json.containsKey('read_at') && json['read_at'] == null);
-
-    DateTime? assignedDate;
-
-    if (json['assigned_at'] != null) {
-      assignedDate = DateTime.tryParse(
-        json['assigned_at'].toString(),
-      );
-    }
-
-    return NotificationItem(
-      id: json['id'] is int
-          ? json['id']
-          : int.tryParse(
-                json['id']?.toString() ?? '0',
-              ) ??
-              0,
-      title: 'Penugasan Baru Diterima',
-      time: json['time']?.toString() ??
-          formatHeaderTime(assignedDate),
-      content: json['content']?.toString() ??
-          json['message']?.toString() ??
-          '',
-      projectName:
-          json['project_name']?.toString() ??
-          json['project']?['name']?.toString(),
-      notes: json['notes']?.toString(),
-      assignedAt: assignedDate,
-      isUnread: unread,
-      section:
-          json['section']?.toString() ??
-          resolveSection(assignedDate),
-      boldText: json['bold_text']?.toString(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'time': time,
-      'content': content,
-      'project_name': projectName,
-      'notes': notes,
-      'assigned_at': assignedAt?.toIso8601String(),
-      'is_unread': isUnread,
-      'section': section,
-      'bold_text': boldText,
-    };
-  }
-}
-
-class NotificationCard extends StatelessWidget {
-  final NotificationItem notification;
-  final VoidCallback? onTap;
-  final bool isTerbaru;
-
-  const NotificationCard({
-    super.key,
-    required this.notification,
-    this.onTap,
-    this.isTerbaru = false,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -375,12 +211,10 @@ class NotificationCard extends StatelessWidget {
   }
 
   Widget _buildDescription() {
-    final project = notification.projectName?.trim();
+    final project = notification.projectName.trim();
     final date = notification.formattedDate;
 
-    final hasProject = project != null &&
-        project.isNotEmpty &&
-        project != '-';
+    final hasProject = project.isNotEmpty && project != '-';
 
     if (!hasProject) {
       return Text(

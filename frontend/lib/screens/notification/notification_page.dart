@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../models/notification_model.dart';
 import '../../services/notification_service.dart';
 import '../../utils/app_colors.dart';
 import 'notification_card.dart';
-
-export 'notification_card.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -14,7 +13,7 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
-  List<NotificationItem> _notifications = [];
+  List<NotificationModel> _notifications = [];
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
@@ -46,9 +45,7 @@ class _NotificationPageState extends State<NotificationPage> {
       final list = await NotificationService().getNotifications();
       if (mounted) {
         setState(() {
-          _notifications = list
-              .map((n) => NotificationItem.fromModel(n))
-              .toList();
+          _notifications = list;
 
           // Pastikan diurutkan dari yang paling baru
           _notifications.sort((a, b) {
@@ -77,9 +74,7 @@ class _NotificationPageState extends State<NotificationPage> {
       final list = await NotificationService().getNotifications();
       if (mounted) {
         setState(() {
-          _notifications = list
-              .map((n) => NotificationItem.fromModel(n))
-              .toList();
+          _notifications = list;
 
           // Pastikan diurutkan dari yang paling baru
           _notifications.sort((a, b) {
@@ -100,7 +95,7 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
-  void _handleNotificationTap(NotificationItem item) {
+  void _handleNotificationTap(NotificationModel item) {
     debugPrint('Notification selected: ${item.title}');
     setState(() {
       item.isUnread = false;
@@ -113,15 +108,15 @@ class _NotificationPageState extends State<NotificationPage> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    final sorted = List<NotificationItem>.from(_notifications)
+    final sorted = List<NotificationModel>.from(_notifications)
       ..sort((a, b) {
         final aDate = a.assignedAt ?? DateTime(1970);
         final bDate = b.assignedAt ?? DateTime(1970);
         return bDate.compareTo(aDate);
       });
 
-    final terbaruList = <NotificationItem>[];
-    final sebelumnyaList = <NotificationItem>[];
+    final terbaruList = <NotificationModel>[];
+    final sebelumnyaList = <NotificationModel>[];
 
     for (final item in sorted) {
       final dt = item.assignedAt?.toLocal();

@@ -64,11 +64,6 @@ class ProjectService {
     }
   }
 
-  /// Versi synchronous untuk kode lama
-  static ProjectModel? getProjectByIdSync(int id) {
-    return getProjectById(id);
-  }
-
   /// Ambil project berdasarkan nama
   static ProjectModel? getProjectByName(String name) {
     try {

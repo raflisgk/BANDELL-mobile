@@ -2,17 +2,11 @@ import 'package:flutter/material.dart';
 
 class AreaOperasionalCard extends StatelessWidget {
   final String title;
-  final String? location;
-  final String? dateRange;
-  final String? status;
   final VoidCallback? onTap;
 
   const AreaOperasionalCard({
     super.key,
     required this.title,
-    this.location,
-    this.dateRange,
-    this.status,
     this.onTap,
   });
 

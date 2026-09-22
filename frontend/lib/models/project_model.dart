@@ -64,5 +64,3 @@ class ProjectModel {
     };
   }
 }
-
-typedef Project = ProjectModel;

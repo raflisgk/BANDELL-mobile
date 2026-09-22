@@ -21,7 +21,7 @@ class KodePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isFocused = focusNode?.hasFocus ?? false;
     final String displayTitle = title ?? 'Kode Panel';
-    final String displaySubtitle = subtitle ?? 'Masukkan kode lampu';
+    final String displaySubtitle = subtitle ?? 'Masukkan kode panel';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

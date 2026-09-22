@@ -1,62 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/installation_model.dart';
+import '../../models/history_lamp_model.dart';
 import '../../utils/app_colors.dart';
 
-class HistoryLampItem {
-  final int? idHistory;
-  final int userId;
-  final int projectId;
-  final int? areaId;
-  final String? districtName;
-  final String kode;
-  final String jenis;
-  final String status;
-  final bool isVerified;
-  final String lokasi;
-  final String koordinat;
-  final String? latitude;
-  final String? longitude;
-  final String fotoCount;
-  final String waktu;
-  final DateTime? tanggal;
-  final DateTime? installedAt;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
-  final String? inputMethod;
-  final String? panelCode;
-  final String? idLcu;
-  final InstallationModel? installation;
-
-  const HistoryLampItem({
-    this.idHistory,
-    required this.userId,
-    required this.projectId,
-    this.areaId,
-    this.districtName,
-    required this.kode,
-    required this.jenis,
-    required this.status,
-    required this.isVerified,
-    required this.lokasi,
-    required this.koordinat,
-    this.latitude,
-    this.longitude,
-    required this.fotoCount,
-    required this.waktu,
-    this.tanggal,
-    this.installedAt,
-    this.createdAt,
-    this.updatedAt,
-    this.inputMethod,
-    this.panelCode,
-    this.idLcu,
-    this.installation,
-  });
-}
-
 class HistoryLampCard extends StatelessWidget {
-  final HistoryLampItem item;
+  final HistoryLampModel item;
   final VoidCallback? onTap;
 
   const HistoryLampCard({
