@@ -51,7 +51,6 @@ class _RealtimePageState extends State<RealtimePage> {
   final FocusNode _notesFocusNode = FocusNode();
 
   String? _scannedBarcode;
-  bool _isBarcodeInvalid = false;
   bool _isLoadingLocation = false;
   bool _isSubmitting = false;
   final List<String> _photos = [];
@@ -133,14 +132,6 @@ class _RealtimePageState extends State<RealtimePage> {
 
   Future<void> _handleScanBarcode() async {
     debugPrint('Scan Barcode clicked');
-
-    // Reset invalid state ketika Scan Ulang ditekan
-    if (_isBarcodeInvalid) {
-      setState(() {
-        _isBarcodeInvalid = false;
-      });
-    }
-
     final String? result = await AppNavigator.push<String>(
       context,
       const ScanBarcodePage(),
@@ -150,22 +141,18 @@ class _RealtimePageState extends State<RealtimePage> {
       final scannedValue = result.trim();
 
       if (scannedValue.length > 11) {
-        setState(() {
-          _isBarcodeInvalid = true;
-          _scannedBarcode = null;
-        });
         if (mounted) {
           CustomFeedbackMessage.showError(
             context,
-            'Barcode ditolak. Maksimal 11 karakter.',
+            'Kode panel ditolak. Maksimal 11 karakter.',
           );
         }
         return;
       }
 
       setState(() {
-        _isBarcodeInvalid = false;
         _scannedBarcode = scannedValue;
+        _panelCodeController.text = scannedValue;
       });
     }
   }
@@ -443,15 +430,6 @@ class _RealtimePageState extends State<RealtimePage> {
       return;
     }
 
-    if (_panelCodeController.text.trim().length > 12) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Kode panel maksimal 12 karakter.',
-      );
-      _panelCodeFocusNode.requestFocus();
-      return;
-    }
-
     final latitude = _latitudeController.text.trim();
     final longitude = _longitudeController.text.trim();
 
@@ -466,6 +444,15 @@ class _RealtimePageState extends State<RealtimePage> {
           _coordinateError = null;
         });
       }
+    }
+
+    if (_panelCodeController.text.trim().length > 11) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Kode panel maksimal 11 karakter.',
+      );
+      _panelCodeFocusNode.requestFocus();
+      return;
     }
 
     setState(() {
@@ -591,7 +578,6 @@ class _RealtimePageState extends State<RealtimePage> {
                     // 1. BARCODE SECTION
                     RealtimeBarcodeSection(
                       scannedBarcode: _scannedBarcode,
-                      isInvalid: _isBarcodeInvalid,
                       onScanBarcode: _handleScanBarcode,
                     ),
 
@@ -600,18 +586,7 @@ class _RealtimePageState extends State<RealtimePage> {
                         color: Color(0xFFE2E8F0), height: 1, thickness: 1),
                     const SizedBox(height: 20),
 
-                    // 2. KODE PANEL SECTION
-                    KodePanel(
-                      controller: _panelCodeController,
-                      focusNode: _panelCodeFocusNode,
-                    ),
-
-                    const SizedBox(height: 20),
-                    const Divider(
-                        color: Color(0xFFE2E8F0), height: 1, thickness: 1),
-                    const SizedBox(height: 20),
-
-                    // 3. LOKASI KOORDINAT SECTION (GPS)
+                    // 2. LOKASI KOORDINAT SECTION (GPS)
                     RealtimeLocationSection(
                       latitudeController: _latitudeController,
                       longitudeController: _longitudeController,
@@ -627,7 +602,18 @@ class _RealtimePageState extends State<RealtimePage> {
                         color: Color(0xFFE2E8F0), height: 1, thickness: 1),
                     const SizedBox(height: 20),
 
-                    // 3. CATATAN SECTION
+                    // 3. KODE PANEL SECTION
+                    KodePanel(
+                      controller: _panelCodeController,
+                      focusNode: _panelCodeFocusNode,
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Divider(
+                        color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+                    const SizedBox(height: 20),
+
+                    // CATATAN SECTION
                     Catatan(
                       controller: _notesController,
                       focusNode: _notesFocusNode,

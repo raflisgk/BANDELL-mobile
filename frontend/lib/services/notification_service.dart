@@ -21,12 +21,14 @@ class NotificationService {
   }
 
   /// Mengambil daftar notifikasi dari Laravel API atau fallback default
+  /// Mengambil daftar notifikasi murni dari Laravel API
   Future<List<NotificationModel>> getNotifications([int? userId]) async {
     final targetUserId = userId ?? AuthService.currentUser?.idUser;
 
     if (targetUserId == null || targetUserId <= 0) {
       debugPrint('NotificationService: user_id tidak valid ($targetUserId)');
       return _getDefaultFallbackNotifications();
+      return [];
     }
 
     try {
@@ -70,6 +72,7 @@ class NotificationService {
     } catch (e) {
       debugPrint('NotificationService getNotifications error: $e');
       return _getDefaultFallbackNotifications();
+      rethrow;
     }
   }
 
