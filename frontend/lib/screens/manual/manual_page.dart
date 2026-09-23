@@ -6,10 +6,12 @@ import '../../services/installation_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/catatan.dart';
 import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
 import '../../widgets/pop_up_sukses.dart';
+import '../../widgets/tanggal_pemasangan.dart';
 import '../../widgets/tombol_simpan_data.dart';
 import '../metode_pendataan/metode_pendataan_page.dart';
 
@@ -36,13 +38,18 @@ class ManualPage extends StatefulWidget {
 class _ManualPageState extends State<ManualPage> {
   final TextEditingController _barcodeController = TextEditingController();
   final TextEditingController _panelCodeController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
   final TextEditingController _latitudeController = TextEditingController();
   final TextEditingController _longitudeController = TextEditingController();
 
   final FocusNode _barcodeFocusNode = FocusNode();
   final FocusNode _panelCodeFocusNode = FocusNode();
+  final FocusNode _notesFocusNode = FocusNode();
   final FocusNode _latitudeFocusNode = FocusNode();
   final FocusNode _longitudeFocusNode = FocusNode();
+
+  DateTime? _installationDate;
+  String? _dateError;
 
   bool _isSubmitting = false;
   final List<String> _photos = [];
@@ -53,6 +60,7 @@ class _ManualPageState extends State<ManualPage> {
     super.initState();
     _barcodeFocusNode.addListener(_onFocusChange);
     _panelCodeFocusNode.addListener(_onFocusChange);
+    _notesFocusNode.addListener(_onFocusChange);
     _latitudeFocusNode.addListener(_onFocusChange);
     _longitudeFocusNode.addListener(_onFocusChange);
     _latitudeController.addListener(_onCoordinateChanged);
@@ -99,11 +107,13 @@ class _ManualPageState extends State<ManualPage> {
   void dispose() {
     _barcodeController.dispose();
     _panelCodeController.dispose();
+    _notesController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
 
     _barcodeFocusNode.removeListener(_onFocusChange);
     _panelCodeFocusNode.removeListener(_onFocusChange);
+    _notesFocusNode.removeListener(_onFocusChange);
     _latitudeFocusNode.removeListener(_onFocusChange);
     _longitudeFocusNode.removeListener(_onFocusChange);
     _latitudeController.removeListener(_onCoordinateChanged);
@@ -111,6 +121,7 @@ class _ManualPageState extends State<ManualPage> {
 
     _barcodeFocusNode.dispose();
     _panelCodeFocusNode.dispose();
+    _notesFocusNode.dispose();
     _latitudeFocusNode.dispose();
     _longitudeFocusNode.dispose();
     super.dispose();
@@ -337,6 +348,23 @@ class _ManualPageState extends State<ManualPage> {
       return;
     }
 
+    if (_installationDate == null) {
+      setState(() {
+        _dateError = 'Tanggal pemasangan wajib diisi';
+      });
+      CustomFeedbackMessage.showError(
+        context,
+        'Tanggal pemasangan wajib diisi.',
+      );
+      return;
+    } else {
+      if (_dateError != null) {
+        setState(() {
+          _dateError = null;
+        });
+      }
+    }
+
     setState(() {
       _isSubmitting = true;
     });
@@ -355,9 +383,13 @@ class _ManualPageState extends State<ManualPage> {
         panelCode: _panelCodeController.text.trim().isNotEmpty
             ? _panelCodeController.text.trim()
             : null,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
         photos: List.from(_photos),
         inputMethod: 'Manual',
         status: 'Tersimpan',
+        installedAt: _installationDate,
         createdAt: DateTime.now(),
       );
 
@@ -518,7 +550,39 @@ class _ManualPageState extends State<ManualPage> {
                               thickness: 1),
                           const SizedBox(height: 18),
 
-                          // 4. DOKUMENTASI (SHARED WIDGET)
+                          // 4. TANGGAL PEMASANGAN (SHARED WIDGET)
+                          TanggalPemasangan(
+                            selectedDate: _installationDate,
+                            onDateSelected: (date) {
+                              setState(() {
+                                _installationDate = date;
+                                _dateError = null;
+                              });
+                            },
+                            errorMessage: _dateError,
+                          ),
+
+                          const SizedBox(height: 18),
+                          const Divider(
+                              color: Color(0xFFF1F5F9),
+                              height: 1,
+                              thickness: 1),
+                          const SizedBox(height: 18),
+
+                          // 5. CATATAN (SHARED WIDGET)
+                          Catatan(
+                            controller: _notesController,
+                            focusNode: _notesFocusNode,
+                          ),
+
+                          const SizedBox(height: 18),
+                          const Divider(
+                              color: Color(0xFFF1F5F9),
+                              height: 1,
+                              thickness: 1),
+                          const SizedBox(height: 18),
+
+                          // 6. DOKUMENTASI (SHARED WIDGET)
                           Dokumentasi(
                             photos: _photos,
                             onAddPhoto: _handleTambahFoto,
@@ -660,7 +724,7 @@ class _ManualPageState extends State<ManualPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
-                Icons.location_on_outlined,
+                Icons.language,
                 color: AppColors.primary,
                 size: 18,
               ),
@@ -696,7 +760,7 @@ class _ManualPageState extends State<ManualPage> {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Masukkan koordinat lampu (Lat/Long)',
+          'Masukkan koordinat lampu (Lintang/Bujur)',
           style: TextStyle(
             color: Color(0xFF64748B),
             fontSize: 12.5,
@@ -706,7 +770,7 @@ class _ManualPageState extends State<ManualPage> {
         _buildLocationInputField(
           controller: _latitudeController,
           focusNode: _latitudeFocusNode,
-          hint: 'Latitude',
+          hint: 'Lintang',
           hasError: _coordinateError != null &&
               !_isLatitudeValid(_latitudeController.text),
         ),
@@ -714,7 +778,7 @@ class _ManualPageState extends State<ManualPage> {
         _buildLocationInputField(
           controller: _longitudeController,
           focusNode: _longitudeFocusNode,
-          hint: 'Longitude',
+          hint: 'Bujur',
           hasError: _coordinateError != null &&
               !_isLongitudeValid(_longitudeController.text),
         ),

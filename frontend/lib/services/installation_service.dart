@@ -80,7 +80,10 @@ class InstallationService {
 
     if (installation.notes != null &&
         installation.notes!.trim().isNotEmpty) {
-      request.fields['address'] = installation.notes!.trim();
+      final noteValue = installation.notes!.trim();
+      request.fields['address'] = noteValue;
+      request.fields['notes'] = noteValue;
+      request.fields['catatan'] = noteValue;
     }
 
     // installed_at menggunakan tanggal instalasi

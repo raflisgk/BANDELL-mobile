@@ -3,11 +3,13 @@ import '../../utils/app_colors.dart';
 
 class RealtimeBarcodeSection extends StatelessWidget {
   final String? scannedBarcode;
+  final bool isInvalid;
   final VoidCallback onScanBarcode;
 
   const RealtimeBarcodeSection({
     super.key,
     required this.scannedBarcode,
+    this.isInvalid = false,
     required this.onScanBarcode,
   });
 
@@ -16,14 +18,43 @@ class RealtimeBarcodeSection extends StatelessWidget {
     final bool hasScanned =
         scannedBarcode != null && scannedBarcode!.isNotEmpty;
 
-    if (hasScanned) {
+    if (hasScanned || isInvalid) {
+      final Color cardBg = isInvalid
+          ? AppColors.popupRedLight
+          : const Color(0xFFC7DBEC);
+      final Color cardBorder = isInvalid
+          ? const Color(0xFFFECACA)
+          : const Color(0xFFA3C7E8);
+      final Color iconCircleBg = isInvalid
+          ? AppColors.error
+          : const Color(0xFF16A34A);
+      final IconData statusIcon = isInvalid
+          ? Icons.close_rounded
+          : Icons.check_rounded;
+      final String statusTitle = isInvalid
+          ? 'TIDAK TERIDENTIFIKASI'
+          : 'TERIDENTIFIKASI';
+      final Color titleColor = isInvalid
+          ? AppColors.error
+          : const Color(0xFF16A34A);
+      final String statusSubtitle = isInvalid
+          ? 'Kode panel tidak valid'
+          : scannedBarcode!;
+      final Color subtitleColor = isInvalid
+          ? AppColors.textSecondary
+          : const Color(0xFF1E2B45);
+      final double subtitleSize = isInvalid ? 15.0 : 21.0;
+      final FontWeight subtitleWeight = isInvalid
+          ? FontWeight.w600
+          : FontWeight.w800;
+
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFFC7DBEC),
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFFA3C7E8),
+            color: cardBorder,
             width: 1.2,
           ),
         ),
@@ -33,7 +64,7 @@ class RealtimeBarcodeSection extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: const Color(0xFF16A34A),
+                color: iconCircleBg,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: Colors.white,
@@ -47,8 +78,8 @@ class RealtimeBarcodeSection extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.check_rounded,
+              child: Icon(
+                statusIcon,
                 color: Colors.white,
                 size: 18,
               ),
@@ -59,10 +90,10 @@ class RealtimeBarcodeSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'TERIDENTIFIKASI',
+                  Text(
+                    statusTitle,
                     style: TextStyle(
-                      color: Color(0xFF16A34A),
+                      color: titleColor,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.3,
@@ -70,11 +101,11 @@ class RealtimeBarcodeSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    scannedBarcode!,
-                    style: const TextStyle(
-                      color: Color(0xFF1E2B45),
-                      fontSize: 21,
-                      fontWeight: FontWeight.w800,
+                    statusSubtitle,
+                    style: TextStyle(
+                      color: subtitleColor,
+                      fontSize: subtitleSize,
+                      fontWeight: subtitleWeight,
                       letterSpacing: -0.2,
                     ),
                   ),

@@ -8,6 +8,7 @@ import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/catatan.dart';
 import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
@@ -42,12 +43,15 @@ class _RealtimePageState extends State<RealtimePage> {
   final TextEditingController _latitudeController = TextEditingController();
   final TextEditingController _longitudeController = TextEditingController();
   final TextEditingController _panelCodeController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
 
   final FocusNode _latitudeFocusNode = FocusNode();
   final FocusNode _longitudeFocusNode = FocusNode();
   final FocusNode _panelCodeFocusNode = FocusNode();
+  final FocusNode _notesFocusNode = FocusNode();
 
   String? _scannedBarcode;
+  bool _isBarcodeInvalid = false;
   bool _isLoadingLocation = false;
   bool _isSubmitting = false;
   final List<String> _photos = [];
@@ -59,6 +63,7 @@ class _RealtimePageState extends State<RealtimePage> {
     _latitudeFocusNode.addListener(_onFocusChange);
     _longitudeFocusNode.addListener(_onFocusChange);
     _panelCodeFocusNode.addListener(_onFocusChange);
+    _notesFocusNode.addListener(_onFocusChange);
     _latitudeController.addListener(_onCoordinateChanged);
     _longitudeController.addListener(_onCoordinateChanged);
   }
@@ -104,16 +109,19 @@ class _RealtimePageState extends State<RealtimePage> {
     _latitudeController.dispose();
     _longitudeController.dispose();
     _panelCodeController.dispose();
+    _notesController.dispose();
 
     _latitudeFocusNode.removeListener(_onFocusChange);
     _longitudeFocusNode.removeListener(_onFocusChange);
     _panelCodeFocusNode.removeListener(_onFocusChange);
+    _notesFocusNode.removeListener(_onFocusChange);
     _latitudeController.removeListener(_onCoordinateChanged);
     _longitudeController.removeListener(_onCoordinateChanged);
 
     _latitudeFocusNode.dispose();
     _longitudeFocusNode.dispose();
     _panelCodeFocusNode.dispose();
+    _notesFocusNode.dispose();
     super.dispose();
   }
 
@@ -125,14 +133,40 @@ class _RealtimePageState extends State<RealtimePage> {
 
   Future<void> _handleScanBarcode() async {
     debugPrint('Scan Barcode clicked');
+
+    // Reset invalid state ketika Scan Ulang ditekan
+    if (_isBarcodeInvalid) {
+      setState(() {
+        _isBarcodeInvalid = false;
+      });
+    }
+
     final String? result = await AppNavigator.push<String>(
       context,
       const ScanBarcodePage(),
     );
 
     if (result != null && result.trim().isNotEmpty) {
+      final scannedValue = result.trim();
+
+      if (scannedValue.length > 11) {
+        setState(() {
+          _isBarcodeInvalid = true;
+          _scannedBarcode = null;
+        });
+        if (mounted) {
+          CustomFeedbackMessage.showError(
+            context,
+            'Kode panel ditolak. Maksimal 11 karakter.',
+          );
+        }
+        return;
+      }
+
       setState(() {
-        _scannedBarcode = result.trim();
+        _isBarcodeInvalid = false;
+        _scannedBarcode = scannedValue;
+        _panelCodeController.text = scannedValue;
       });
     }
   }
@@ -426,10 +460,10 @@ class _RealtimePageState extends State<RealtimePage> {
       }
     }
 
-    if (_panelCodeController.text.trim().length > 12) {
+    if (_panelCodeController.text.trim().length > 11) {
       CustomFeedbackMessage.showError(
         context,
-        'Kode panel maksimal 12 karakter.',
+        'Kode panel maksimal 11 karakter.',
       );
       _panelCodeFocusNode.requestFocus();
       return;
@@ -452,6 +486,9 @@ class _RealtimePageState extends State<RealtimePage> {
         longitude: longitude.replaceAll(',', '.'),
         panelCode: _panelCodeController.text.trim().isNotEmpty
             ? _panelCodeController.text.trim()
+            : null,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
             : null,
         photos: List.from(_photos),
         inputMethod: 'Realtime',
@@ -555,6 +592,7 @@ class _RealtimePageState extends State<RealtimePage> {
                     // 1. BARCODE SECTION
                     RealtimeBarcodeSection(
                       scannedBarcode: _scannedBarcode,
+                      isInvalid: _isBarcodeInvalid,
                       onScanBarcode: _handleScanBarcode,
                     ),
 
@@ -583,6 +621,17 @@ class _RealtimePageState extends State<RealtimePage> {
                     KodePanel(
                       controller: _panelCodeController,
                       focusNode: _panelCodeFocusNode,
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Divider(
+                        color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+                    const SizedBox(height: 20),
+
+                    // CATATAN SECTION
+                    Catatan(
+                      controller: _notesController,
+                      focusNode: _notesFocusNode,
                     ),
 
                     const SizedBox(height: 20),
