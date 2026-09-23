@@ -38,7 +38,7 @@ class RealtimeBarcodeSection extends StatelessWidget {
           ? AppColors.error
           : const Color(0xFF16A34A);
       final String statusSubtitle = isInvalid
-          ? 'Kode panel tidak valid'
+          ? 'Barcode tidak valid'
           : scannedBarcode!;
       final Color subtitleColor = isInvalid
           ? AppColors.textSecondary
