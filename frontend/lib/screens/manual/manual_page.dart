@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/installation_model.dart';
 import '../../services/auth_service.dart';
@@ -11,7 +13,7 @@ import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
 import '../../widgets/pop_up_sukses.dart';
-import '../../widgets/tanggal_pemasangan.dart';
+import '../../widgets/pilih_tanggal.dart';
 import '../../widgets/tombol_simpan_data.dart';
 import '../metode_pendataan/metode_pendataan_page.dart';
 
@@ -35,7 +37,8 @@ class ManualPage extends StatefulWidget {
   State<ManualPage> createState() => _ManualPageState();
 }
 
-class _ManualPageState extends State<ManualPage> {
+class _ManualPageState extends State<ManualPage>
+    with TickerProviderStateMixin {
   final TextEditingController _barcodeController = TextEditingController();
   final TextEditingController _panelCodeController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
@@ -55,19 +58,188 @@ class _ManualPageState extends State<ManualPage> {
   final List<String> _photos = [];
   String? _coordinateError;
 
+  AnimationController? _shakeController;
+  Animation<double>? _shakeAnimation;
+  bool _isBarcodeExceeded = false;
+  Timer? _barcodeErrorTimer;
+
+  AnimationController? _locationShakeController;
+  Animation<double>? _locationShakeAnimation;
+  bool _isLatitudeExceeded = false;
+  Timer? _latitudeErrorTimer;
+  bool _isLongitudeExceeded = false;
+  Timer? _longitudeErrorTimer;
+
+  void _initShakeAnimation() {
+    _shakeController ??= AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+
+    _shakeAnimation ??= TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _shakeController!,
+      curve: Curves.easeInOut,
+    ));
+
+    _locationShakeController ??= AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+
+    _locationShakeAnimation ??= TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _locationShakeController!,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  AnimationController get _effectiveShakeController {
+    if (_shakeController == null) _initShakeAnimation();
+    return _shakeController!;
+  }
+
+  Animation<double> get _effectiveShakeAnimation {
+    if (_shakeAnimation == null) _initShakeAnimation();
+    return _shakeAnimation!;
+  }
+
+  AnimationController get _effectiveLocationShakeController {
+    if (_locationShakeController == null) _initShakeAnimation();
+    return _locationShakeController!;
+  }
+
+  Animation<double> get _effectiveLocationShakeAnimation {
+    if (_locationShakeAnimation == null) _initShakeAnimation();
+    return _locationShakeAnimation!;
+  }
+
   @override
   void initState() {
     super.initState();
+    _initShakeAnimation();
+
     _barcodeFocusNode.addListener(_onFocusChange);
+    _barcodeController.addListener(_onBarcodeChanged);
     _panelCodeFocusNode.addListener(_onFocusChange);
     _notesFocusNode.addListener(_onFocusChange);
     _latitudeFocusNode.addListener(_onFocusChange);
     _longitudeFocusNode.addListener(_onFocusChange);
     _latitudeController.addListener(_onCoordinateChanged);
+    _latitudeController.addListener(_onLatitudeChanged);
     _longitudeController.addListener(_onCoordinateChanged);
+    _longitudeController.addListener(_onLongitudeChanged);
+  }
+
+  void _onBarcodeChanged() {
+    if (_isBarcodeExceeded && _barcodeController.text.length < 11) {
+      _barcodeErrorTimer?.cancel();
+      setState(() {
+        _isBarcodeExceeded = false;
+      });
+    }
+  }
+
+  void _onBarcodeLimitExceeded() {
+    _barcodeErrorTimer?.cancel();
+    if (!_isBarcodeExceeded) {
+      setState(() {
+        _isBarcodeExceeded = true;
+      });
+    }
+    _effectiveShakeController.forward(from: 0.0);
+
+    // Otomatis kembalikan ke warna normal & hapus tulisan merah setelah berhenti mengetik
+    _barcodeErrorTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && _isBarcodeExceeded) {
+        setState(() {
+          _isBarcodeExceeded = false;
+        });
+      }
+    });
+  }
+
+  void _onLatitudeChanged() {
+    if (_isLatitudeExceeded && _latitudeController.text.length < 10) {
+      _latitudeErrorTimer?.cancel();
+      setState(() {
+        _isLatitudeExceeded = false;
+      });
+    }
+  }
+
+  void _onLatitudeLimitExceeded() {
+    _latitudeErrorTimer?.cancel();
+    if (!_isLatitudeExceeded) {
+      setState(() {
+        _isLatitudeExceeded = true;
+      });
+    }
+    _effectiveLocationShakeController.forward(from: 0.0);
+
+    // Otomatis kembalikan ke warna normal & hapus tulisan merah setelah berhenti mengetik
+    _latitudeErrorTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && _isLatitudeExceeded) {
+        setState(() {
+          _isLatitudeExceeded = false;
+        });
+      }
+    });
+  }
+
+  void _onLongitudeChanged() {
+    if (_isLongitudeExceeded && _longitudeController.text.length < 11) {
+      _longitudeErrorTimer?.cancel();
+      setState(() {
+        _isLongitudeExceeded = false;
+      });
+    }
+  }
+
+  void _onLongitudeLimitExceeded() {
+    _longitudeErrorTimer?.cancel();
+    if (!_isLongitudeExceeded) {
+      setState(() {
+        _isLongitudeExceeded = true;
+      });
+    }
+    _effectiveLocationShakeController.forward(from: 0.0);
+
+    // Otomatis kembalikan ke warna normal & hapus tulisan merah setelah berhenti mengetik
+    _longitudeErrorTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && _isLongitudeExceeded) {
+        setState(() {
+          _isLongitudeExceeded = false;
+        });
+      }
+    });
   }
 
   void _onFocusChange() {
+    if (!_barcodeFocusNode.hasFocus && _isBarcodeExceeded) {
+      _barcodeErrorTimer?.cancel();
+      _isBarcodeExceeded = false;
+    }
+    if (!_latitudeFocusNode.hasFocus && _isLatitudeExceeded) {
+      _latitudeErrorTimer?.cancel();
+      _isLatitudeExceeded = false;
+    }
+    if (!_longitudeFocusNode.hasFocus && _isLongitudeExceeded) {
+      _longitudeErrorTimer?.cancel();
+      _isLongitudeExceeded = false;
+    }
     setState(() {});
   }
 
@@ -105,6 +277,12 @@ class _ManualPageState extends State<ManualPage> {
 
   @override
   void dispose() {
+    _barcodeErrorTimer?.cancel();
+    _latitudeErrorTimer?.cancel();
+    _longitudeErrorTimer?.cancel();
+    _shakeController?.dispose();
+    _locationShakeController?.dispose();
+    _barcodeController.removeListener(_onBarcodeChanged);
     _barcodeController.dispose();
     _panelCodeController.dispose();
     _notesController.dispose();
@@ -117,7 +295,9 @@ class _ManualPageState extends State<ManualPage> {
     _latitudeFocusNode.removeListener(_onFocusChange);
     _longitudeFocusNode.removeListener(_onFocusChange);
     _latitudeController.removeListener(_onCoordinateChanged);
+    _latitudeController.removeListener(_onLatitudeChanged);
     _longitudeController.removeListener(_onCoordinateChanged);
+    _longitudeController.removeListener(_onLongitudeChanged);
 
     _barcodeFocusNode.dispose();
     _panelCodeFocusNode.dispose();
@@ -312,12 +492,30 @@ class _ManualPageState extends State<ManualPage> {
       return;
     }
 
-    if (barcode.length > 12) {
+    if (barcode.length > 11) {
       CustomFeedbackMessage.showError(
         context,
-        'ID Barcode (LCU) maksimal 12 karakter.',
+        'ID Barcode maksimal 11 karakter.',
       );
       _barcodeFocusNode.requestFocus();
+      return;
+    }
+
+    if (latitude.length > 10) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Latitude maksimal 10 karakter.',
+      );
+      _latitudeFocusNode.requestFocus();
+      return;
+    }
+
+    if (longitude.length > 11) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Longitude maksimal 11 karakter.',
+      );
+      _longitudeFocusNode.requestFocus();
       return;
     }
 
@@ -350,11 +548,11 @@ class _ManualPageState extends State<ManualPage> {
 
     if (_installationDate == null) {
       setState(() {
-        _dateError = 'Tanggal pemasangan wajib diisi';
+        _dateError = 'Tanggal penugasan wajib diisi';
       });
       CustomFeedbackMessage.showError(
         context,
-        'Tanggal pemasangan wajib diisi.',
+        'Tanggal penugasan wajib diisi.',
       );
       return;
     } else {
@@ -550,8 +748,10 @@ class _ManualPageState extends State<ManualPage> {
                               thickness: 1),
                           const SizedBox(height: 18),
 
-                          // 4. TANGGAL PEMASANGAN (SHARED WIDGET)
+                          // 4. TANGGAL PENUGASAN (SHARED WIDGET)
                           TanggalPemasangan(
+                            title: 'Tanggal Penugasan',
+                            subtitle: 'Masukkan tanggal penugasan',
                             selectedDate: _installationDate,
                             onDateSelected: (date) {
                               setState(() {
@@ -618,39 +818,52 @@ class _ManualPageState extends State<ManualPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(8),
+        AnimatedBuilder(
+          animation: _effectiveShakeAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(_effectiveShakeAnimation.value, 0),
+              child: child,
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _isBarcodeExceeded
+                      ? AppColors.errorLight
+                      : AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.wb_incandescent_outlined,
+                  color: _isBarcodeExceeded
+                      ? AppColors.error
+                      : AppColors.primary,
+                  size: 18,
+                ),
               ),
-              child: const Icon(
-                Icons.wb_incandescent_outlined,
-                color: AppColors.primary,
-                size: 18,
+              const SizedBox(width: 8),
+              const Text(
+                'ID Barcode',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'ID Barcode',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+              const SizedBox(width: 4),
+              const Text(
+                '*',
+                style: TextStyle(
+                  color: Color(0xFFEF4444),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            const Text(
-              '*',
-              style: TextStyle(
-                color: Color(0xFFEF4444),
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 4),
         const Text(
@@ -666,15 +879,25 @@ class _ManualPageState extends State<ManualPage> {
             color: isFocused ? Colors.white : AppColors.inputBackground,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isFocused ? AppColors.primary : AppColors.border,
-              width: isFocused ? 1.5 : 1,
+              color: _isBarcodeExceeded
+                  ? AppColors.error
+                  : (isFocused ? AppColors.primary : AppColors.border),
+              width: _isBarcodeExceeded || isFocused ? 1.5 : 1,
             ),
           ),
           child: TextField(
             controller: _barcodeController,
             focusNode: _barcodeFocusNode,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            inputFormatters: [
+              _BarcodeLimitFormatter(
+                maxLength: 11,
+                onExceeded: _onBarcodeLimitExceeded,
+              ),
+            ],
+            style: TextStyle(
+              color: _isBarcodeExceeded
+                  ? AppColors.error
+                  : AppColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -693,6 +916,20 @@ class _ManualPageState extends State<ManualPage> {
             ),
           ),
         ),
+        if (_isBarcodeExceeded) ...[
+          const SizedBox(height: 6),
+          const Padding(
+            padding: EdgeInsets.only(left: 2.0),
+            child: Text(
+              'Maksimal 11 karakter',
+              style: TextStyle(
+                color: AppColors.error,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -715,52 +952,65 @@ class _ManualPageState extends State<ManualPage> {
               ),
             ),
           ),
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(8),
+        AnimatedBuilder(
+          animation: _effectiveLocationShakeAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(_effectiveLocationShakeAnimation.value, 0),
+              child: child,
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: (_isLatitudeExceeded || _isLongitudeExceeded)
+                      ? AppColors.errorLight
+                      : AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.language,
+                  color: (_isLatitudeExceeded || _isLongitudeExceeded)
+                      ? AppColors.error
+                      : AppColors.primary,
+                  size: 18,
+                ),
               ),
-              child: const Icon(
-                Icons.language,
-                color: AppColors.primary,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      'Lokasi Koordinat',
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'Lokasi Koordinat',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      '*',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: Color(0xFFEF4444),
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  SizedBox(width: 4),
-                  Text(
-                    '*',
-                    style: TextStyle(
-                      color: Color(0xFFEF4444),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 4),
         const Text(
-          'Masukkan koordinat lampu (Lintang/Bujur)',
+          'Masukkan koordinat lampu (Lat/Long)',
           style: TextStyle(
             color: Color(0xFF64748B),
             fontSize: 12.5,
@@ -770,7 +1020,10 @@ class _ManualPageState extends State<ManualPage> {
         _buildLocationInputField(
           controller: _latitudeController,
           focusNode: _latitudeFocusNode,
-          hint: 'Lintang',
+          hint: 'Latitude',
+          maxLength: 10,
+          isExceeded: _isLatitudeExceeded,
+          onExceeded: _onLatitudeLimitExceeded,
           hasError: _coordinateError != null &&
               !_isLatitudeValid(_latitudeController.text),
         ),
@@ -778,7 +1031,10 @@ class _ManualPageState extends State<ManualPage> {
         _buildLocationInputField(
           controller: _longitudeController,
           focusNode: _longitudeFocusNode,
-          hint: 'Bujur',
+          hint: 'Longitude',
+          maxLength: 11,
+          isExceeded: _isLongitudeExceeded,
+          onExceeded: _onLongitudeLimitExceeded,
           hasError: _coordinateError != null &&
               !_isLongitudeValid(_longitudeController.text),
         ),
@@ -790,50 +1046,111 @@ class _ManualPageState extends State<ManualPage> {
     required TextEditingController controller,
     FocusNode? focusNode,
     required String hint,
+    required int maxLength,
+    bool isExceeded = false,
+    VoidCallback? onExceeded,
     bool hasError = false,
   }) {
     final bool isFocused = focusNode?.hasFocus ?? false;
 
-    final borderColor = hasError
-        ? const Color(0xFFEF4444)
-        : (isFocused ? AppColors.primary : AppColors.border);
-    final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
+    final borderColor = isExceeded
+        ? AppColors.error
+        : (hasError
+            ? const Color(0xFFEF4444)
+            : (isFocused ? AppColors.primary : AppColors.border));
+    final borderWidth = (isExceeded || hasError || isFocused) ? 1.5 : 1.0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isFocused ? Colors.white : AppColors.inputBackground,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: borderColor,
-          width: borderWidth,
-        ),
-      ),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: const TextInputType.numberWithOptions(
-          decimal: true,
-          signed: true,
-        ),
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(
-            color: AppColors.hintColor,
-            fontSize: 14,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: isFocused ? Colors.white : AppColors.inputBackground,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: borderColor,
+              width: borderWidth,
+            ),
           ),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+              signed: true,
+            ),
+            inputFormatters: [
+              if (onExceeded != null)
+                _BarcodeLimitFormatter(
+                  maxLength: maxLength,
+                  onExceeded: onExceeded,
+                )
+              else
+                LengthLimitingTextInputFormatter(maxLength),
+            ],
+            style: TextStyle(
+              color: isExceeded ? AppColors.error : AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(
+                color: AppColors.hintColor,
+                fontSize: 14,
+              ),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              border: InputBorder.none,
+            ),
           ),
-          border: InputBorder.none,
         ),
-      ),
+        if (isExceeded) ...[
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 2.0),
+            child: Text(
+              'Maksimal $maxLength karakter',
+              style: const TextStyle(
+                color: AppColors.error,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
+  }
+}
+
+class _BarcodeLimitFormatter extends TextInputFormatter {
+  final int maxLength;
+  final VoidCallback onExceeded;
+
+  _BarcodeLimitFormatter({
+    required this.maxLength,
+    required this.onExceeded,
+  });
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.length > maxLength) {
+      onExceeded();
+      if (oldValue.text.length <= maxLength) {
+        return oldValue;
+      }
+      return TextEditingValue(
+        text: newValue.text.substring(0, maxLength),
+        selection: TextSelection.collapsed(offset: maxLength),
+      );
+    }
+    return newValue;
   }
 }

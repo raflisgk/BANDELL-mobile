@@ -24,7 +24,8 @@ class ProfileController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone_number' => $user->phone_number,
+                'phone' => $user->phone,
+                'phone_number' => $user->phone,
                 'placement_area' => $user->placement_area,
             ],
         ]);
@@ -39,7 +40,7 @@ class ProfileController extends Controller
 
         $user = User::findOrFail($validated['user_id']);
 
-        $user->phone_number = $validated['phone_number'] ?? null;
+        $user->phone = $validated['phone_number'] ?? null;
         $user->save();
 
         return response()->json([
@@ -49,7 +50,8 @@ class ProfileController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone_number' => $user->phone_number,
+                'phone' => $user->phone,
+                'phone_number' => $user->phone,
                 'placement_area' => $user->placement_area,
             ],
         ]);

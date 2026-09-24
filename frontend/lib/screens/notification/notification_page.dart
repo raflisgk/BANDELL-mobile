@@ -5,6 +5,7 @@ import '../../services/notification_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import 'notification_card.dart';
+import 'notification_detail_dialog.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -99,6 +100,9 @@ class _NotificationPageState extends State<NotificationPage> {
             ProjectService.getProjectByName(item.projectName);
       }
     }
+
+    // Tampilkan popup detail dialog sesuai jenis notifikasi
+    NotificationDetailDialog.show(context, notification: item);
   }
 
   @override
@@ -117,26 +121,19 @@ class _NotificationPageState extends State<NotificationPage> {
     final sebelumnyaList = <NotificationModel>[];
 
     for (final item in sorted) {
-      if (item.type == NotificationType.rejected) {
-        // Laporan ditolak selalu masuk ke SEBELUMNYA sesuai spesifikasi
-        sebelumnyaList.add(item);
-      } else {
-        // Penugasan baru: jika baru / unread / < 24 jam masuk TERBARU, selain itu SEBELUMNYA
-        final dt = item.assignedAt?.toLocal() ?? item.createdAt?.toLocal();
-        if (dt == null) {
-          terbaruList.add(item);
-        } else {
-          final itemDay = DateTime(dt.year, dt.month, dt.day);
-          final isToday = itemDay == today;
-          final isWithin24Hours =
-              now.difference(dt).inHours < 24 && !now.difference(dt).isNegative;
+      final dt = item.assignedAt?.toLocal() ?? item.createdAt?.toLocal();
 
-          if (isToday || isWithin24Hours || item.isUnread) {
-            terbaruList.add(item);
-          } else {
-            sebelumnyaList.add(item);
-          }
-        }
+      if (dt == null) {
+        sebelumnyaList.add(item);
+        continue;
+      }
+
+      final itemDay = DateTime(dt.year, dt.month, dt.day);
+
+      if (itemDay == today) {
+        terbaruList.add(item);
+      } else {
+        sebelumnyaList.add(item);
       }
     }
 

@@ -81,7 +81,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _startEditingPhone() {
     setState(() {
-      _editController.text = _phone;
+      _editController.text =
+          _phone == '-' ? '' : (_phone.length > 13 ? _phone.substring(0, 13) : _phone);
       _activeEditField = ProfileEditField.phone;
     });
 
@@ -96,6 +97,14 @@ class _ProfilePageState extends State<ProfilePage> {
     if (newValue.isEmpty) return;
 
     if (_activeEditField == ProfileEditField.phone) {
+      if (newValue.length > 13) {
+        CustomFeedback.showError(
+          context,
+          'Nomor telepon maksimal 13 karakter',
+        );
+        return;
+      }
+
       final success = await AuthService().updatePhone(newValue);
 
       if (!mounted) return;
@@ -432,6 +441,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   controller: _editController,
                                   focusNode: _editFocusNode,
                                   keyboardType: TextInputType.phone,
+                                  maxLength: 13,
                                   onTap: _startEditingPhone,
                                   onSave: _saveActiveField,
                                   onCancel: _cancelEditing,

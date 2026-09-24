@@ -21,6 +21,8 @@ class Installation extends Model
         'id_lcu',
         'input_method',
         'verification_status',
+        'note_by_admin',
+        'note_by_teknisi',
         'latitude',
         'longitude',
         'address',

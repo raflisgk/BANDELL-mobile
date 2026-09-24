@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../utils/app_colors.dart';
 
-class EditableProfileItem extends StatelessWidget {
+class EditableProfileItem extends StatefulWidget {
   final IconData icon;
   final String title;
   final String value;
@@ -10,6 +12,8 @@ class EditableProfileItem extends StatelessWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final TextInputType keyboardType;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
   final VoidCallback? onTap;
   final VoidCallback? onSave;
   final VoidCallback? onCancel;
@@ -24,14 +28,128 @@ class EditableProfileItem extends StatelessWidget {
     this.controller,
     this.focusNode,
     this.keyboardType = TextInputType.text,
+    this.maxLength,
+    this.inputFormatters,
     this.onTap,
     this.onSave,
     this.onCancel,
   });
 
   @override
+  State<EditableProfileItem> createState() => _EditableProfileItemState();
+}
+
+class _EditableProfileItemState extends State<EditableProfileItem>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _shakeController;
+  Animation<double>? _shakeAnimation;
+  bool _isExceeded = false;
+  Timer? _errorTimer;
+
+  void _initShakeAnimation() {
+    _shakeController ??= AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+
+    _shakeAnimation ??= TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _shakeController!,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  AnimationController get _effectiveShakeController {
+    if (_shakeController == null) _initShakeAnimation();
+    return _shakeController!;
+  }
+
+  Animation<double> get _effectiveShakeAnimation {
+    if (_shakeAnimation == null) _initShakeAnimation();
+    return _shakeAnimation!;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initShakeAnimation();
+    widget.controller?.addListener(_onTextChanged);
+    widget.focusNode?.addListener(_onFocusChanged);
+  }
+
+  @override
+  void didUpdateWidget(EditableProfileItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?.removeListener(_onTextChanged);
+      widget.controller?.addListener(_onTextChanged);
+    }
+    if (oldWidget.focusNode != widget.focusNode) {
+      oldWidget.focusNode?.removeListener(_onFocusChanged);
+      widget.focusNode?.addListener(_onFocusChanged);
+    }
+    if (!widget.isEditing && _isExceeded) {
+      _errorTimer?.cancel();
+      _isExceeded = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _errorTimer?.cancel();
+    _shakeController?.dispose();
+    widget.controller?.removeListener(_onTextChanged);
+    widget.focusNode?.removeListener(_onFocusChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (_isExceeded && widget.controller != null && widget.maxLength != null) {
+      if (widget.controller!.text.length < widget.maxLength!) {
+        _errorTimer?.cancel();
+        setState(() {
+          _isExceeded = false;
+        });
+      }
+    }
+  }
+
+  void _onFocusChanged() {
+    if (widget.focusNode != null && !widget.focusNode!.hasFocus && _isExceeded) {
+      _errorTimer?.cancel();
+      setState(() {
+        _isExceeded = false;
+      });
+    }
+  }
+
+  void _onLimitExceeded() {
+    _errorTimer?.cancel();
+    if (!_isExceeded) {
+      setState(() {
+        _isExceeded = true;
+      });
+    }
+    _effectiveShakeController.forward(from: 0.0);
+
+    _errorTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && _isExceeded) {
+        setState(() {
+          _isExceeded = false;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (isEditing) {
+    if (widget.isEditing) {
       return _buildEditMode();
     }
     return _buildNormalMode();
@@ -54,7 +172,7 @@ class EditableProfileItem extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          onTap: isEditable ? onTap : null,
+          onTap: widget.isEditable ? widget.onTap : null,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -69,7 +187,7 @@ class EditableProfileItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    icon,
+                    widget.icon,
                     color: const Color(0xFF084B83),
                     size: 22,
                   ),
@@ -82,7 +200,7 @@ class EditableProfileItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        widget.title,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -91,7 +209,7 @@ class EditableProfileItem extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        value,
+                        widget.value,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12.5,
@@ -103,7 +221,7 @@ class EditableProfileItem extends StatelessWidget {
                 ),
 
                 // Right Chevron Icon only shown if field is editable
-                if (isEditable)
+                if (widget.isEditable)
                   const Icon(
                     Icons.chevron_right_rounded,
                     color: Colors.white,
@@ -138,12 +256,21 @@ class EditableProfileItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 13.5,
-              fontWeight: FontWeight.bold,
+          AnimatedBuilder(
+            animation: _effectiveShakeAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(_effectiveShakeAnimation.value, 0),
+                child: child,
+              );
+            },
+            child: Text(
+              widget.title,
+              style: TextStyle(
+                color: _isExceeded ? AppColors.error : AppColors.textPrimary,
+                fontSize: 13.5,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -154,24 +281,37 @@ class EditableProfileItem extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF084B83),
-                width: 1.2,
+                color: _isExceeded
+                    ? AppColors.error
+                    : const Color(0xFF084B83),
+                width: _isExceeded ? 1.5 : 1.2,
               ),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    keyboardType: keyboardType,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    controller: widget.controller,
+                    focusNode: widget.focusNode,
+                    keyboardType: widget.keyboardType,
+                    inputFormatters: [
+                      if (widget.maxLength != null)
+                        _ProfileItemLimitFormatter(
+                          maxLength: widget.maxLength!,
+                          onExceeded: _onLimitExceeded,
+                        )
+                      else if (widget.inputFormatters != null)
+                        ...widget.inputFormatters!,
+                    ],
+                    style: TextStyle(
+                      color: _isExceeded
+                          ? AppColors.error
+                          : AppColors.textPrimary,
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Masukkan $title',
+                      hintText: 'Masukkan ${widget.title}',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontSize: 13.5,
@@ -185,17 +325,34 @@ class EditableProfileItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(right: 12),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
                   child: Icon(
                     Icons.edit_outlined,
-                    color: Color(0xFF084B83),
+                    color: _isExceeded
+                        ? AppColors.error
+                        : const Color(0xFF084B83),
                     size: 18,
                   ),
                 ),
               ],
             ),
           ),
+
+          if (_isExceeded && widget.maxLength != null) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 2.0),
+              child: Text(
+                'Maksimal ${widget.maxLength} karakter',
+                style: const TextStyle(
+                  color: AppColors.error,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 10),
 
@@ -204,7 +361,7 @@ class EditableProfileItem extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: onCancel,
+                  onPressed: widget.onCancel,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     side: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -226,7 +383,7 @@ class EditableProfileItem extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: onSave,
+                  onPressed: widget.onSave,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF084B83),
                     foregroundColor: Colors.white,
@@ -256,5 +413,33 @@ class EditableProfileItem extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _ProfileItemLimitFormatter extends TextInputFormatter {
+  final int maxLength;
+  final VoidCallback onExceeded;
+
+  _ProfileItemLimitFormatter({
+    required this.maxLength,
+    required this.onExceeded,
+  });
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.length > maxLength) {
+      onExceeded();
+      if (oldValue.text.length <= maxLength) {
+        return oldValue;
+      }
+      return TextEditingValue(
+        text: newValue.text.substring(0, maxLength),
+        selection: TextSelection.collapsed(offset: maxLength),
+      );
+    }
+    return newValue;
   }
 }

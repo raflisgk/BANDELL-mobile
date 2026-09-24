@@ -24,6 +24,8 @@ class InstallationModel {
   final String? inputMethod;
   final String? photoUrl;
   final String? notes;
+  final String? noteByAdmin;
+  final String? verificationStatus;
   final DateTime? installedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -47,6 +49,8 @@ class InstallationModel {
     this.inputMethod,
     this.photoUrl,
     this.notes,
+    this.noteByAdmin,
+    this.verificationStatus,
     this.installedAt,
     this.createdAt,
     this.updatedAt,
@@ -59,6 +63,17 @@ class InstallationModel {
   String? get areaId => idArea.toString();
 
   String? get projectId => idProject?.toString();
+
+  // ignore: non_constant_identifier_names
+  String? get note_by_admin => noteByAdmin;
+
+  // ignore: non_constant_identifier_names
+  String? get verification_status => verificationStatus ?? status;
+
+  String? get district => districtName;
+
+  // ignore: non_constant_identifier_names
+  String? get lcu_id => idLcu;
 
   factory InstallationModel.fromJson(Map<String, dynamic> json) {
     List<String> parsedPhotos = [];
@@ -203,6 +218,13 @@ class InstallationModel {
           json['notes']?.toString() ??
           json['catatan']?.toString(),
 
+      noteByAdmin: json['note_by_admin']?.toString() ??
+          json['noteByAdmin']?.toString() ??
+          json['rejection_note']?.toString(),
+
+      verificationStatus: json['verification_status']?.toString() ??
+          json['status']?.toString(),
+
       installedAt: json['installed_at'] != null
           ? DateTime.tryParse(
               json['installed_at'].toString(),
@@ -237,6 +259,7 @@ class InstallationModel {
       'lamp_type': lampType,
       'wattage': wattage,
       'status': status,
+      'verification_status': verificationStatus,
       'latitude': latitude,
       'longitude': longitude,
       'panel_code': panelCode,
@@ -244,6 +267,7 @@ class InstallationModel {
       'input_method': inputMethod,
       'photo_url': photoUrl,
       'notes': notes,
+      'note_by_admin': noteByAdmin,
       'installed_at': installedAt?.toIso8601String(),
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),

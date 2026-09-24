@@ -15,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
     'name',
     'email',
     'password',
-    'phone_number',
+    'phone',
     'placement_area',
     'joined_at',
 ])]
@@ -34,6 +34,16 @@ class User extends Authenticatable
             'password' => 'hashed',
             'joined_at' => 'date',
         ];
+    }
+
+    public function getPhoneNumberAttribute(): ?string
+    {
+        return $this->attributes['phone'] ?? null;
+    }
+
+    public function setPhoneNumberAttribute(?string $value): void
+    {
+        $this->attributes['phone'] = $value;
     }
 
     public function projectAssignments(): HasMany

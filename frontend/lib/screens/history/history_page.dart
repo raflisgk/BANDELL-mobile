@@ -13,7 +13,7 @@ import '../area_operasional/area_operasional_page.dart';
 import '../detail_lampu/detail_lampu_page.dart';
 import '../profile/profile_page.dart';
 import 'history_lamp_card.dart';
-import 'pilih_tanggal.dart';
+import '../../widgets/pilih_tanggal.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});

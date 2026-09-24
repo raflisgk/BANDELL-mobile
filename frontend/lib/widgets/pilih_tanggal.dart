@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_colors.dart';
+import 'package:intl/intl.dart';
+import '../utils/app_colors.dart';
 
 class PilihTanggal extends StatefulWidget {
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
+  final bool isSingleDate;
 
   const PilihTanggal({
     super.key,
     this.initialStartDate,
     this.initialEndDate,
+    this.isSingleDate = false,
   });
 
   static const List<String> monthNames = [
@@ -26,7 +29,7 @@ class PilihTanggal extends StatefulWidget {
     'Desember'
   ];
 
-  /// Helper statis untuk menampilkan bottom sheet pemilihan rentang tanggal
+  /// Helper statis untuk menampilkan bottom sheet pemilihan rentang tanggal (Riwayat)
   static Future<Map<String, DateTime>?> show(
     BuildContext context, {
     DateTime? initialStartDate,
@@ -39,6 +42,23 @@ class PilihTanggal extends StatefulWidget {
       builder: (context) => PilihTanggal(
         initialStartDate: initialStartDate,
         initialEndDate: initialEndDate,
+        isSingleDate: false,
+      ),
+    );
+  }
+
+  /// Helper statis untuk menampilkan bottom sheet pemilihan satu tanggal (Metode Manual)
+  static Future<DateTime?> showSingle(
+    BuildContext context, {
+    DateTime? initialDate,
+  }) async {
+    return showModalBottomSheet<DateTime>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PilihTanggal(
+        initialStartDate: initialDate,
+        isSingleDate: true,
       ),
     );
   }
@@ -59,7 +79,7 @@ class _PilihTanggalState extends State<PilihTanggal> {
     final now = DateTime.now();
     _today = DateTime(now.year, now.month, now.day);
     _startDate = widget.initialStartDate;
-    _endDate = widget.initialEndDate;
+    _endDate = widget.isSingleDate ? null : widget.initialEndDate;
     if (_startDate != null) {
       _focusedMonth = DateTime(_startDate!.year, _startDate!.month, 1);
     } else {
@@ -81,12 +101,19 @@ class _PilihTanggalState extends State<PilihTanggal> {
 
   void _onDaySelected(DateTime day) {
     setState(() {
+      if (widget.isSingleDate) {
+        _startDate = day;
+        _endDate = null;
+        if (day.month != _focusedMonth.month) {
+          _focusedMonth = DateTime(day.year, day.month, 1);
+        }
+        return;
+      }
+
       if (_startDate == null || (_startDate != null && _endDate != null)) {
-        // Pemilihan pertama: set tanggal mulai, kosongkan tanggal akhir
         _startDate = day;
         _endDate = null;
       } else if (_startDate != null && _endDate == null) {
-        // Pemilihan kedua: jika tanggal kedua lebih awal dari tanggal pertama, swap agar rentang tetap valid
         if (day.isBefore(_startDate!)) {
           _endDate = _startDate;
           _startDate = day;
@@ -103,7 +130,7 @@ class _PilihTanggalState extends State<PilihTanggal> {
   }
 
   bool _isInRange(DateTime day) {
-    if (_startDate == null || _endDate == null) return false;
+    if (widget.isSingleDate || _startDate == null || _endDate == null) return false;
     return day.isAfter(_startDate!) && day.isBefore(_endDate!);
   }
 
@@ -116,7 +143,9 @@ class _PilihTanggalState extends State<PilihTanggal> {
     final leadingDays = firstDayOfMonth.weekday - 1; // Mon = 1
     final prevMonthDays = DateTime(year, month, 0).day;
 
-    final bool isRangeValid = _startDate != null && _endDate != null;
+    final bool isSelectionValid = widget.isSingleDate
+        ? _startDate != null
+        : (_startDate != null && _endDate != null);
 
     return Container(
       decoration: const BoxDecoration(
@@ -133,178 +162,182 @@ class _PilihTanggalState extends State<PilihTanggal> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-          // Top Drag Handle Bar
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE2E8F0),
-                borderRadius: BorderRadius.circular(2),
+              // Top Drag Handle Bar
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 6),
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-          ),
 
-          // Header Row (Title & Close Button)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Pilih Tanggal',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    color: Color(0xFF64748B),
-                    size: 22,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(color: Color(0xFFF1F5F9), height: 1, thickness: 1),
-
-          // Month Navigation Row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: _prevMonth,
-                  icon: const Icon(
-                    Icons.chevron_left_rounded,
-                    color: AppColors.textPrimary,
-                    size: 24,
-                  ),
-                ),
-                Text(
-                  '${PilihTanggal.monthNames[month - 1]} $year',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  onPressed: _nextMonth,
-                  icon: const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.textPrimary,
-                    size: 24,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Weekday Header Row (Sen, Sel, Rab, Kam, Jum, Sab, Min)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                _buildWeekdayHeader('Sen', false),
-                _buildWeekdayHeader('Sel', false),
-                _buildWeekdayHeader('Rab', false),
-                _buildWeekdayHeader('Kam', false),
-                _buildWeekdayHeader('Jum', false),
-                _buildWeekdayHeader('Sab', true),
-                _buildWeekdayHeader('Min', true),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // Days Grid
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildDaysGrid(
-              year: year,
-              month: month,
-              daysInMonth: daysInMonth,
-              leadingDays: leadingDays,
-              prevMonthDays: prevMonthDays,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Action Buttons: Batal & Pilih
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+              // Header Row (Title & Close Button)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Pilih Tanggal',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.2,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Batal',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Color(0xFF64748B),
+                        size: 22,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
-                  ),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: isRangeValid
-                      ? () {
-                          Navigator.pop(context, {
-                            'startDate': _startDate!,
-                            'endDate': _endDate!,
-                          });
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0x5900569E),
-                    disabledForegroundColor: const Color(0x99FFFFFF),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 42,
-                      vertical: 12,
+              ),
+
+              const Divider(color: Color(0xFFF1F5F9), height: 1, thickness: 1),
+
+              // Month Navigation Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: _prevMonth,
+                      icon: const Icon(
+                        Icons.chevron_left_rounded,
+                        color: AppColors.textPrimary,
+                        size: 24,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    Text(
+                      '${PilihTanggal.monthNames[month - 1]} $year',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Pilih',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    IconButton(
+                      onPressed: _nextMonth,
+                      icon: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textPrimary,
+                        size: 24,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              // Weekday Header Row (Sen, Sel, Rab, Kam, Jum, Sab, Min)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Row(
+                  children: [
+                    _buildWeekdayHeader('Sen', false),
+                    _buildWeekdayHeader('Sel', false),
+                    _buildWeekdayHeader('Rab', false),
+                    _buildWeekdayHeader('Kam', false),
+                    _buildWeekdayHeader('Jum', false),
+                    _buildWeekdayHeader('Sab', widget.isSingleDate ? false : true),
+                    _buildWeekdayHeader('Min', true),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              // Days Grid
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildDaysGrid(
+                  year: year,
+                  month: month,
+                  daysInMonth: daysInMonth,
+                  leadingDays: leadingDays,
+                  prevMonthDays: prevMonthDays,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Action Buttons: Batal & Pilih
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'Batal',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: isSelectionValid
+                          ? () {
+                              if (widget.isSingleDate) {
+                                Navigator.pop(context, _startDate);
+                              } else {
+                                Navigator.pop(context, {
+                                  'startDate': _startDate!,
+                                  'endDate': _endDate!,
+                                });
+                              }
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: const Color(0x5900569E),
+                        disabledForegroundColor: const Color(0x99FFFFFF),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 42,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Pilih',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   Widget _buildWeekdayHeader(String label, bool isWeekend) {
@@ -338,7 +371,6 @@ class _PilihTanggalState extends State<PilihTanggal> {
 
     for (int i = 0; i < totalGridCells; i++) {
       if (i < leadingDays) {
-        // Previous Month Day
         final dayNum = prevMonthDays - leadingDays + i + 1;
         final date = DateTime(year, month - 1, dayNum);
         currentRow.add(
@@ -350,11 +382,11 @@ class _PilihTanggalState extends State<PilihTanggal> {
           ),
         );
       } else if (i < leadingDays + daysInMonth) {
-        // Current Month Day
         final dayNum = i - leadingDays + 1;
         final date = DateTime(year, month, dayNum);
-        final isWeekend = date.weekday == DateTime.saturday ||
-            date.weekday == DateTime.sunday;
+        final isWeekend = widget.isSingleDate
+            ? date.weekday == DateTime.sunday
+            : (date.weekday == DateTime.saturday || date.weekday == DateTime.sunday);
 
         currentRow.add(
           _buildDayCell(
@@ -365,7 +397,6 @@ class _PilihTanggalState extends State<PilihTanggal> {
           ),
         );
       } else {
-        // Next Month Day
         final dayNum = i - (leadingDays + daysInMonth) + 1;
         final date = DateTime(year, month + 1, dayNum);
         currentRow.add(
@@ -407,22 +438,24 @@ class _PilihTanggalState extends State<PilihTanggal> {
 
     // Range Highlight Styling
     Decoration? containerDecoration;
-    if (isStart && isEnd) {
-      containerDecoration = null;
-    } else if (inRange) {
-      containerDecoration = const BoxDecoration(
-        color: Color(0xFFB8D5ED),
-      );
-    } else if (isStart && _endDate != null) {
-      containerDecoration = const BoxDecoration(
-        color: Color(0xFFB8D5ED),
-        borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
-      );
-    } else if (isEnd && _startDate != null) {
-      containerDecoration = const BoxDecoration(
-        color: Color(0xFFB8D5ED),
-        borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
-      );
+    if (!widget.isSingleDate) {
+      if (isStart && isEnd) {
+        containerDecoration = null;
+      } else if (inRange) {
+        containerDecoration = const BoxDecoration(
+          color: Color(0xFFB8D5ED),
+        );
+      } else if (isStart && _endDate != null) {
+        containerDecoration = const BoxDecoration(
+          color: Color(0xFFB8D5ED),
+          borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
+        );
+      } else if (isEnd && _startDate != null) {
+        containerDecoration = const BoxDecoration(
+          color: Color(0xFFB8D5ED),
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
+        );
+      }
     }
 
     // Inner Circle Styling
@@ -479,6 +512,170 @@ class _PilihTanggalState extends State<PilihTanggal> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Reusable Widget Tanggal Penugasan / Pemasangan
+class TanggalPemasangan extends StatelessWidget {
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime> onDateSelected;
+  final String? title;
+  final String? subtitle;
+  final bool isRequired;
+  final String? hintText;
+  final String? errorMessage;
+
+  const TanggalPemasangan({
+    super.key,
+    required this.selectedDate,
+    required this.onDateSelected,
+    this.title = 'Tanggal Penugasan',
+    this.subtitle = 'Masukkan tanggal penugasan',
+    this.isRequired = true,
+    this.hintText,
+    this.errorMessage,
+  });
+
+  Future<void> _pickDate(BuildContext context) async {
+    final now = DateTime.now();
+    final initial = selectedDate ?? now;
+
+    final picked = await PilihTanggal.showSingle(
+      context,
+      initialDate: initial,
+    );
+
+    if (picked != null) {
+      onDateSelected(picked);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final displayTitle = title ?? 'Tanggal Penugasan';
+    final displaySubtitle = subtitle ?? 'Masukkan tanggal penugasan';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF), // Soft light blue
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: const Icon(
+                Icons.event_note_outlined,
+                color: Color(0xFF2563EB), // Primary blue
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        displayTitle,
+                        style: const TextStyle(
+                          color: Color(0xFF1E293B),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (isRequired) ...[
+                        const SizedBox(width: 4),
+                        const Text(
+                          '*',
+                          style: TextStyle(
+                            color: Color(0xFFEF4444),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    displaySubtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        // Input Field Box
+        InkWell(
+          onTap: () => _pickDate(context),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: errorMessage != null
+                    ? const Color(0xFFEF4444)
+                    : const Color(0xFFE2E8F0),
+                width: 1.0,
+              ),
+            ),
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  selectedDate != null
+                      ? DateFormat('dd/MM/yyyy').format(selectedDate!)
+                      : (hintText ?? 'Pilih tanggal penugasan'),
+                  style: TextStyle(
+                    color: selectedDate != null
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFF94A3B8),
+                    fontSize: 14,
+                    fontWeight: selectedDate != null
+                        ? FontWeight.w500
+                        : FontWeight.w400,
+                  ),
+                ),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: Color(0xFF94A3B8),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        if (errorMessage != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            errorMessage!,
+            style: const TextStyle(
+              color: Color(0xFFEF4444),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

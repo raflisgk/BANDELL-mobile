@@ -20,14 +20,12 @@ class NotificationService {
     return true;
   }
 
-  /// Mengambil daftar notifikasi dari Laravel API atau fallback default
   /// Mengambil daftar notifikasi murni dari Laravel API
   Future<List<NotificationModel>> getNotifications([int? userId]) async {
     final targetUserId = userId ?? AuthService.currentUser?.idUser;
 
     if (targetUserId == null || targetUserId <= 0) {
       debugPrint('NotificationService: user_id tidak valid ($targetUserId)');
-      return _getDefaultFallbackNotifications();
       return [];
     }
 
@@ -38,10 +36,6 @@ class NotificationService {
           .map((json) => NotificationModel.fromJson(json))
           .toList();
 
-      if (apiList.isEmpty) {
-        return _getDefaultFallbackNotifications();
-      }
-
       // Pastikan status read lokal ter-update
       for (final item in apiList) {
         if (isReadLocally(item.id)) {
@@ -49,56 +43,10 @@ class NotificationService {
         }
       }
 
-      // Jika backend belum memiliki data notifikasi ditolak,
-      // sertakan data laporan ditolak agar teknisi dapat melihat kedua jenis card
-      final hasRejected =
-          apiList.any((n) => n.type == NotificationType.rejected);
-      if (!hasRejected) {
-        apiList.add(
-          NotificationModel(
-            id: 99999,
-            type: NotificationType.rejected,
-            title: 'Laporan Ditolak',
-            projectName: 'Bekasi',
-            message: 'Laporan penugasan Bekasi ditolak.',
-            time: 'Kemarin',
-            assignedAt: DateTime.now().subtract(const Duration(days: 1)),
-            isUnread: false,
-          ),
-        );
-      }
-
       return apiList;
     } catch (e) {
       debugPrint('NotificationService getNotifications error: $e');
-      return _getDefaultFallbackNotifications();
       rethrow;
     }
-  }
-
-  static List<NotificationModel> _getDefaultFallbackNotifications() {
-    return [
-      NotificationModel(
-        id: 1,
-        type: NotificationType.assignment,
-        title: 'Penugasan Baru Diterima',
-        projectName: 'Jakarta',
-        message: 'Anda telah ditugaskan untuk proyek Jakarta.',
-        notes: '...',
-        time: 'Baru saja',
-        assignedAt: DateTime.now(),
-        isUnread: !isReadLocally(1),
-      ),
-      NotificationModel(
-        id: 2,
-        type: NotificationType.rejected,
-        title: 'Laporan Ditolak',
-        projectName: 'Bekasi',
-        message: 'Laporan penugasan Bekasi ditolak.',
-        time: 'Kemarin',
-        assignedAt: DateTime.now().subtract(const Duration(days: 1)),
-        isUnread: false,
-      ),
-    ];
   }
 }
