@@ -10,6 +10,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable([
     'name',
@@ -18,6 +20,7 @@ use Illuminate\Notifications\Notifiable;
     'phone',
     'placement_area',
     'joined_at',
+    'status',
 ])]
 #[Hidden([
     'password',
@@ -26,6 +29,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected function casts(): array
     {
@@ -33,7 +37,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'joined_at' => 'date',
+            'deleted_at' => 'datetime',
         ];
+    }
+
+    public function getRoleAttribute(): ?string
+    {
+        if (isset($this->attributes['role']) && !empty($this->attributes['role'])) {
+            return $this->attributes['role'];
+        }
+
+        return DB::table('model_has_roles')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->where('model_has_roles.model_id', $this->id)
+            ->value('roles.name');
     }
 
     public function getPhoneNumberAttribute(): ?string

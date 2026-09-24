@@ -233,7 +233,19 @@ class ApiService {
     if (response.statusCode == 401) {
       throw const ApiException(
         'Email atau password salah.',
+      final msg = data?['message']?.toString();
+      throw ApiException(
+        (msg != null && msg.isNotEmpty) ? msg : 'Email atau password salah.',
         statusCode: 401,
+      );
+    }
+
+    // 403: Akses ditolak (role bukan teknisi, status nonaktif, deleted_at)
+    if (response.statusCode == 403) {
+      final msg = data?['message']?.toString();
+      throw ApiException(
+        (msg != null && msg.isNotEmpty) ? msg : 'Akses ditolak.',
+        statusCode: 403,
       );
     }
 
