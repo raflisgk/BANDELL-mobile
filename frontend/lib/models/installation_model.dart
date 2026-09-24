@@ -158,8 +158,13 @@ class InstallationModel {
           return json['district']['name']?.toString() ??
               json['district']['district_name']?.toString();
         }
+        if (json['area'] is Map) {
+          return json['area']['name']?.toString() ??
+              json['area']['area_name']?.toString();
+        }
         return json['district_name']?.toString() ??
-            json['area_name']?.toString();
+            json['area_name']?.toString() ??
+            json['district']?.toString();
       })(),
 
       // ID jenis lampu dari database

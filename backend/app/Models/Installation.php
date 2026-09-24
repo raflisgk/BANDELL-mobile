@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Installation extends Model
 {
@@ -37,6 +38,37 @@ class Installation extends Model
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (Installation $installation) {
+            $status = strtolower((string) $installation->verification_status);
+            if ($status === 'ditolak' || $status === 'rejected') {
+                if ($installation->user_id) {
+                    DB::transaction(function () use ($installation) {
+                        // Cegah duplikasi: cek apakah notifikasi penolakan untuk instalasi ini sudah ada
+                        $alreadyExists = Notification::where('installation_id', $installation->id)
+                            ->where('type', 'rejected')
+                            ->exists();
+
+                        if (!$alreadyExists) {
+                            Notification::create([
+                                'user_id' => $installation->user_id,
+                                'type' => 'rejected',
+                                'title' => 'Laporan Ditolak',
+                                'message' => 'Laporan penugasan ditolak.',
+                                'project_id' => $installation->project_id,
+                                'installation_id' => $installation->id,
+                                'is_read' => 0,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     public function project(): BelongsTo

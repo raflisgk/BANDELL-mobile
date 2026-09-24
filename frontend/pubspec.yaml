@@ -32,9 +32,6 @@ dependencies:
     sdk: flutter
   http: ^1.5.0
   intl: ^0.20.2
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
   mobile_scanner: ^6.0.4
   geolocator: ^13.0.2
   image_picker: ^1.2.3
@@ -66,8 +63,4 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/logo bandell 1.png
-    - assets/images/connection_error.png
-    - assets/images/empty_project.png
     - assets/images/
-    - assets/icons/

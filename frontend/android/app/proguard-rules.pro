@@ -22,3 +22,9 @@
 # Google Play Core & Deferred Components
 -dontwarn com.google.android.play.core.**
 -dontwarn com.google.android.libraries.barhopper.**
+
+# Flutter Secure Storage & Crypto
+-keep class androidx.security.crypto.** { *; }
+
+# Flutter Image Compress
+-keep class com.fluttercandies.flutter_image_compress.** { *; }

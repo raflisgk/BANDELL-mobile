@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+
 import '../models/user_model.dart';
 import 'auth_service.dart';
 
@@ -21,17 +23,22 @@ class ApiService {
   /// Base URL endpoint Laravel backend API
   static const String baseUrl = 'http://192.168.1.110:8000/api';
 
-  /// Returns the base URL for public storage files (e.g. http://192.168.1.44:8000/storage)
+  /// Returns the base URL for public storage files
+  /// (e.g. http://192.168.1.110:8000/storage)
   static String get storageBaseUrl {
     final uri = Uri.tryParse(baseUrl);
+
     if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
       final portPart = uri.hasPort ? ':${uri.port}' : '';
+
       return '${uri.scheme}://${uri.host}$portPart/storage';
     }
+
     return 'http://192.168.1.110:8000/storage';
   }
 
-  /// Converts any photo path or partial URL into a fully-qualified, accessible URL for the mobile device.
+  /// Converts any photo path or partial URL into a fully-qualified,
+  /// accessible URL for the mobile device.
   static String resolvePhotoUrl(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
       return '';
@@ -45,26 +52,31 @@ class ApiService {
         !path.startsWith('/installations')) {
       return path;
     }
+
     if (RegExp(r'^[a-zA-Z]:[/\\]').hasMatch(path)) {
       return path;
     }
 
     final baseStorage = storageBaseUrl;
 
-    // If it's already an HTTP / HTTPS URL:
+    // If it's already an HTTP / HTTPS URL
     if (path.startsWith('http://') || path.startsWith('https://')) {
       // Replace localhost or 127.0.0.1 with the actual host from baseUrl
       if (path.contains('localhost') || path.contains('127.0.0.1')) {
         final parsed = Uri.tryParse(path);
         final baseUri = Uri.tryParse(baseUrl);
+
         if (parsed != null && baseUri != null) {
-          path = parsed.replace(
-            scheme: baseUri.scheme,
-            host: baseUri.host,
-            port: baseUri.hasPort ? baseUri.port : null,
-          ).toString();
+          path = parsed
+              .replace(
+                scheme: baseUri.scheme,
+                host: baseUri.host,
+                port: baseUri.hasPort ? baseUri.port : null,
+              )
+              .toString();
         }
       }
+
       return path;
     }
 
@@ -86,7 +98,8 @@ class ApiService {
     return '$baseStorage/$path';
   }
 
-  /// Token session untuk autentikasi Bearer Token (opsional, jika digunakan)
+  /// Token session untuk autentikasi Bearer Token
+  /// (opsional, jika digunakan)
   static String? _authToken;
 
   static void setAuthToken(String? token) {
@@ -94,38 +107,38 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> updateProfilePhone({
-  required int userId,
-  required String phoneNumber,
-}) async {
-  final response = await http.put(
-    Uri.parse('$baseUrl/profile/phone'),
-    headers: defaultHeaders,
-    body: jsonEncode({
-      'user_id': userId,
-      'phone_number': phoneNumber,
-    }),
-  );
+    required int userId,
+    required String phoneNumber,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/profile/phone'),
+      headers: defaultHeaders,
+      body: jsonEncode({
+        'user_id': userId,
+        'phone_number': phoneNumber,
+      }),
+    );
 
-  debugPrint('UPDATE PROFILE STATUS: ${response.statusCode}');
-  debugPrint('UPDATE PROFILE BODY: ${response.body}');
+    debugPrint('UPDATE PROFILE STATUS: ${response.statusCode}');
+    debugPrint('UPDATE PROFILE BODY: ${response.body}');
 
-  Map<String, dynamic> responseData;
+    Map<String, dynamic> responseData;
 
-  try {
-    responseData = jsonDecode(response.body) as Map<String, dynamic>;
-  } catch (_) {
-    throw Exception('Response server tidak valid.');
+    try {
+      responseData = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception('Response server tidak valid.');
+    }
+
+    if (response.statusCode == 200 && responseData['success'] == true) {
+      return responseData;
+    }
+
+    throw Exception(
+      responseData['message']?.toString() ??
+          'Gagal memperbarui nomor telepon.',
+    );
   }
-
-  if (response.statusCode == 200 && responseData['success'] == true) {
-    return responseData;
-  }
-
-  throw Exception(
-    responseData['message']?.toString() ??
-        'Gagal memperbarui nomor telepon.',
-  );
-}
 
   static Future<Map<String, dynamic>> getProfile(int userId) async {
     final response = await http.get(
@@ -166,6 +179,7 @@ class ApiService {
     required String password,
   }) async {
     final http.Response response;
+
     try {
       response = await http
           .post(
@@ -195,8 +209,10 @@ class ApiService {
     debugPrint('LOGIN BODY: ${response.body}');
 
     Map<String, dynamic>? data;
+
     try {
       final dynamic decoded = jsonDecode(response.body);
+
       if (decoded is Map<String, dynamic>) {
         data = decoded;
       }
@@ -209,6 +225,7 @@ class ApiService {
         AuthService.currentUser =
             UserModel.fromJson(data['user'] as Map<String, dynamic>);
       }
+
       return data ?? {};
     }
 
@@ -222,13 +239,18 @@ class ApiService {
 
     // 422: Validasi input gagal dari backend
     if (response.statusCode == 422) {
-      String validationMsg = 'Format email atau password tidak valid.';
+      String validationMsg =
+          'Format email atau password tidak valid.';
+
       if (data != null) {
-        if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
+        if (data['errors'] is Map &&
+            (data['errors'] as Map).isNotEmpty) {
           final firstKey = (data['errors'] as Map).keys.first;
           final firstVal = (data['errors'] as Map)[firstKey];
+
           if (firstVal is List && firstVal.isNotEmpty) {
             final raw = firstVal.first.toString();
+
             if (raw.toLowerCase().contains('email')) {
               validationMsg = 'Format email tidak valid.';
             } else if (raw.toLowerCase().contains('password')) {
@@ -239,6 +261,7 @@ class ApiService {
           }
         } else if (data['message'] != null) {
           final rawMsg = data['message'].toString();
+
           if (rawMsg.toLowerCase().contains('email')) {
             validationMsg = 'Format email tidak valid.';
           } else {
@@ -246,7 +269,11 @@ class ApiService {
           }
         }
       }
-      throw ApiException(validationMsg, statusCode: 422);
+
+      throw ApiException(
+        validationMsg,
+        statusCode: 422,
+      );
     }
 
     // 500+: Server error
@@ -259,6 +286,7 @@ class ApiService {
 
     // Status code lainnya
     final safeMsg = data?['message']?.toString();
+
     final bool isSafe = safeMsg != null &&
         safeMsg.isNotEmpty &&
         !safeMsg.toLowerCase().contains('exception') &&
@@ -267,14 +295,18 @@ class ApiService {
         !safeMsg.contains('{');
 
     throw ApiException(
-      isSafe ? safeMsg : 'Terjadi kesalahan. Silakan coba lagi.',
+      isSafe
+          ? safeMsg
+          : 'Terjadi kesalahan. Silakan coba lagi.',
       statusCode: response.statusCode,
     );
   }
 
-  /// Endpoint untuk mengambil notifikasi penugasan project berdasarkan user_id
+  /// Endpoint untuk mengambil notifikasi berdasarkan user_id
   static Future<List<dynamic>> getNotifications(int userId) async {
-    final uri = Uri.parse('$baseUrl/notifications?user_id=$userId');
+    final uri = Uri.parse(
+      '$baseUrl/notifications?user_id=$userId',
+    );
 
     debugPrint('DEBUG USER ID: $userId');
     debugPrint('DEBUG NOTIFICATION URL: $uri');
@@ -284,11 +316,17 @@ class ApiService {
       headers: defaultHeaders,
     );
 
-    debugPrint('DEBUG NOTIFICATION STATUS: ${response.statusCode}');
-    debugPrint('DEBUG NOTIFICATION BODY: ${response.body}');
+    debugPrint(
+      'DEBUG NOTIFICATION STATUS: ${response.statusCode}',
+    );
+
+    debugPrint(
+      'DEBUG NOTIFICATION BODY: ${response.body}',
+    );
 
     if (response.statusCode == 200) {
       final dynamic decoded = jsonDecode(response.body);
+
       if (decoded is Map<String, dynamic> &&
           decoded['success'] == true &&
           decoded['data'] is List) {
@@ -299,23 +337,39 @@ class ApiService {
     return [];
   }
 
-  /// Endpoint untuk mengambil assignment project teknisi berdasarkan user_id
-  static Future<List<dynamic>> getProjectAssignments(int userId) async {
-    final uri = Uri.parse('$baseUrl/project-assignments?user_id=$userId');
+  /// Endpoint untuk mengambil assignment project teknisi
+  /// berdasarkan user_id
+  static Future<List<dynamic>> getProjectAssignments(
+    int userId,
+  ) async {
+    final uri = Uri.parse(
+      '$baseUrl/project-assignments?user_id=$userId',
+    );
 
-    debugPrint('DEBUG USER ID FOR ASSIGNMENTS: $userId');
-    debugPrint('DEBUG PROJECT ASSIGNMENTS URL: $uri');
+    debugPrint(
+      'DEBUG USER ID FOR ASSIGNMENTS: $userId',
+    );
+
+    debugPrint(
+      'DEBUG PROJECT ASSIGNMENTS URL: $uri',
+    );
 
     final response = await http.get(
       uri,
       headers: defaultHeaders,
     );
 
-    debugPrint('DEBUG PROJECT ASSIGNMENTS STATUS: ${response.statusCode}');
-    debugPrint('DEBUG PROJECT ASSIGNMENTS BODY: ${response.body}');
+    debugPrint(
+      'DEBUG PROJECT ASSIGNMENTS STATUS: ${response.statusCode}',
+    );
+
+    debugPrint(
+      'DEBUG PROJECT ASSIGNMENTS BODY: ${response.body}',
+    );
 
     if (response.statusCode == 200) {
       final dynamic decoded = jsonDecode(response.body);
+
       if (decoded is Map<String, dynamic> &&
           decoded['success'] == true &&
           decoded['data'] is List) {
@@ -324,5 +378,56 @@ class ApiService {
     }
 
     return [];
+  }
+
+  /// Endpoint untuk menandai notifikasi telah dibaca di server
+  static Future<void> markNotificationAsRead(
+    int notificationId,
+  ) async {
+    try {
+      final uri = Uri.parse(
+        '$baseUrl/notifications/$notificationId/read',
+      );
+
+      debugPrint(
+        'MARK NOTIFICATION READ URL: $uri',
+      );
+
+      final response = await http.put(
+        uri,
+        headers: defaultHeaders,
+      );
+
+      debugPrint(
+        'MARK NOTIFICATION READ STATUS: ${response.statusCode}',
+      );
+
+      debugPrint(
+        'MARK NOTIFICATION READ BODY: ${response.body}',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Gagal menandai notifikasi sebagai sudah dibaca.',
+        );
+      }
+
+      final dynamic decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        if (decoded['success'] != true) {
+          throw Exception(
+            decoded['message']?.toString() ??
+                'Gagal menandai notifikasi sebagai sudah dibaca.',
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint(
+        'Error marking notification as read in ApiService: $e',
+      );
+
+      rethrow;
+    }
   }
 }

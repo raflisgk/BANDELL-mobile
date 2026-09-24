@@ -12,7 +12,7 @@ void main() {
       );
       expect(
         resolved,
-        'http://192.168.1.44:8000/storage/installations/SO4XPlhjuTYKDdpRc38mUKh1iFLntGveVtgpUe1I.jpg',
+        '${ApiService.storageBaseUrl}/installations/SO4XPlhjuTYKDdpRc38mUKh1iFLntGveVtgpUe1I.jpg',
       );
     });
 
@@ -22,7 +22,7 @@ void main() {
       );
       expect(
         resolved,
-        'http://192.168.1.44:8000/storage/installations/SO4XPlhjuTYKDdpRc38mUKh1iFLntGveVtgpUe1I.jpg',
+        '${ApiService.storageBaseUrl}/installations/SO4XPlhjuTYKDdpRc38mUKh1iFLntGveVtgpUe1I.jpg',
       );
     });
 
@@ -32,7 +32,7 @@ void main() {
       );
       expect(
         resolved,
-        'http://192.168.1.44:8000/storage/installations/test_photo.jpg',
+        '${ApiService.storageBaseUrl}/installations/test_photo.jpg',
       );
     });
 
@@ -42,7 +42,7 @@ void main() {
       );
       expect(
         resolved,
-        'http://192.168.1.44:8000/storage/installations/nested/test_photo.jpg',
+        '${ApiService.storageBaseUrl}/installations/nested/test_photo.jpg',
       );
     });
 
@@ -52,7 +52,7 @@ void main() {
       );
       expect(
         resolvedLocalhost,
-        'http://192.168.1.44:8000/storage/installations/photo.jpg',
+        '${ApiService.storageBaseUrl}/installations/photo.jpg',
       );
 
       final resolvedLoopback = ApiService.resolvePhotoUrl(
@@ -60,7 +60,7 @@ void main() {
       );
       expect(
         resolvedLoopback,
-        'http://192.168.1.44:8000/storage/installations/photo.jpg',
+        '${ApiService.storageBaseUrl}/installations/photo.jpg',
       );
     });
 
@@ -112,11 +112,11 @@ void main() {
       expect(model.photos.length, 2);
       expect(
         model.photos[0],
-        'http://192.168.1.44:8000/storage/installations/SO4XPlhjuTYKDdpRc38mUKh1iFLntGveVtgpUe1I.jpg',
+        '${ApiService.storageBaseUrl}/installations/SO4XPlhjuTYKDdpRc38mUKh1iFLntGveVtgpUe1I.jpg',
       );
       expect(
         model.photos[1],
-        'http://192.168.1.44:8000/storage/installations/another_photo.jpg',
+        '${ApiService.storageBaseUrl}/installations/another_photo.jpg',
       );
     });
 
@@ -129,11 +129,11 @@ void main() {
       expect(modelUrl.photos.length, 1);
       expect(
         modelUrl.photos.first,
-        'http://192.168.1.44:8000/storage/installations/single.jpg',
+        '${ApiService.storageBaseUrl}/installations/single.jpg',
       );
       expect(
         modelUrl.photoUrl,
-        'http://192.168.1.44:8000/storage/installations/single.jpg',
+        '${ApiService.storageBaseUrl}/installations/single.jpg',
       );
 
       final jsonPath = {
@@ -144,7 +144,7 @@ void main() {
       expect(modelPath.photos.length, 1);
       expect(
         modelPath.photos.first,
-        'http://192.168.1.44:8000/storage/installations/fallback.jpg',
+        '${ApiService.storageBaseUrl}/installations/fallback.jpg',
       );
     });
   });
@@ -182,4 +182,3 @@ void main() {
     });
   });
 }
-

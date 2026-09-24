@@ -14,9 +14,14 @@ class NotificationService {
     _readNotificationIds.add(id);
   }
 
-  /// Menandai notifikasi telah dibaca secara lokal (state)
+  /// Menandai notifikasi telah dibaca secara lokal dan database API
   Future<bool> markAsRead(int idNotification) async {
     markLocallyAsRead(idNotification);
+    try {
+      await ApiService.markNotificationAsRead(idNotification);
+    } catch (e) {
+      debugPrint('NotificationService markAsRead API error: $e');
+    }
     return true;
   }
 

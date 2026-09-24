@@ -21,6 +21,7 @@ Route::get('/installations/{installation}', [InstallationController::class, 'sho
 Route::put('/installations/{installation}', [InstallationController::class, 'update']);
 Route::delete('/installations/{installation}', [InstallationController::class, 'destroy']);
 Route::get('/notifications', [NotificationController::class, 'index']);
+Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 Route::get('/profile', [ProfileController::class, 'show']);
 Route::put('/profile/phone', [ProfileController::class, 'updatePhone']);
 

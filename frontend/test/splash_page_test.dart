@@ -6,7 +6,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('SplashPage Tests', () {
-    testWidgets('reveals the Pilar wordmark after its monogram',
+    testWidgets('renders BANDELL Mobile splash screen with logo',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -15,12 +15,8 @@ void main() {
       );
 
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-      expect(scaffold.backgroundColor, const Color(0xFF0F58B7));
-      expect(find.text('P'), findsOneWidget);
-      expect(find.text('Pilar'), findsNothing);
-
-      await tester.pump(const Duration(seconds: 6));
-      expect(find.text('Pilar'), findsOneWidget);
+      expect(scaffold.backgroundColor, const Color(0xFF2878D7));
+      expect(find.byType(Image), findsOneWidget);
     });
   });
 }
