@@ -231,8 +231,6 @@ class ApiService {
 
     // 401: Kredensial tidak valid
     if (response.statusCode == 401) {
-      throw const ApiException(
-        'Email atau password salah.',
       final msg = data?['message']?.toString();
       throw ApiException(
         (msg != null && msg.isNotEmpty) ? msg : 'Email atau password salah.',

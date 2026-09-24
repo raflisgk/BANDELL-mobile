@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
@@ -18,7 +17,6 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
         // Cari user (termasuk yang di-soft delete agar dapat mendeteksi kondisi deleted_at)
         $user = User::withTrashed()->where('email', $credentials['email'])->first();
 

@@ -28,7 +28,6 @@ use Illuminate\Support\Facades\DB;
 ])]
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
     use HasFactory, Notifiable, SoftDeletes;
 
     protected function casts(): array
