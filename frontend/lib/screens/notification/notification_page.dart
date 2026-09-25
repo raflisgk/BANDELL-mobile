@@ -141,9 +141,9 @@ class _NotificationPageState extends State<NotificationPage> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
         children: [
-          // 1. Header Biru Sesuai Desain Referensi
+          // 1. Header Sesuai Warna Layar
           Container(
-            color: AppColors.primary,
+            color: const Color(0xFFF8FAFC),
             child: SafeArea(
               bottom: false,
               child: Container(
@@ -154,7 +154,7 @@ class _NotificationPageState extends State<NotificationPage> {
                     IconButton(
                       icon: const Icon(
                         Icons.arrow_back_rounded,
-                        color: Colors.white,
+                        color: AppColors.primary,
                         size: 24,
                       ),
                       onPressed: _handleBack,
@@ -164,7 +164,7 @@ class _NotificationPageState extends State<NotificationPage> {
                         'Notifikasi',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.2,
@@ -180,13 +180,18 @@ class _NotificationPageState extends State<NotificationPage> {
 
           // 2. Konten Notifikasi
           Expanded(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 20.0,
+            child: ScrollConfiguration(
+              behavior: const ScrollBehavior().copyWith(
+                overscroll: false,
+                physics: const ClampingScrollPhysics(),
               ),
-              child: Column(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 20.0,
+                ),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Loading State
@@ -352,8 +357,9 @@ class _NotificationPageState extends State<NotificationPage> {
               ),
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
   }
 }

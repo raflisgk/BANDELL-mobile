@@ -235,7 +235,37 @@ class HistoryLampCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge() {
-    if (item.isVerified) {
+    if (item.isDitolak) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 4,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEE2E2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(
+              Icons.cancel_outlined,
+              size: 13,
+              color: Color(0xFFDC2626),
+            ),
+            SizedBox(width: 4),
+            Text(
+              'Ditolak',
+              style: TextStyle(
+                color: Color(0xFFDC2626),
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (item.isVerified) {
       return Container(
         padding: const EdgeInsets.symmetric(
           horizontal: 10,

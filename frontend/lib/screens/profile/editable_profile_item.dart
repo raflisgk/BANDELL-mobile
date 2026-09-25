@@ -17,6 +17,7 @@ class EditableProfileItem extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onSave;
   final VoidCallback? onCancel;
+  final EdgeInsetsGeometry? contentPadding;
 
   const EditableProfileItem({
     super.key,
@@ -33,6 +34,7 @@ class EditableProfileItem extends StatefulWidget {
     this.onTap,
     this.onSave,
     this.onCancel,
+    this.contentPadding,
   });
 
   @override
@@ -175,7 +177,8 @@ class _EditableProfileItemState extends State<EditableProfileItem>
           onTap: widget.isEditable ? widget.onTap : null,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: widget.contentPadding ??
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Row(
               children: [
                 // White Rounded Container for Icon

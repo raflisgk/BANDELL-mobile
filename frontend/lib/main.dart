@@ -13,6 +13,23 @@ class LocalDevHttpOverrides extends HttpOverrides {
   }
 }
 
+/// ScrollBehavior default yang menonaktifkan efek stretch / overscroll indicator
+/// dan menggunakan ClampingScrollPhysics secara konsisten di seluruh aplikasi.
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const ClampingScrollPhysics();
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = LocalDevHttpOverrides();
@@ -30,6 +47,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'BANDELL Mobile',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const AppScrollBehavior(),
       theme: ThemeData(
         useMaterial3: true,
         pageTransitionsTheme: const PageTransitionsTheme(

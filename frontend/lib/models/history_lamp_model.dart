@@ -52,6 +52,18 @@ class HistoryLampModel {
     this.installation,
   });
 
+  bool get isDitolak {
+    final s = status.trim().toLowerCase();
+    final instVerif = installation?.verificationStatus?.trim().toLowerCase();
+    final instStatus = installation?.status.trim().toLowerCase();
+    return s == 'ditolak' ||
+        s == 'rejected' ||
+        instVerif == 'ditolak' ||
+        instVerif == 'rejected' ||
+        instStatus == 'ditolak' ||
+        instStatus == 'rejected';
+  }
+
   factory HistoryLampModel.fromJson(Map<String, dynamic> json) {
     String lampTypeName = '';
     if (json['lamp_type'] is Map) {
@@ -78,19 +90,38 @@ class HistoryLampModel {
         ? rawAreaId
         : int.tryParse(rawAreaId?.toString() ?? '');
 
-    final vStatus = json['verification_status']?.toString() ??
+    final rawStatus = json['verification_status']?.toString() ??
         json['status']?.toString() ??
-        'Tersimpan';
-
-    final isVerif = json['is_verified'] == true ||
-        json['is_verified'] == 1 ||
-        json['is_verified'] == '1' ||
-        vStatus.toLowerCase() == 'terverifikasi';
+        'Menunggu Verifikasi';
 
     InstallationModel? instModel;
     try {
       instModel = InstallationModel.fromJson(json);
     } catch (_) {}
+
+    final isRejected = rawStatus.toLowerCase() == 'ditolak' ||
+        rawStatus.toLowerCase() == 'rejected' ||
+        instModel?.verificationStatus?.toLowerCase() == 'ditolak' ||
+        instModel?.verificationStatus?.toLowerCase() == 'rejected' ||
+        instModel?.status.toLowerCase() == 'ditolak' ||
+        instModel?.status.toLowerCase() == 'rejected';
+
+    final isVerif = !isRejected &&
+        (json['is_verified'] == true ||
+            json['is_verified'] == 1 ||
+            json['is_verified'] == '1' ||
+            rawStatus.toLowerCase() == 'terverifikasi');
+
+    final String vStatus = isRejected
+        ? 'Ditolak'
+        : (isVerif
+            ? 'Terverifikasi'
+            : (rawStatus.toLowerCase() == 'menunggu verifikasi' ||
+                    rawStatus.toLowerCase() == 'pending' ||
+                    rawStatus.toLowerCase() == 'tersimpan' ||
+                    rawStatus.toLowerCase() == 'terpasang'
+                ? 'Menunggu Verifikasi'
+                : rawStatus));
 
     final installedAt = json['installed_at'] != null
         ? DateTime.tryParse(json['installed_at'].toString())

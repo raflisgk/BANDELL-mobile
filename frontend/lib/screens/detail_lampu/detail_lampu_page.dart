@@ -140,6 +140,12 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       return;
     }
 
+    final inst = _currentInstallation ?? widget.installation;
+    final effectivePhotos = inst?.photos.isNotEmpty == true
+        ? inst!.photos
+        : (widget.photos ?? const <String>[]);
+    final effectiveNotes = inst?.notes ?? widget.address ?? '';
+
     debugPrint('Edit Data');
     await AppNavigator.push(
       context,
@@ -151,8 +157,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
             _currentInstallation?.longitude ?? widget.installation?.longitude ?? widget.longitude ?? '',
         initialLatitude:
             _currentInstallation?.latitude ?? widget.installation?.latitude ?? widget.latitude ?? '',
-        initialAlamat: _currentInstallation?.notes ?? widget.address ?? '',
+        initialAlamat: effectiveNotes,
+        initialCatatan: effectiveNotes,
         initialTipeLampu: _effectiveType,
+        initialPhotos: effectivePhotos,
       ),
     );
 

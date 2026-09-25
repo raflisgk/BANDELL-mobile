@@ -243,12 +243,17 @@ class _HistoryPageState extends State<HistoryPage> {
                 item.installation!.districtName!.toLowerCase().contains(query)) ||
             item.lokasi.toLowerCase().contains(query) ||
             item.koordinat.toLowerCase().contains(query) ||
+            item.status.toLowerCase().contains(query) ||
             item.jenis.toLowerCase().contains(query);
       }).toList();
     }
 
-    // Sorting "Terbaru" berdasarkan created_at (record paling baru di atas).
+    // Sorting: Kartu berstatus "Ditolak" diletakkan di paling atas (prioritas teratas),
+    // selanjutnya diurutkan berdasarkan created_at (record paling baru di atas).
     items.sort((a, b) {
+      if (a.isDitolak && !b.isDitolak) return -1;
+      if (!a.isDitolak && b.isDitolak) return 1;
+
       final dateA = a.createdAt ?? a.installation?.createdAt;
       final dateB = b.createdAt ?? b.installation?.createdAt;
 

@@ -5,6 +5,7 @@ import '../../services/installation_service.dart';
 import '../../services/lamp_type_service.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/catatan.dart';
 import '../../widgets/dokumentasi.dart';
 import 'edit_lampu_action_buttons.dart';
 import 'edit_lampu_location.dart';
@@ -18,7 +19,9 @@ class EditDataLampuPage extends StatefulWidget {
   final String? initialLongitude;
   final String? initialLatitude;
   final String? initialAlamat;
+  final String? initialCatatan;
   final String? initialTipeLampu;
+  final List<String>? initialPhotos;
 
   const EditDataLampuPage({
     super.key,
@@ -29,7 +32,9 @@ class EditDataLampuPage extends StatefulWidget {
     this.initialLongitude,
     this.initialLatitude,
     this.initialAlamat,
+    this.initialCatatan,
     this.initialTipeLampu,
+    this.initialPhotos,
   });
 
   @override
@@ -43,13 +48,13 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   late TextEditingController _kodeLampuController;
   late TextEditingController _longitudeController;
   late TextEditingController _latitudeController;
-  late TextEditingController _alamatController;
+  late TextEditingController _catatanController;
   late TextEditingController _tipeLampuController;
 
   final FocusNode _kodeLampuFocusNode = FocusNode();
   final FocusNode _longitudeFocusNode = FocusNode();
   final FocusNode _latitudeFocusNode = FocusNode();
-  final FocusNode _alamatFocusNode = FocusNode();
+  final FocusNode _catatanFocusNode = FocusNode();
   final FocusNode _tipeLampuFocusNode = FocusNode();
 
   List<String> _lampTypeOptions = [];
@@ -82,11 +87,15 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
             ? widget.initialLatitude!
             : '')
         : '';
-    final defaultAlamat = widget.isEdit
-        ? ((widget.initialAlamat != null && widget.initialAlamat != '-')
-            ? widget.initialAlamat!
-            : '')
-        : '';
+    final defaultCatatan = widget.isEdit
+        ? ((widget.initialCatatan != null &&
+                widget.initialCatatan!.isNotEmpty &&
+                widget.initialCatatan != '-')
+            ? widget.initialCatatan!
+            : ((widget.initialAlamat != null && widget.initialAlamat != '-')
+                ? widget.initialAlamat!
+                : ''))
+        : (widget.initialCatatan ?? widget.initialAlamat ?? '');
     final defaultTipe = widget.isEdit
         ? ((widget.initialTipeLampu != null &&
                 widget.initialTipeLampu!.isNotEmpty &&
@@ -98,18 +107,42 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _kodeLampuController = TextEditingController(text: defaultKode);
     _longitudeController = TextEditingController(text: defaultLong);
     _latitudeController = TextEditingController(text: defaultLat);
-    _alamatController = TextEditingController(text: defaultAlamat);
+    _catatanController = TextEditingController(text: defaultCatatan);
     _tipeLampuController = TextEditingController(text: defaultTipe);
 
     _kodeLampuFocusNode.addListener(_onFocusChange);
     _longitudeFocusNode.addListener(_onFocusChange);
     _latitudeFocusNode.addListener(_onFocusChange);
-    _alamatFocusNode.addListener(_onFocusChange);
+    _catatanFocusNode.addListener(_onFocusChange);
     _tipeLampuFocusNode.addListener(_onFocusChange);
     _latitudeController.addListener(_onCoordinateChanged);
     _longitudeController.addListener(_onCoordinateChanged);
 
+    if (widget.initialPhotos != null && widget.initialPhotos!.isNotEmpty) {
+      _photos.addAll(widget.initialPhotos!.where((p) => p.trim().isNotEmpty));
+    } else if (widget.isEdit && widget.idInstallation != null && widget.idInstallation! > 0) {
+      _loadExistingInstallation();
+    }
+
     _loadLampTypes();
+  }
+
+  void _loadExistingInstallation() async {
+    try {
+      final detail = await InstallationService().getInstallationDetail(widget.idInstallation!);
+      if (detail != null && mounted) {
+        setState(() {
+          if (_photos.isEmpty && detail.photos.isNotEmpty) {
+            _photos.addAll(detail.photos.where((p) => p.trim().isNotEmpty));
+          }
+          if (_catatanController.text.isEmpty && detail.notes != null && detail.notes!.isNotEmpty && detail.notes != '-') {
+            _catatanController.text = detail.notes!;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading existing installation detail: $e');
+    }
   }
 
   void _onCoordinateChanged() {
@@ -145,14 +178,18 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   }
 
   void _loadLampTypes() async {
-    final types = await LampTypeService().getLampTypes();
-    if (mounted) {
-      setState(() {
-        _lampTypeOptions = types.map((t) => t.name).toList();
-        if (_lampTypeOptions.isNotEmpty && _tipeLampuController.text.isEmpty) {
-          _tipeLampuController.text = _lampTypeOptions.first;
-        }
-      });
+    try {
+      final types = await LampTypeService().getLampTypes();
+      if (mounted) {
+        setState(() {
+          _lampTypeOptions = types.map((t) => t.name).toList();
+          if (_lampTypeOptions.isNotEmpty && _tipeLampuController.text.isEmpty) {
+            _tipeLampuController.text = _lampTypeOptions.first;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading lamp types: $e');
     }
   }
 
@@ -165,13 +202,13 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _kodeLampuController.dispose();
     _longitudeController.dispose();
     _latitudeController.dispose();
-    _alamatController.dispose();
+    _catatanController.dispose();
     _tipeLampuController.dispose();
 
     _kodeLampuFocusNode.removeListener(_onFocusChange);
     _longitudeFocusNode.removeListener(_onFocusChange);
     _latitudeFocusNode.removeListener(_onFocusChange);
-    _alamatFocusNode.removeListener(_onFocusChange);
+    _catatanFocusNode.removeListener(_onFocusChange);
     _tipeLampuFocusNode.removeListener(_onFocusChange);
     _latitudeController.removeListener(_onCoordinateChanged);
     _longitudeController.removeListener(_onCoordinateChanged);
@@ -179,7 +216,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _kodeLampuFocusNode.dispose();
     _longitudeFocusNode.dispose();
     _latitudeFocusNode.dispose();
-    _alamatFocusNode.dispose();
+    _catatanFocusNode.dispose();
     _tipeLampuFocusNode.dispose();
     super.dispose();
   }
@@ -365,7 +402,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
         lampType: _tipeLampuController.text.trim(),
         latitude: latitude.replaceAll(',', '.'),
         longitude: longitude.replaceAll(',', '.'),
-        notes: _alamatController.text.trim(),
+        notes: _catatanController.text.trim(),
         photos: List.from(_photos),
         status: 'Tersimpan',
         updatedAt: DateTime.now(),
@@ -521,57 +558,67 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
                               errorMessage: _coordinateError,
                             ),
 
-                      const SizedBox(height: 20),
-                      const Divider(color: AppColors.border, height: 1),
-                      const SizedBox(height: 20),
+                            const SizedBox(height: 20),
+                            const Divider(color: AppColors.border, height: 1),
+                            const SizedBox(height: 20),
 
-                      // 4. TIPE LAMPU
-                      EditLampuType(
-                        tipeLampuController: _tipeLampuController,
-                        tipeLampuFocusNode: _tipeLampuFocusNode,
-                        lampTypeOptions: _lampTypeOptions,
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _tipeLampuController.text = newValue;
-                            });
-                          }
-                        },
+                            // 3. TIPE LAMPU
+                            EditLampuType(
+                              tipeLampuController: _tipeLampuController,
+                              tipeLampuFocusNode: _tipeLampuFocusNode,
+                              lampTypeOptions: _lampTypeOptions,
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    _tipeLampuController.text = newValue;
+                                  });
+                                }
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+                            const Divider(color: AppColors.border, height: 1),
+                            const SizedBox(height: 20),
+
+                            // 4. CATATAN
+                            Catatan(
+                              controller: _catatanController,
+                              focusNode: _catatanFocusNode,
+                            ),
+
+                            const SizedBox(height: 20),
+                            const Divider(color: AppColors.border, height: 1),
+                            const SizedBox(height: 20),
+
+                            // 5. DOKUMENTASI
+                            Dokumentasi(
+                              photos: _photos,
+                              onAddPhoto: _handleTambahFoto,
+                              onRemovePhoto: _removePhoto,
+                            ),
+                          ],
+                        ),
                       ),
 
-                      const SizedBox(height: 20),
-                      const Divider(color: AppColors.border, height: 1),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
-                      // 5. DOKUMENTASI
-                      Dokumentasi(
-                        photos: _photos,
-                        onAddPhoto: _handleTambahFoto,
-                        onRemovePhoto: _removePhoto,
+                      // Bottom Buttons Row: [ Batal ] & [ Simpan Perubahan ]
+                      EditLampuActionButtons(
+                        isEdit: widget.isEdit,
+                        isLoading: _isSubmitting,
+                        onCancel: _handleBack,
+                        onSave: _handleSubmit,
                       ),
+
+                      const SizedBox(height: 28),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                // Bottom Buttons Row: [ Batal ] & [ Simpan Perubahan ]
-                EditLampuActionButtons(
-                  isEdit: widget.isEdit,
-                  isLoading: _isSubmitting,
-                  onCancel: _handleBack,
-                  onSave: _handleSubmit,
-                ),
-
-                const SizedBox(height: 28),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
-    ],
-  ),
-),
     );
   }
 
@@ -670,5 +717,3 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     );
   }
 }
-
-

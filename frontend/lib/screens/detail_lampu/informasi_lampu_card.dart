@@ -151,11 +151,19 @@ class _StatusItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isVerified =
-        status.trim().toLowerCase() == 'terverifikasi';
+    final s = status.trim().toLowerCase();
+    final bool isDitolak = s == 'ditolak' || s == 'rejected';
+    final bool isVerified = s == 'terverifikasi';
 
-    final String displayStatus =
-        status.trim().isNotEmpty ? status : '-';
+    final Color dotColor = isDitolak
+        ? const Color(0xFFDC2626)
+        : (isVerified ? AppColors.success : AppColors.warning);
+
+    final String displayStatus = isDitolak
+        ? 'Ditolak'
+        : (isVerified
+            ? 'Terverifikasi'
+            : (status.trim().isNotEmpty ? status : '-'));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,9 +185,7 @@ class _StatusItem extends StatelessWidget {
               width: 7,
               height: 7,
               decoration: BoxDecoration(
-                color: isVerified
-                    ? AppColors.success
-                    : AppColors.warning,
+                color: dotColor,
                 shape: BoxShape.circle,
               ),
             ),
