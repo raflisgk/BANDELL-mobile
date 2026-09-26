@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../utils/app_colors.dart';
+import '../../widgets/lokasi_koordinat.dart';
 
 class RealtimeLocationSection extends StatelessWidget {
   final TextEditingController latitudeController;
@@ -24,207 +24,16 @@ class RealtimeLocationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasLocation =
-        latitudeController.text.isNotEmpty ||
-        longitudeController.text.isNotEmpty;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (errorMessage != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0, left: 2.0),
-            child: Text(
-              errorMessage!,
-              style: const TextStyle(
-                color: AppColors.error,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ),
-        // Section Header
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.location_on_outlined,
-                color: AppColors.primary,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Lokasi Koordinat',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text(
-              '*',
-              style: TextStyle(
-                color: AppColors.error,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Masukkan koordinat lampu (Lat/Long)',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
-        ),
-
-        const SizedBox(height: 14),
-
-        // STATE 2: Show Latitude & Longitude TextFields when location is filled
-        if (hasLocation) ...[
-          _buildInputField(
-            controller: latitudeController,
-            focusNode: latitudeFocusNode,
-            hint: 'Latitude',
-            hasError: errorMessage != null,
-          ),
-          const SizedBox(height: 10),
-          _buildInputField(
-            controller: longitudeController,
-            focusNode: longitudeFocusNode,
-            hint: 'Longitude',
-            hasError: errorMessage != null,
-          ),
-        ] else ...[
-          // STATE 1: Show Get Location Button (Green) when location is empty
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: isLoadingLocation ? null : onGetLocation,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.statusTerverifikasiText,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: AppColors.statusTerverifikasiText
-                    .withValues(alpha: 0.7),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: isLoadingLocation
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          'Mengambil lokasi...',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Get Location',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Ambil koordinat otomatis dari GPS',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildInputField({
-    required TextEditingController controller,
-    FocusNode? focusNode,
-    required String hint,
-    bool hasError = false,
-  }) {
-    final bool isFocused = focusNode?.hasFocus ?? false;
-
-    final borderColor = hasError
-        ? AppColors.error
-        : (isFocused ? AppColors.primary : AppColors.border);
-    final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isFocused ? Colors.white : AppColors.inputBackground,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor, width: borderWidth),
-      ),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        readOnly: true,
-        keyboardType: const TextInputType.numberWithOptions(
-          decimal: true,
-          signed: true,
-        ),
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: AppColors.hintColor, fontSize: 14),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
-          ),
-          border: InputBorder.none,
-        ),
-      ),
+    return LokasiKoordinat(
+      latitudeController: latitudeController,
+      longitudeController: longitudeController,
+      latitudeFocusNode: latitudeFocusNode,
+      longitudeFocusNode: longitudeFocusNode,
+      isGpsMode: true,
+      isLoadingGps: isLoadingLocation,
+      onGetGpsLocation: onGetLocation,
+      errorMessage: errorMessage,
+      readOnly: true,
     );
   }
 }

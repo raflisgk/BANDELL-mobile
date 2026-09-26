@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../models/installation_model.dart';
 import '../../services/auth_service.dart';
@@ -14,8 +13,10 @@ import '../../widgets/catatan.dart';
 import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
+import '../../widgets/lokasi_koordinat.dart';
 import '../../widgets/pop_up_sukses.dart';
 import '../../widgets/pilih_tanggal.dart';
+import '../../widgets/shake_widget.dart';
 import '../../widgets/tombol_simpan_data.dart';
 import '../metode_pendataan/metode_pendataan_page.dart';
 
@@ -77,37 +78,18 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _shakeAnimation ??=
-        TweenSequence<double>([
-          TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
-        ]).animate(
-          CurvedAnimation(parent: _shakeController!, curve: Curves.easeInOut),
-        );
+    _shakeAnimation ??= ShakeAnimationHelper.createShakeAnimation(
+      _shakeController!,
+    );
 
     _locationShakeController ??= AnimationController(
       duration: const Duration(milliseconds: 350),
       vsync: this,
     );
 
-    _locationShakeAnimation ??=
-        TweenSequence<double>([
-          TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
-          TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
-        ]).animate(
-          CurvedAnimation(
-            parent: _locationShakeController!,
-            curve: Curves.easeInOut,
-          ),
-        );
+    _locationShakeAnimation ??= ShakeAnimationHelper.createShakeAnimation(
+      _locationShakeController!,
+    );
   }
 
   AnimationController get _effectiveShakeController {
@@ -594,8 +576,19 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
                           ),
                           const SizedBox(height: 18),
 
-                          // 3. LOKASI KOORDINAT (MANUAL INPUTS)
-                          _buildLocationSection(),
+                          // 3. LOKASI KOORDINAT (SHARED WIDGET)
+                          LokasiKoordinat(
+                            latitudeController: _latitudeController,
+                            longitudeController: _longitudeController,
+                            latitudeFocusNode: _latitudeFocusNode,
+                            longitudeFocusNode: _longitudeFocusNode,
+                            shakeAnimation: _effectiveLocationShakeAnimation,
+                            isLatitudeExceeded: _isLatitudeExceeded,
+                            isLongitudeExceeded: _isLongitudeExceeded,
+                            onLatitudeLimitExceeded: _onLatitudeLimitExceeded,
+                            onLongitudeLimitExceeded: _onLongitudeLimitExceeded,
+                            errorMessage: _coordinateError,
+                          ),
 
                           const SizedBox(height: 18),
                           const Divider(
@@ -681,14 +674,8 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AnimatedBuilder(
+        ShakeWidget(
           animation: _effectiveShakeAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(_effectiveShakeAnimation.value, 0),
-              child: child,
-            );
-          },
           child: Row(
             children: [
               Container(
@@ -749,7 +736,7 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
             controller: _barcodeController,
             focusNode: _barcodeFocusNode,
             inputFormatters: [
-              _BarcodeLimitFormatter(
+              LimitExceededFormatter(
                 maxLength: 11,
                 onExceeded: _onBarcodeLimitExceeded,
               ),
@@ -789,218 +776,5 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
         ],
       ],
     );
-  }
-
-  // 3. Lokasi Koordinat Section (Manual Lat/Long Inputs, No Get Location Button)
-  Widget _buildLocationSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_coordinateError != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0, left: 2.0),
-            child: Text(
-              _coordinateError!,
-              style: const TextStyle(
-                color: AppColors.error,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ),
-        AnimatedBuilder(
-          animation: _effectiveLocationShakeAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(_effectiveLocationShakeAnimation.value, 0),
-              child: child,
-            );
-          },
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: (_isLatitudeExceeded || _isLongitudeExceeded)
-                      ? AppColors.errorLight
-                      : AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.language,
-                  color: (_isLatitudeExceeded || _isLongitudeExceeded)
-                      ? AppColors.error
-                      : AppColors.primary,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'Lokasi Koordinat',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      '*',
-                      style: TextStyle(
-                        color: AppColors.error,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Masukkan koordinat lampu (Lat/Long)',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
-        ),
-        const SizedBox(height: 14),
-        _buildLocationInputField(
-          controller: _latitudeController,
-          focusNode: _latitudeFocusNode,
-          hint: 'Latitude',
-          maxLength: 10,
-          isExceeded: _isLatitudeExceeded,
-          onExceeded: _onLatitudeLimitExceeded,
-          hasError:
-              _coordinateError != null &&
-              !Validators.isLatitudeValid(_latitudeController.text),
-        ),
-        const SizedBox(height: 10),
-        _buildLocationInputField(
-          controller: _longitudeController,
-          focusNode: _longitudeFocusNode,
-          hint: 'Longitude',
-          maxLength: 11,
-          isExceeded: _isLongitudeExceeded,
-          onExceeded: _onLongitudeLimitExceeded,
-          hasError:
-              _coordinateError != null &&
-              !Validators.isLongitudeValid(_longitudeController.text),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLocationInputField({
-    required TextEditingController controller,
-    FocusNode? focusNode,
-    required String hint,
-    required int maxLength,
-    bool isExceeded = false,
-    VoidCallback? onExceeded,
-    bool hasError = false,
-  }) {
-    final bool isFocused = focusNode?.hasFocus ?? false;
-
-    final borderColor = isExceeded
-        ? AppColors.error
-        : (hasError
-              ? AppColors.error
-              : (isFocused ? AppColors.primary : AppColors.border));
-    final borderWidth = (isExceeded || hasError || isFocused) ? 1.5 : 1.0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: isFocused ? Colors.white : AppColors.inputBackground,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor, width: borderWidth),
-          ),
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-              signed: true,
-            ),
-            inputFormatters: [
-              if (onExceeded != null)
-                _BarcodeLimitFormatter(
-                  maxLength: maxLength,
-                  onExceeded: onExceeded,
-                )
-              else
-                LengthLimitingTextInputFormatter(maxLength),
-            ],
-            style: TextStyle(
-              color: isExceeded ? AppColors.error : AppColors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(
-                color: AppColors.hintColor,
-                fontSize: 14,
-              ),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
-              border: InputBorder.none,
-            ),
-          ),
-        ),
-        if (isExceeded) ...[
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 2.0),
-            child: Text(
-              'Maksimal $maxLength karakter',
-              style: const TextStyle(
-                color: AppColors.error,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _BarcodeLimitFormatter extends TextInputFormatter {
-  final int maxLength;
-  final VoidCallback onExceeded;
-
-  _BarcodeLimitFormatter({required this.maxLength, required this.onExceeded});
-
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    if (newValue.text.length > maxLength) {
-      onExceeded();
-      if (oldValue.text.length <= maxLength) {
-        return oldValue;
-      }
-      return TextEditingValue(
-        text: newValue.text.substring(0, maxLength),
-        selection: TextSelection.collapsed(offset: maxLength),
-      );
-    }
-    return newValue;
   }
 }
