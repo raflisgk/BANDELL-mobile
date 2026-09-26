@@ -1,21 +1,163 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../services/api_service.dart';
 import '../utils/app_colors.dart';
+import 'custom_feedback.dart';
 
 class Dokumentasi extends StatelessWidget {
   final List<String> photos;
-  final VoidCallback onAddPhoto;
+  final VoidCallback? onAddPhoto;
+  final ValueChanged<String>? onPhotoAdded;
   final Function(int index) onRemovePhoto;
+  final int maxPhotos;
 
   const Dokumentasi({
     super.key,
     required this.photos,
-    required this.onAddPhoto,
+    this.onAddPhoto,
+    this.onPhotoAdded,
     required this.onRemovePhoto,
+    this.maxPhotos = 4,
   });
+
+  /// Helper statis untuk menampilkan bottom sheet pemilihan sumber foto (Galeri / Kamera)
+  static Future<void> showPhotoPicker({
+    required BuildContext context,
+    required ValueChanged<String> onImagePicked,
+  }) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderMedium,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Tambah Foto Dokumentasi',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.photo_library_rounded,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  title: const Text(
+                    'Pilih dari Galeri',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text('Buka galeri hp untuk memilih foto'),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    pickImage(
+                      context: context,
+                      source: ImageSource.gallery,
+                      onImagePicked: onImagePicked,
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  title: const Text(
+                    'Ambil Foto Kamera',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text('Buka kamera untuk mengambil foto baru'),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    pickImage(
+                      context: context,
+                      source: ImageSource.camera,
+                      onImagePicked: onImagePicked,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Helper statis untuk memanggil ImagePicker
+  static Future<void> pickImage({
+    required BuildContext context,
+    required ImageSource source,
+    required ValueChanged<String> onImagePicked,
+  }) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        onImagePicked(image.path);
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      if (context.mounted) {
+        CustomFeedbackMessage.showError(context, 'Gagal mengambil foto.');
+      }
+    }
+  }
+
+  void _handleTapAdd(BuildContext context) {
+    if (onAddPhoto != null) {
+      onAddPhoto!();
+    } else if (onPhotoAdded != null) {
+      if (photos.length >= maxPhotos) {
+        CustomFeedbackMessage.showError(
+          context,
+          'Maksimal $maxPhotos foto sudah tercapai.',
+        );
+        return;
+      }
+      showPhotoPicker(context: context, onImagePicked: onPhotoAdded!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,9 +209,9 @@ class Dokumentasi extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Tambahkan foto kondisi lampu (maks. 4 foto)',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
+        Text(
+          'Tambahkan foto kondisi lampu (maks. $maxPhotos foto)',
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
         ),
 
         const SizedBox(height: 14),
@@ -174,10 +316,10 @@ class Dokumentasi extends StatelessWidget {
                 );
               }),
 
-              // Add Photo Box (Only if less than 4 photos)
-              if (photos.length < 4)
+              // Add Photo Box (Only if less than maxPhotos)
+              if (photos.length < maxPhotos)
                 GestureDetector(
-                  onTap: onAddPhoto,
+                  onTap: () => _handleTapAdd(context),
                   child: Container(
                     width: 84,
                     height: 84,

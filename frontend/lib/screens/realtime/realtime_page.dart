@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../models/installation_model.dart';
 import '../../services/auth_service.dart';
@@ -8,6 +7,7 @@ import '../../services/installation_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
+import '../../utils/validators.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/catatan.dart';
 import '../../widgets/custom_feedback.dart';
@@ -76,32 +76,12 @@ class _RealtimePageState extends State<RealtimePage> {
     if (_coordinateError != null) {
       final lat = _latitudeController.text.trim();
       final lng = _longitudeController.text.trim();
-      if (_isValidCoordinate(lat, lng)) {
+      if (Validators.isValidCoordinate(lat, lng)) {
         setState(() {
           _coordinateError = null;
         });
       }
     }
-  }
-
-  bool _isLatitudeValid(String latStr) {
-    final text = latStr.replaceAll(',', '.').trim();
-    if (text.isEmpty) return false;
-    final lat = double.tryParse(text);
-    if (lat == null) return false;
-    return lat >= -90.0 && lat <= 90.0;
-  }
-
-  bool _isLongitudeValid(String lngStr) {
-    final text = lngStr.replaceAll(',', '.').trim();
-    if (text.isEmpty) return false;
-    final lng = double.tryParse(text);
-    if (lng == null) return false;
-    return lng >= -180.0 && lng <= 180.0;
-  }
-
-  bool _isValidCoordinate(String latStr, String lngStr) {
-    return _isLatitudeValid(latStr) && _isLongitudeValid(lngStr);
   }
 
   @override
@@ -234,124 +214,6 @@ class _RealtimePageState extends State<RealtimePage> {
     }
   }
 
-  void _handleTambahFoto() {
-    if (_photos.length >= 4) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Maksimal 4 foto sudah tercapai.',
-      );
-      return;
-    }
-
-    _showPhotoSourcePicker();
-  }
-
-  void _showPhotoSourcePicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (bottomSheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderMedium,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Tambah Foto Dokumentasi',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt_rounded,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  title: const Text(
-                    'Ambil Foto Kamera',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: const Text('Buka kamera untuk mengambil foto baru'),
-                  onTap: () {
-                    Navigator.pop(bottomSheetContext);
-                    _pickImage(ImageSource.camera);
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.photo_library_rounded,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  title: const Text(
-                    'Pilih dari Galeri',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: const Text('Buka galeri hp untuk memilih foto'),
-                  onTap: () {
-                    Navigator.pop(bottomSheetContext);
-                    _pickImage(ImageSource.gallery);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: source,
-        imageQuality: 80,
-      );
-
-      if (image != null) {
-        setState(() {
-          _photos.add(image.path);
-        });
-      }
-    } catch (e) {
-      debugPrint('Error picking image: $e');
-      if (mounted) {
-        CustomFeedbackMessage.showError(context, 'Gagal mengambil foto.');
-      }
-    }
-  }
-
   void _removePhoto(int index) {
     if (index >= 0 && index < _photos.length) {
       setState(() {
@@ -425,7 +287,7 @@ class _RealtimePageState extends State<RealtimePage> {
     final latitude = _latitudeController.text.trim();
     final longitude = _longitudeController.text.trim();
 
-    if (!_isValidCoordinate(latitude, longitude)) {
+    if (!Validators.isValidCoordinate(latitude, longitude)) {
       setState(() {
         _coordinateError = '⚠️ Koordinat tidak valid';
       });
@@ -625,7 +487,11 @@ class _RealtimePageState extends State<RealtimePage> {
                     // 4. DOKUMENTASI SECTION
                     Dokumentasi(
                       photos: _photos,
-                      onAddPhoto: _handleTambahFoto,
+                      onPhotoAdded: (path) {
+                        setState(() {
+                          _photos.add(path);
+                        });
+                      },
                       onRemovePhoto: _removePhoto,
                     ),
 
