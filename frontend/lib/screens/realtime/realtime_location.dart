@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../utils/app_colors.dart';
 
 class RealtimeLocationSection extends StatelessWidget {
@@ -23,7 +24,8 @@ class RealtimeLocationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasLocation = latitudeController.text.isNotEmpty ||
+    final bool hasLocation =
+        latitudeController.text.isNotEmpty ||
         longitudeController.text.isNotEmpty;
 
     return Column(
@@ -35,7 +37,7 @@ class RealtimeLocationSection extends StatelessWidget {
             child: Text(
               errorMessage!,
               style: const TextStyle(
-                color: Color(0xFFEF4444),
+                color: AppColors.error,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.1,
@@ -70,7 +72,7 @@ class RealtimeLocationSection extends StatelessWidget {
             const Text(
               '*',
               style: TextStyle(
-                color: Color(0xFFEF4444),
+                color: AppColors.error,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -80,10 +82,7 @@ class RealtimeLocationSection extends StatelessWidget {
         const SizedBox(height: 4),
         const Text(
           'Masukkan koordinat lampu (Lat/Long)',
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 12.5,
-          ),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
         ),
 
         const SizedBox(height: 14),
@@ -110,10 +109,10 @@ class RealtimeLocationSection extends StatelessWidget {
             child: ElevatedButton(
               onPressed: isLoadingLocation ? null : onGetLocation,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF15803D),
+                backgroundColor: AppColors.statusTerverifikasiText,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor:
-                    const Color(0xFF15803D).withValues(alpha: 0.7),
+                disabledBackgroundColor: AppColors.statusTerverifikasiText
+                    .withValues(alpha: 0.7),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -192,7 +191,7 @@ class RealtimeLocationSection extends StatelessWidget {
     final bool isFocused = focusNode?.hasFocus ?? false;
 
     final borderColor = hasError
-        ? const Color(0xFFEF4444)
+        ? AppColors.error
         : (isFocused ? AppColors.primary : AppColors.border);
     final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
 
@@ -200,10 +199,7 @@ class RealtimeLocationSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: isFocused ? Colors.white : AppColors.inputBackground,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: borderColor,
-          width: borderWidth,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
       ),
       child: TextField(
         controller: controller,
@@ -220,10 +216,7 @@ class RealtimeLocationSection extends StatelessWidget {
         ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(
-            color: AppColors.hintColor,
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: AppColors.hintColor, fontSize: 14),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,

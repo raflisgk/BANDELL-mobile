@@ -1,5 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../../utils/app_colors.dart';
 import '../login/login_page.dart';
 
 class SplashPage extends StatelessWidget {
@@ -7,17 +10,12 @@ class SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SplashScreen(
-      nextPage: LoginPage(),
-    );
+    return const SplashScreen(nextPage: LoginPage());
   }
 }
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({
-    super.key,
-    required this.nextPage,
-  });
+  const SplashScreen({super.key, required this.nextPage});
 
   final Widget nextPage;
 
@@ -47,43 +45,23 @@ class _SplashScreenState extends State<SplashScreen>
     _scaleAnimation = Tween<double>(
       begin: 0.72,
       end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutBack,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    _opacityAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(
-          0.0,
-          0.55,
-          curve: Curves.easeOut,
-        ),
+        curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
       ),
     );
 
     _glowAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
 
-    _navigationTimer = Timer(
-      const Duration(milliseconds: 2200),
-      _goToNextPage,
-    );
+    _navigationTimer = Timer(const Duration(milliseconds: 2200), _goToNextPage);
   }
 
   void _goToNextPage() {
@@ -97,10 +75,7 @@ class _SplashScreenState extends State<SplashScreen>
         reverseTransitionDuration: const Duration(milliseconds: 250),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOut,
-            ),
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
             child: child,
           );
         },
@@ -118,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2878D7),
+      backgroundColor: AppColors.splashButtonBg,
       body: Center(
         child: AnimatedBuilder(
           animation: _controller,
@@ -154,11 +129,8 @@ class _SplashScreenState extends State<SplashScreen>
             width: 58,
             height: 58,
             fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.shield_rounded,
-              color: Colors.white,
-              size: 48,
-            ),
+            errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.shield_rounded, color: Colors.white, size: 48),
           ),
         ),
       ),

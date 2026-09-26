@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../utils/app_colors.dart';
 
 class KodePanel extends StatelessWidget {
@@ -75,10 +76,7 @@ class KodePanel extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           displaySubtitle,
-          style: const TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 12.5,
-          ),
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
         ),
 
         const SizedBox(height: 14),
@@ -103,10 +101,7 @@ class KodePanel extends StatelessWidget {
             ),
             decoration: const InputDecoration(
               hintText: 'Contoh: PNL-01',
-              hintStyle: TextStyle(
-                color: AppColors.hintColor,
-                fontSize: 14,
-              ),
+              hintStyle: TextStyle(color: AppColors.hintColor, fontSize: 14),
               isDense: true,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 14,

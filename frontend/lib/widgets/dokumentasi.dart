@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 import '../utils/app_colors.dart';
 
@@ -67,10 +69,7 @@ class Dokumentasi extends StatelessWidget {
         const SizedBox(height: 4),
         const Text(
           'Tambahkan foto kondisi lampu (maks. 4 foto)',
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 12.5,
-          ),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
         ),
 
         const SizedBox(height: 14),
@@ -85,7 +84,8 @@ class Dokumentasi extends StatelessWidget {
               ...List.generate(photos.length, (index) {
                 final rawPhotoItem = photos[index];
                 final resolvedPhoto = ApiService.resolvePhotoUrl(rawPhotoItem);
-                final bool isNetwork = resolvedPhoto.startsWith('http://') ||
+                final bool isNetwork =
+                    resolvedPhoto.startsWith('http://') ||
                     resolvedPhoto.startsWith('https://');
 
                 return Padding(
@@ -97,10 +97,10 @@ class Dokumentasi extends StatelessWidget {
                         width: 84,
                         height: 84,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE2EBF8),
+                          color: AppColors.avatarCircleBackground,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFCBD5E1),
+                            color: AppColors.borderMedium,
                             width: 1,
                           ),
                         ),
@@ -112,19 +112,22 @@ class Dokumentasi extends StatelessWidget {
                                   width: 84,
                                   height: 84,
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return const Center(
-                                      child: SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null) {
+                                          return child;
+                                        }
+                                        return const Center(
+                                          child: SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                   errorBuilder: (context, error, stackTrace) {
                                     return _buildErrorThumbnail();
                                   },
@@ -148,7 +151,7 @@ class Dokumentasi extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
-                              color: Color(0xFFEF4444),
+                              color: AppColors.error,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
@@ -179,7 +182,7 @@ class Dokumentasi extends StatelessWidget {
                     width: 84,
                     height: 84,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.inputBackground,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: AppColors.primary.withValues(alpha: 0.4),
@@ -216,7 +219,7 @@ class Dokumentasi extends StatelessWidget {
 
   Widget _buildErrorThumbnail() {
     return Container(
-      color: const Color(0xFFF1F5F9),
+      color: AppColors.divider,
       child: const Center(
         child: Icon(
           Icons.broken_image_rounded,

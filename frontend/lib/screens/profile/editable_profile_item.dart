@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../utils/app_colors.dart';
 
 class EditableProfileItem extends StatefulWidget {
@@ -54,17 +56,17 @@ class _EditableProfileItemState extends State<EditableProfileItem>
       vsync: this,
     );
 
-    _shakeAnimation ??= TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
-    ]).animate(CurvedAnimation(
-      parent: _shakeController!,
-      curve: Curves.easeInOut,
-    ));
+    _shakeAnimation ??=
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
+          TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
+        ]).animate(
+          CurvedAnimation(parent: _shakeController!, curve: Curves.easeInOut),
+        );
   }
 
   AnimationController get _effectiveShakeController {
@@ -123,7 +125,9 @@ class _EditableProfileItemState extends State<EditableProfileItem>
   }
 
   void _onFocusChanged() {
-    if (widget.focusNode != null && !widget.focusNode!.hasFocus && _isExceeded) {
+    if (widget.focusNode != null &&
+        !widget.focusNode!.hasFocus &&
+        _isExceeded) {
       _errorTimer?.cancel();
       setState(() {
         _isExceeded = false;
@@ -160,11 +164,11 @@ class _EditableProfileItemState extends State<EditableProfileItem>
   Widget _buildNormalMode() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF084B83),
+        color: AppColors.primaryDark,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14000000),
+            color: AppColors.shadowLight,
             blurRadius: 6,
             offset: Offset(0, 2),
           ),
@@ -177,7 +181,8 @@ class _EditableProfileItemState extends State<EditableProfileItem>
           onTap: widget.isEditable ? widget.onTap : null,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: widget.contentPadding ??
+            padding:
+                widget.contentPadding ??
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Row(
               children: [
@@ -191,7 +196,7 @@ class _EditableProfileItemState extends State<EditableProfileItem>
                   ),
                   child: Icon(
                     widget.icon,
-                    color: const Color(0xFF084B83),
+                    color: AppColors.primaryDark,
                     size: 22,
                   ),
                 ),
@@ -242,15 +247,12 @@ class _EditableProfileItemState extends State<EditableProfileItem>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.inputBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF084B83),
-          width: 1.5,
-        ),
+        border: Border.all(color: AppColors.primaryDark, width: 1.5),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F000000),
+            color: AppColors.shadowSoft,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -284,9 +286,7 @@ class _EditableProfileItemState extends State<EditableProfileItem>
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: _isExceeded
-                    ? AppColors.error
-                    : const Color(0xFF084B83),
+                color: _isExceeded ? AppColors.error : AppColors.primaryDark,
                 width: _isExceeded ? 1.5 : 1.2,
               ),
             ),
@@ -316,7 +316,7 @@ class _EditableProfileItemState extends State<EditableProfileItem>
                     decoration: InputDecoration(
                       hintText: 'Masukkan ${widget.title}',
                       hintStyle: const TextStyle(
-                        color: Color(0xFF94A3B8),
+                        color: AppColors.textSubtle,
                         fontSize: 13.5,
                       ),
                       isDense: true,
@@ -334,7 +334,7 @@ class _EditableProfileItemState extends State<EditableProfileItem>
                     Icons.edit_outlined,
                     color: _isExceeded
                         ? AppColors.error
-                        : const Color(0xFF084B83),
+                        : AppColors.primaryDark,
                     size: 18,
                   ),
                 ),
@@ -367,7 +367,7 @@ class _EditableProfileItemState extends State<EditableProfileItem>
                   onPressed: widget.onCancel,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    side: const BorderSide(color: AppColors.borderMedium),
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -376,7 +376,7 @@ class _EditableProfileItemState extends State<EditableProfileItem>
                   child: const Text(
                     'Batal',
                     style: TextStyle(
-                      color: Color(0xFF475569),
+                      color: AppColors.textBody,
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                     ),
@@ -388,7 +388,7 @@ class _EditableProfileItemState extends State<EditableProfileItem>
                 child: ElevatedButton.icon(
                   onPressed: widget.onSave,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF084B83),
+                    backgroundColor: AppColors.primaryDark,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -446,4 +446,3 @@ class _ProfileItemLimitFormatter extends TextInputFormatter {
     return newValue;
   }
 }
-

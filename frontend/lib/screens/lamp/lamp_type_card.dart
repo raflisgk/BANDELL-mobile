@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../utils/app_colors.dart';
 
 class LampTypeCard extends StatelessWidget {
@@ -21,13 +22,10 @@ class LampTypeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.border,
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.border, width: 1),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
+            color: AppColors.shadowFaint,
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -51,14 +49,10 @@ class LampTypeCard extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: AppColors.divider,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
-                    icon,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
+                  child: Icon(icon, color: AppColors.primary, size: 20),
                 ),
 
                 const SizedBox(width: 12),

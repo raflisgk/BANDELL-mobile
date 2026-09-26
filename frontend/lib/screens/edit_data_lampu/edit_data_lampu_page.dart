@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../models/installation_model.dart';
 import '../../services/installation_service.dart';
 import '../../services/lamp_type_service.dart';
@@ -68,40 +69,40 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
 
     final defaultKode = widget.isEdit
         ? ((widget.initialKodeLampu != null &&
-                widget.initialKodeLampu!.isNotEmpty &&
-                widget.initialKodeLampu != '-')
-            ? widget.initialKodeLampu!
-            : '')
+                  widget.initialKodeLampu!.isNotEmpty &&
+                  widget.initialKodeLampu != '-')
+              ? widget.initialKodeLampu!
+              : '')
         : (widget.scannedCode ?? '');
     final defaultLong = widget.isEdit
         ? ((widget.initialLongitude != null &&
-                widget.initialLongitude!.isNotEmpty &&
-                widget.initialLongitude != '-')
-            ? widget.initialLongitude!
-            : '')
+                  widget.initialLongitude!.isNotEmpty &&
+                  widget.initialLongitude != '-')
+              ? widget.initialLongitude!
+              : '')
         : '';
     final defaultLat = widget.isEdit
         ? ((widget.initialLatitude != null &&
-                widget.initialLatitude!.isNotEmpty &&
-                widget.initialLatitude != '-')
-            ? widget.initialLatitude!
-            : '')
+                  widget.initialLatitude!.isNotEmpty &&
+                  widget.initialLatitude != '-')
+              ? widget.initialLatitude!
+              : '')
         : '';
     final defaultCatatan = widget.isEdit
         ? ((widget.initialCatatan != null &&
-                widget.initialCatatan!.isNotEmpty &&
-                widget.initialCatatan != '-')
-            ? widget.initialCatatan!
-            : ((widget.initialAlamat != null && widget.initialAlamat != '-')
-                ? widget.initialAlamat!
-                : ''))
+                  widget.initialCatatan!.isNotEmpty &&
+                  widget.initialCatatan != '-')
+              ? widget.initialCatatan!
+              : ((widget.initialAlamat != null && widget.initialAlamat != '-')
+                    ? widget.initialAlamat!
+                    : ''))
         : (widget.initialCatatan ?? widget.initialAlamat ?? '');
     final defaultTipe = widget.isEdit
         ? ((widget.initialTipeLampu != null &&
-                widget.initialTipeLampu!.isNotEmpty &&
-                widget.initialTipeLampu != '-')
-            ? widget.initialTipeLampu!
-            : '')
+                  widget.initialTipeLampu!.isNotEmpty &&
+                  widget.initialTipeLampu != '-')
+              ? widget.initialTipeLampu!
+              : '')
         : '';
 
     _kodeLampuController = TextEditingController(text: defaultKode);
@@ -120,7 +121,9 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
 
     if (widget.initialPhotos != null && widget.initialPhotos!.isNotEmpty) {
       _photos.addAll(widget.initialPhotos!.where((p) => p.trim().isNotEmpty));
-    } else if (widget.isEdit && widget.idInstallation != null && widget.idInstallation! > 0) {
+    } else if (widget.isEdit &&
+        widget.idInstallation != null &&
+        widget.idInstallation! > 0) {
       _loadExistingInstallation();
     }
 
@@ -129,13 +132,18 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
 
   void _loadExistingInstallation() async {
     try {
-      final detail = await InstallationService().getInstallationDetail(widget.idInstallation!);
+      final detail = await InstallationService().getInstallationDetail(
+        widget.idInstallation!,
+      );
       if (detail != null && mounted) {
         setState(() {
           if (_photos.isEmpty && detail.photos.isNotEmpty) {
             _photos.addAll(detail.photos.where((p) => p.trim().isNotEmpty));
           }
-          if (_catatanController.text.isEmpty && detail.notes != null && detail.notes!.isNotEmpty && detail.notes != '-') {
+          if (_catatanController.text.isEmpty &&
+              detail.notes != null &&
+              detail.notes!.isNotEmpty &&
+              detail.notes != '-') {
             _catatanController.text = detail.notes!;
           }
         });
@@ -183,7 +191,8 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       if (mounted) {
         setState(() {
           _lampTypeOptions = types.map((t) => t.name).toList();
-          if (_lampTypeOptions.isNotEmpty && _tipeLampuController.text.isEmpty) {
+          if (_lampTypeOptions.isNotEmpty &&
+              _tipeLampuController.text.isEmpty) {
             _tipeLampuController.text = _lampTypeOptions.first;
           }
         });
@@ -247,7 +256,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Maksimal 4 foto dokumentasi.'),
-          backgroundColor: Color(0xFFDC2626),
+          backgroundColor: AppColors.error,
           duration: Duration(seconds: 1),
         ),
       );
@@ -275,7 +284,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
+                    color: AppColors.borderMedium,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -296,8 +305,10 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.photo_library_rounded,
-                        color: AppColors.primary),
+                    child: const Icon(
+                      Icons.photo_library_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   title: const Text(
                     'Pilih dari Galeri',
@@ -317,15 +328,16 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.camera_alt_rounded,
-                        color: AppColors.primary),
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   title: const Text(
                     'Ambil Foto Kamera',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  subtitle:
-                      const Text('Buka kamera untuk mengambil foto baru'),
+                  subtitle: const Text('Buka kamera untuk mengambil foto baru'),
                   onTap: () {
                     Navigator.pop(bottomSheetContext);
                     _pickImage(ImageSource.camera);
@@ -635,11 +647,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
             color: AppColors.primaryLight,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.primary,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppColors.primary, size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -689,22 +697,12 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       child: TextField(
         controller: controller,
         focusNode: focusNode,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(
-            color: AppColors.hintColor,
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: AppColors.hintColor, fontSize: 14),
           prefixIcon: prefixIcon != null
-              ? Icon(
-                  prefixIcon,
-                  color: AppColors.iconColor,
-                  size: 20,
-                )
+              ? Icon(prefixIcon, color: AppColors.iconColor, size: 20)
               : null,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(

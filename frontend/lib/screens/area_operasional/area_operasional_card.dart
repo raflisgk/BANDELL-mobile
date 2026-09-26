@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/app_colors.dart';
+
 class AreaOperasionalCard extends StatelessWidget {
   final String title;
   final VoidCallback? onTap;
 
-  const AreaOperasionalCard({
-    super.key,
-    required this.title,
-    this.onTap,
-  });
+  const AreaOperasionalCard({super.key, required this.title, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +16,14 @@ class AreaOperasionalCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF0D4B85),
-            Color(0xFF093766),
+            AppColors.areaCardGradientStart,
+            AppColors.areaCardGradientEnd,
           ],
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1A0C5DA5),
+            color: AppColors.shadowColor,
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -69,7 +67,7 @@ class AreaOperasionalCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0x1A000000),
+                        color: AppColors.shadowMedium,
                         blurRadius: 4,
                         offset: Offset(0, 2),
                       ),
@@ -77,7 +75,7 @@ class AreaOperasionalCard extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.chevron_right_rounded,
-                    color: Color(0xFF0D4B85),
+                    color: AppColors.areaCardGradientStart,
                     size: 24,
                   ),
                 ),

@@ -7,14 +7,12 @@ import '../../utils/page_transitions.dart';
 import '../../widgets/custom_feedback.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
 
-
 class ScanBarcodePage extends StatefulWidget {
   const ScanBarcodePage({super.key});
 
   @override
   State<ScanBarcodePage> createState() => _ScanBarcodePageState();
 }
-
 
 class _ScanBarcodePageState extends State<ScanBarcodePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
@@ -24,7 +22,6 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
 
   bool _isScanned = false;
   bool _isTorchOn = false;
-
 
   @override
   void initState() {
@@ -46,7 +43,6 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
     _startCamera();
   }
 
-
   Future<void> _startCamera() async {
     try {
       if (!_cameraController.value.isRunning && !_isScanned) {
@@ -56,7 +52,6 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
       debugPrint('Error starting camera: $e');
     }
   }
-
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -82,7 +77,6 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
     }
   }
 
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -91,13 +85,11 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
     super.dispose();
   }
 
-
   void _handleBack() {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     }
   }
-
 
   Future<void> _handleFlashlight() async {
     try {
@@ -113,7 +105,6 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
     }
   }
 
-
   Future<void> _handleGallery() async {
     if (_isScanned) return;
 
@@ -126,8 +117,8 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
         return;
       }
 
-      final BarcodeCapture? barcodeCapture =
-          await _cameraController.analyzeImage(file.path);
+      final BarcodeCapture? barcodeCapture = await _cameraController
+          .analyzeImage(file.path);
 
       if (!mounted) return;
 
@@ -181,9 +172,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
       } else {
         AppNavigator.pushReplacement(
           context,
-          EditDataLampuPage(
-            scannedCode: scannedCode,
-          ),
+          EditDataLampuPage(scannedCode: scannedCode),
         );
       }
     });
@@ -195,8 +184,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
     final List<Barcode> barcodes = capture.barcodes;
 
     for (final barcode in barcodes) {
-      final String? value =
-          barcode.rawValue ?? barcode.displayValue;
+      final String? value = barcode.rawValue ?? barcode.displayValue;
 
       if (value != null && value.trim().isNotEmpty) {
         _handleScanResult(value.trim());
@@ -204,7 +192,6 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -240,8 +227,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
 
                     Expanded(
                       child: Padding(
-                        padding:
-                            const EdgeInsets.only(right: 28.0),
+                        padding: const EdgeInsets.only(right: 28.0),
                         child: const Text(
                           'Scan Barcode',
                           textAlign: TextAlign.center,
@@ -280,7 +266,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                   'Arahkan kamera ke barcode atau QR code pada\nlampu',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF94A3B8),
+                    color: AppColors.textSubtle,
                     fontSize: 13,
                     height: 1.4,
                   ),
@@ -291,10 +277,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                 const Text(
                   'Pastikan barcode berada di dalam area scan.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 11.5,
-                  ),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
                 ),
 
                 const SizedBox(height: 36),
@@ -325,9 +308,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                           _isTorchOn
                               ? Icons.flashlight_on_rounded
                               : Icons.flashlight_off_rounded,
-                          color: _isTorchOn
-                              ? Colors.black
-                              : Colors.white,
+                          color: _isTorchOn ? Colors.black : Colors.white,
                           size: 22,
                         ),
                       ),
@@ -373,7 +354,6 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
     );
   }
 
-
   Widget _buildCenterScanningButton() {
     return Column(
       children: [
@@ -414,7 +394,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                       gradient: SweepGradient(
                         colors: [
                           Colors.transparent,
-                          Color(0x3338BDF8),
+                          AppColors.scanCyanLight,
                           AppColors.scanCyan,
                         ],
                         stops: [0.0, 0.6, 1.0],
@@ -439,7 +419,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                             width: 36,
                             height: 36,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF1E293B),
+                              color: AppColors.textHeading,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -465,7 +445,6 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
     );
   }
 
-
   Widget _buildScannerFrame() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -483,207 +462,203 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
               child: Stack(
                 children: [
                   // TOP LEFT
-              Positioned(
-                top: 0,
-                left: 0,
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.scanCyan,
-                        width: 4.0,
-                      ),
-                      left: BorderSide(
-                        color: AppColors.scanCyan,
-                        width: 4.0,
-                      ),
-                    ),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-
-              // TOP RIGHT
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.scanCyan,
-                        width: 4.0,
-                      ),
-                      right: BorderSide(
-                        color: AppColors.scanCyan,
-                        width: 4.0,
-                      ),
-                    ),
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-
-              // BOTTOM LEFT
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.scanCyan,
-                        width: 4.0,
-                      ),
-                      left: BorderSide(
-                        color: AppColors.scanCyan,
-                        width: 4.0,
-                      ),
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-
-              // BOTTOM RIGHT
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.scanCyan,
-                        width: 4.0,
-                      ),
-                      right: BorderSide(
-                        color: AppColors.scanCyan,
-                        width: 4.0,
-                      ),
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomRight: Radius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // LIVE CAMERA
-        Container(
-          width: cameraSize,
-          height: cameraSize,
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.scanIconDark,
-              width: 1,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(13),
-            child: MobileScanner(
-              controller: _cameraController,
-              fit: BoxFit.cover,
-              onDetect: _onDetect,
-
-              placeholderBuilder: (context, child) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.scanCyan,
-                    strokeWidth: 2.5,
-                  ),
-                );
-              },
-
-              errorBuilder: (context, error, child) {
-                String errorMessage =
-                    'Kamera tidak dapat dibuka. Pastikan izin kamera telah diberikan.';
-
-                if (error.errorCode ==
-                    MobileScannerErrorCode.permissionDenied) {
-                  errorMessage =
-                      'Izin kamera belum diberikan. Aktifkan izin kamera pada Pengaturan HP untuk memindai barcode.';
-                }
-
-                return Container(
-                  color: AppColors.scanCardDark,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.videocam_off_rounded,
-                        color: Colors.white54,
-                        size: 36,
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      Text(
-                        errorMessage,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11.5,
-                          height: 1.3,
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: AppColors.scanCyan,
+                            width: 4.0,
+                          ),
+                          left: BorderSide(
+                            color: AppColors.scanCyan,
+                            width: 4.0,
+                          ),
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(14),
                         ),
                       ),
+                    ),
+                  ),
 
-                      const SizedBox(height: 12),
-
-                      InkWell(
-                        onTap: _startCamera,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
+                  // TOP RIGHT
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
                             color: AppColors.scanCyan,
-                            borderRadius: BorderRadius.circular(8),
+                            width: 4.0,
                           ),
-                          child: const Text(
-                            'Coba Lagi',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                          right: BorderSide(
+                            color: AppColors.scanCyan,
+                            width: 4.0,
+                          ),
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // BOTTOM LEFT
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppColors.scanCyan,
+                            width: 4.0,
+                          ),
+                          left: BorderSide(
+                            color: AppColors.scanCyan,
+                            width: 4.0,
+                          ),
+                        ),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // BOTTOM RIGHT
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppColors.scanCyan,
+                            width: 4.0,
+                          ),
+                          right: BorderSide(
+                            color: AppColors.scanCyan,
+                            width: 4.0,
+                          ),
+                        ),
+                        borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // LIVE CAMERA
+            Container(
+              width: cameraSize,
+              height: cameraSize,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.scanIconDark, width: 1),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(13),
+                child: MobileScanner(
+                  controller: _cameraController,
+                  fit: BoxFit.cover,
+                  onDetect: _onDetect,
+
+                  placeholderBuilder: (context, child) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.scanCyan,
+                        strokeWidth: 2.5,
+                      ),
+                    );
+                  },
+
+                  errorBuilder: (context, error, child) {
+                    String errorMessage =
+                        'Kamera tidak dapat dibuka. Pastikan izin kamera telah diberikan.';
+
+                    if (error.errorCode ==
+                        MobileScannerErrorCode.permissionDenied) {
+                      errorMessage = 'Izin kamera belum diberikan. Aktifkan izin kamera pada Pengaturan HP untuk memindai barcode.';
+                    }
+
+                    return Container(
+                      color: AppColors.scanCardDark,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.videocam_off_rounded,
+                            color: Colors.white54,
+                            size: 36,
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          Text(
+                            errorMessage,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11.5,
+                              height: 1.3,
                             ),
                           ),
-                        ),
+
+                          const SizedBox(height: 12),
+
+                          InkWell(
+                            onTap: _startCamera,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.scanCyan,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'Coba Lagi',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
-  },
-);
   }
 }

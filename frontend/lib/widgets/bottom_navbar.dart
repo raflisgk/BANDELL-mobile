@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../utils/app_colors.dart';
 
 class BottomNavbar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
 
-  const BottomNavbar({
-    super.key,
-    this.currentIndex = 0,
-    this.onTap,
-  });
+  const BottomNavbar({super.key, this.currentIndex = 0, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +19,7 @@ class BottomNavbar extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x14000000),
+              color: AppColors.shadowLight,
               blurRadius: 16,
               offset: Offset(0, 4),
             ),
@@ -56,10 +53,10 @@ class BottomNavbar extends StatelessWidget {
               ),
             ],
           ),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildNavItem({
     required int index,
@@ -81,7 +78,7 @@ class BottomNavbar extends StatelessWidget {
             ? const EdgeInsets.symmetric(horizontal: 20, vertical: 8)
             : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFEFF6FF) : Colors.transparent,
+          color: isActive ? AppColors.navActiveBackground : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -90,13 +87,13 @@ class BottomNavbar extends StatelessWidget {
             Icon(
               icon,
               size: 22,
-              color: isActive ? AppColors.primary : const Color(0xFF6B7280),
+              color: isActive ? AppColors.primary : AppColors.navInactive,
             ),
             const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                color: isActive ? AppColors.primary : const Color(0xFF6B7280),
+                color: isActive ? AppColors.primary : AppColors.navInactive,
                 fontSize: 12,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
               ),

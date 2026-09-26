@@ -1,7 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../models/installation_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/installation_service.dart';
@@ -37,8 +39,7 @@ class ManualPage extends StatefulWidget {
   State<ManualPage> createState() => _ManualPageState();
 }
 
-class _ManualPageState extends State<ManualPage>
-    with TickerProviderStateMixin {
+class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
   final TextEditingController _barcodeController = TextEditingController();
   final TextEditingController _panelCodeController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
@@ -76,34 +77,37 @@ class _ManualPageState extends State<ManualPage>
       vsync: this,
     );
 
-    _shakeAnimation ??= TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
-    ]).animate(CurvedAnimation(
-      parent: _shakeController!,
-      curve: Curves.easeInOut,
-    ));
+    _shakeAnimation ??=
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
+          TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
+        ]).animate(
+          CurvedAnimation(parent: _shakeController!, curve: Curves.easeInOut),
+        );
 
     _locationShakeController ??= AnimationController(
       duration: const Duration(milliseconds: 350),
       vsync: this,
     );
 
-    _locationShakeAnimation ??= TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
-    ]).animate(CurvedAnimation(
-      parent: _locationShakeController!,
-      curve: Curves.easeInOut,
-    ));
+    _locationShakeAnimation ??=
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
+          TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 6.0, end: -4.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 4.0, end: -2.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
+        ]).animate(
+          CurvedAnimation(
+            parent: _locationShakeController!,
+            curve: Curves.easeInOut,
+          ),
+        );
   }
 
   AnimationController get _effectiveShakeController {
@@ -343,7 +347,7 @@ class _ManualPageState extends State<ManualPage>
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
+                    color: AppColors.borderMedium,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -364,8 +368,10 @@ class _ManualPageState extends State<ManualPage>
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.photo_library_rounded,
-                        color: AppColors.primary),
+                    child: const Icon(
+                      Icons.photo_library_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   title: const Text(
                     'Pilih dari Galeri',
@@ -385,15 +391,16 @@ class _ManualPageState extends State<ManualPage>
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.camera_alt_rounded,
-                        color: AppColors.primary),
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   title: const Text(
                     'Ambil Foto Kamera',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  subtitle:
-                      const Text('Buka kamera untuk mengambil foto baru'),
+                  subtitle: const Text('Buka kamera untuk mengambil foto baru'),
                   onTap: () {
                     Navigator.pop(bottomSheetContext);
                     _pickImage(ImageSource.camera);
@@ -423,10 +430,7 @@ class _ManualPageState extends State<ManualPage>
     } catch (e) {
       debugPrint('Error picking image: $e');
       if (mounted) {
-        CustomFeedbackMessage.showError(
-          context,
-          'Gagal mengambil foto.',
-        );
+        CustomFeedbackMessage.showError(context, 'Gagal mengambil foto.');
       }
     }
   }
@@ -442,7 +446,7 @@ class _ManualPageState extends State<ManualPage>
 
     final isProjectClosed =
         ProjectService.selectedProject?.status == 'closed' ||
-            ProjectService.selectedProject?.status == 'selesai';
+        ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       CustomFeedbackMessage.showError(
         context,
@@ -454,10 +458,7 @@ class _ManualPageState extends State<ManualPage>
     final projectId =
         widget.idProject ?? ProjectService.selectedProject?.idProject;
     if (projectId == null || projectId <= 0) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Project belum dipilih.',
-      );
+      CustomFeedbackMessage.showError(context, 'Project belum dipilih.');
       return;
     }
 
@@ -484,10 +485,7 @@ class _ManualPageState extends State<ManualPage>
     final longitude = _longitudeController.text.trim();
 
     if (barcode.isEmpty) {
-      CustomFeedbackMessage.showError(
-        context,
-        'ID Barcode wajib diisi.',
-      );
+      CustomFeedbackMessage.showError(context, 'ID Barcode wajib diisi.');
       _barcodeFocusNode.requestFocus();
       return;
     }
@@ -598,10 +596,7 @@ class _ManualPageState extends State<ManualPage>
           _isSubmitting = false;
         });
 
-        CustomFeedbackMessage.showSuccess(
-          context,
-          'Data berhasil disimpan',
-        );
+        CustomFeedbackMessage.showSuccess(context, 'Data berhasil disimpan');
 
         _showSuccessDialog(barcode);
       }
@@ -632,8 +627,8 @@ class _ManualPageState extends State<ManualPage>
     final String lampCode = barcode.isNotEmpty
         ? barcode
         : (_panelCodeController.text.isNotEmpty
-            ? _panelCodeController.text
-            : '');
+              ? _panelCodeController.text
+              : '');
 
     PopUpSukses.show(
       context,
@@ -657,10 +652,7 @@ class _ManualPageState extends State<ManualPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppTopBar(
-                showDropdown: false,
-                onBackPressed: _handleBack,
-              ),
+              AppTopBar(showDropdown: false, onBackPressed: _handleBack),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
@@ -700,12 +692,12 @@ class _ManualPageState extends State<ManualPage>
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                          color: AppColors.borderLight,
                           width: 1.0,
                         ),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x0A000000),
+                            color: AppColors.shadowSubtle,
                             blurRadius: 8,
                             offset: Offset(0, 2),
                           ),
@@ -720,9 +712,10 @@ class _ManualPageState extends State<ManualPage>
 
                           const SizedBox(height: 18),
                           const Divider(
-                              color: Color(0xFFF1F5F9),
-                              height: 1,
-                              thickness: 1),
+                            color: AppColors.divider,
+                            height: 1,
+                            thickness: 1,
+                          ),
                           const SizedBox(height: 18),
 
                           // 2. KODE PANEL (SHARED WIDGET)
@@ -733,9 +726,10 @@ class _ManualPageState extends State<ManualPage>
 
                           const SizedBox(height: 18),
                           const Divider(
-                              color: Color(0xFFF1F5F9),
-                              height: 1,
-                              thickness: 1),
+                            color: AppColors.divider,
+                            height: 1,
+                            thickness: 1,
+                          ),
                           const SizedBox(height: 18),
 
                           // 3. LOKASI KOORDINAT (MANUAL INPUTS)
@@ -743,9 +737,10 @@ class _ManualPageState extends State<ManualPage>
 
                           const SizedBox(height: 18),
                           const Divider(
-                              color: Color(0xFFF1F5F9),
-                              height: 1,
-                              thickness: 1),
+                            color: AppColors.divider,
+                            height: 1,
+                            thickness: 1,
+                          ),
                           const SizedBox(height: 18),
 
                           // 4. TANGGAL PENUGASAN (SHARED WIDGET)
@@ -764,9 +759,10 @@ class _ManualPageState extends State<ManualPage>
 
                           const SizedBox(height: 18),
                           const Divider(
-                              color: Color(0xFFF1F5F9),
-                              height: 1,
-                              thickness: 1),
+                            color: AppColors.divider,
+                            height: 1,
+                            thickness: 1,
+                          ),
                           const SizedBox(height: 18),
 
                           // 5. CATATAN (SHARED WIDGET)
@@ -777,9 +773,10 @@ class _ManualPageState extends State<ManualPage>
 
                           const SizedBox(height: 18),
                           const Divider(
-                              color: Color(0xFFF1F5F9),
-                              height: 1,
-                              thickness: 1),
+                            color: AppColors.divider,
+                            height: 1,
+                            thickness: 1,
+                          ),
                           const SizedBox(height: 18),
 
                           // 6. DOKUMENTASI (SHARED WIDGET)
@@ -857,7 +854,7 @@ class _ManualPageState extends State<ManualPage>
               const Text(
                 '*',
                 style: TextStyle(
-                  color: Color(0xFFEF4444),
+                  color: AppColors.error,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -868,10 +865,7 @@ class _ManualPageState extends State<ManualPage>
         const SizedBox(height: 4),
         const Text(
           'Masukkan kode barcode',
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 12.5,
-          ),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
         ),
         const SizedBox(height: 12),
         Container(
@@ -903,10 +897,7 @@ class _ManualPageState extends State<ManualPage>
             ),
             decoration: const InputDecoration(
               hintText: 'Contoh: JKT-2025-001',
-              hintStyle: TextStyle(
-                color: AppColors.hintColor,
-                fontSize: 14,
-              ),
+              hintStyle: TextStyle(color: AppColors.hintColor, fontSize: 14),
               isDense: true,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 14,
@@ -945,7 +936,7 @@ class _ManualPageState extends State<ManualPage>
             child: Text(
               _coordinateError!,
               style: const TextStyle(
-                color: Color(0xFFEF4444),
+                color: AppColors.error,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.1,
@@ -997,7 +988,7 @@ class _ManualPageState extends State<ManualPage>
                     Text(
                       '*',
                       style: TextStyle(
-                        color: Color(0xFFEF4444),
+                        color: AppColors.error,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1011,10 +1002,7 @@ class _ManualPageState extends State<ManualPage>
         const SizedBox(height: 4),
         const Text(
           'Masukkan koordinat lampu (Lat/Long)',
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 12.5,
-          ),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
         ),
         const SizedBox(height: 14),
         _buildLocationInputField(
@@ -1024,7 +1012,8 @@ class _ManualPageState extends State<ManualPage>
           maxLength: 10,
           isExceeded: _isLatitudeExceeded,
           onExceeded: _onLatitudeLimitExceeded,
-          hasError: _coordinateError != null &&
+          hasError:
+              _coordinateError != null &&
               !_isLatitudeValid(_latitudeController.text),
         ),
         const SizedBox(height: 10),
@@ -1035,7 +1024,8 @@ class _ManualPageState extends State<ManualPage>
           maxLength: 11,
           isExceeded: _isLongitudeExceeded,
           onExceeded: _onLongitudeLimitExceeded,
-          hasError: _coordinateError != null &&
+          hasError:
+              _coordinateError != null &&
               !_isLongitudeValid(_longitudeController.text),
         ),
       ],
@@ -1056,8 +1046,8 @@ class _ManualPageState extends State<ManualPage>
     final borderColor = isExceeded
         ? AppColors.error
         : (hasError
-            ? const Color(0xFFEF4444)
-            : (isFocused ? AppColors.primary : AppColors.border));
+              ? AppColors.error
+              : (isFocused ? AppColors.primary : AppColors.border));
     final borderWidth = (isExceeded || hasError || isFocused) ? 1.5 : 1.0;
 
     return Column(
@@ -1067,10 +1057,7 @@ class _ManualPageState extends State<ManualPage>
           decoration: BoxDecoration(
             color: isFocused ? Colors.white : AppColors.inputBackground,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: borderColor,
-              width: borderWidth,
-            ),
+            border: Border.all(color: borderColor, width: borderWidth),
           ),
           child: TextField(
             controller: controller,
@@ -1131,10 +1118,7 @@ class _BarcodeLimitFormatter extends TextInputFormatter {
   final int maxLength;
   final VoidCallback onExceeded;
 
-  _BarcodeLimitFormatter({
-    required this.maxLength,
-    required this.onExceeded,
-  });
+  _BarcodeLimitFormatter({required this.maxLength, required this.onExceeded});
 
   @override
   TextEditingValue formatEditUpdate(

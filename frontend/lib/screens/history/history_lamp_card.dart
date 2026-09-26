@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../models/history_lamp_model.dart';
 import '../../utils/app_colors.dart';
 
@@ -7,11 +8,7 @@ class HistoryLampCard extends StatelessWidget {
   final HistoryLampModel item;
   final VoidCallback? onTap;
 
-  const HistoryLampCard({
-    super.key,
-    required this.item,
-    this.onTap,
-  });
+  const HistoryLampCard({super.key, required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -20,15 +17,12 @@ class HistoryLampCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFCFE),
+        color: AppColors.historyCardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.borderLight, width: 1),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
+            color: AppColors.shadowFaint,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -58,9 +52,9 @@ class HistoryLampCard extends StatelessWidget {
                             item.kode.isNotEmpty
                                 ? item.kode
                                 : ((item.idLcu != null &&
-                                        item.idLcu!.trim().isNotEmpty)
-                                    ? item.idLcu!
-                                    : '-'),
+                                          item.idLcu!.trim().isNotEmpty)
+                                      ? item.idLcu!
+                                      : '-'),
                             style: const TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 16,
@@ -72,7 +66,7 @@ class HistoryLampCard extends StatelessWidget {
                           Text(
                             item.jenis,
                             style: const TextStyle(
-                              color: Color(0xFF64748B),
+                              color: AppColors.textMuted,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w400,
                             ),
@@ -96,7 +90,7 @@ class HistoryLampCard extends StatelessWidget {
                       child: Icon(
                         Icons.location_on_outlined,
                         size: 16,
-                        color: Color(0xFF94A3B8),
+                        color: AppColors.textSubtle,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -107,7 +101,7 @@ class HistoryLampCard extends StatelessWidget {
                           Text(
                             _getDistrictName(),
                             style: const TextStyle(
-                              color: Color(0xFF334155),
+                              color: AppColors.textDark,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -116,7 +110,7 @@ class HistoryLampCard extends StatelessWidget {
                           Text(
                             _getCoordinates(),
                             style: const TextStyle(
-                              color: Color(0xFF64748B),
+                              color: AppColors.textMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
                             ),
@@ -130,7 +124,7 @@ class HistoryLampCard extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 const Divider(
-                  color: Color(0xFFF1F5F9),
+                  color: AppColors.divider,
                   height: 1,
                   thickness: 1,
                 ),
@@ -148,16 +142,16 @@ class HistoryLampCard extends StatelessWidget {
                           Icons.camera_alt_outlined,
                           size: 15,
                           color: hasPhotos
-                              ? const Color(0xFF2563EB)
-                              : const Color(0xFFEA580C),
+                              ? AppColors.accentBlue
+                              : AppColors.manualOrange,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           item.fotoCount,
                           style: TextStyle(
                             color: hasPhotos
-                                ? const Color(0xFF2563EB)
-                                : const Color(0xFFEA580C),
+                                ? AppColors.accentBlue
+                                : AppColors.manualOrange,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -168,13 +162,13 @@ class HistoryLampCard extends StatelessWidget {
                     // Waktu info (HANYA gunakan created_at sesuai aturan)
                     Builder(
                       builder: (context) {
-                        final displayDate = item.createdAt ??
-                            item.installation?.createdAt;
+                        final displayDate =
+                            item.createdAt ?? item.installation?.createdAt;
 
                         return Text(
                           _formatWaktu(displayDate, null),
                           style: const TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.textSubtle,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w400,
                           ),
@@ -191,17 +185,12 @@ class HistoryLampCard extends StatelessWidget {
     );
   }
 
-  String _formatWaktu(
-    DateTime? createdAt,
-    String? fallbackWaktu,
-  ) {
+  String _formatWaktu(DateTime? createdAt, String? fallbackWaktu) {
     if (createdAt == null) {
       if (fallbackWaktu != null &&
           fallbackWaktu.trim().isNotEmpty &&
           fallbackWaktu.trim() != '-') {
-        final parsed = DateTime.tryParse(
-          fallbackWaktu.trim(),
-        );
+        final parsed = DateTime.tryParse(fallbackWaktu.trim());
 
         if (parsed != null) {
           try {
@@ -210,9 +199,7 @@ class HistoryLampCard extends StatelessWidget {
               'id_ID',
             ).format(parsed.toLocal());
           } catch (_) {
-            return DateFormat(
-              'dd MMM yyyy, HH:mm',
-            ).format(parsed.toLocal());
+            return DateFormat('dd MMM yyyy, HH:mm').format(parsed.toLocal());
           }
         }
 
@@ -228,21 +215,16 @@ class HistoryLampCard extends StatelessWidget {
         'id_ID',
       ).format(createdAt.toLocal());
     } catch (_) {
-      return DateFormat(
-        'dd MMM yyyy, HH:mm',
-      ).format(createdAt.toLocal());
+      return DateFormat('dd MMM yyyy, HH:mm').format(createdAt.toLocal());
     }
   }
 
   Widget _buildStatusBadge() {
     if (item.isDitolak) {
       return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 4,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEE2E2),
+          color: AppColors.statusDitolakBg,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -251,13 +233,13 @@ class HistoryLampCard extends StatelessWidget {
             Icon(
               Icons.cancel_outlined,
               size: 13,
-              color: Color(0xFFDC2626),
+              color: AppColors.statusDitolakText,
             ),
             SizedBox(width: 4),
             Text(
               'Ditolak',
               style: TextStyle(
-                color: Color(0xFFDC2626),
+                color: AppColors.statusDitolakText,
                 fontSize: 11.5,
                 fontWeight: FontWeight.bold,
               ),
@@ -267,12 +249,9 @@ class HistoryLampCard extends StatelessWidget {
       );
     } else if (item.isVerified) {
       return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 4,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFFDCFCE7),
+          color: AppColors.statusTerverifikasiBg,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -281,13 +260,13 @@ class HistoryLampCard extends StatelessWidget {
             Icon(
               Icons.check_circle_outline_rounded,
               size: 13,
-              color: Color(0xFF16A34A),
+              color: AppColors.realtimeGreen,
             ),
             SizedBox(width: 4),
             Text(
               'Terverifikasi',
               style: TextStyle(
-                color: Color(0xFF16A34A),
+                color: AppColors.realtimeGreen,
                 fontSize: 11.5,
                 fontWeight: FontWeight.bold,
               ),
@@ -297,12 +276,9 @@ class HistoryLampCard extends StatelessWidget {
       );
     } else {
       return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 4,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF3C7),
+          color: AppColors.statusMenungguBg,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -311,13 +287,13 @@ class HistoryLampCard extends StatelessWidget {
             Icon(
               Icons.warning_amber_rounded,
               size: 13,
-              color: Color(0xFFD97706),
+              color: AppColors.statusRevisiText,
             ),
             SizedBox(width: 4),
             Text(
               'Menunggu Verifikasi',
               style: TextStyle(
-                color: Color(0xFFD97706),
+                color: AppColors.statusRevisiText,
                 fontSize: 11.5,
                 fontWeight: FontWeight.bold,
               ),
@@ -329,15 +305,16 @@ class HistoryLampCard extends StatelessWidget {
   }
 
   String _getDistrictName() {
-    final name = (item.districtName != null &&
+    final name =
+        (item.districtName != null &&
             item.districtName!.trim().isNotEmpty &&
             item.districtName!.trim() != '-')
         ? item.districtName!.trim()
         : (item.installation?.districtName != null &&
-                item.installation!.districtName!.trim().isNotEmpty &&
-                item.installation!.districtName!.trim() != '-')
-            ? item.installation!.districtName!.trim()
-            : '-';
+              item.installation!.districtName!.trim().isNotEmpty &&
+              item.installation!.districtName!.trim() != '-')
+        ? item.installation!.districtName!.trim()
+        : '-';
     return name;
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/app_colors.dart';
+
 /// Reusable Widget Catatan (Opsional)
 /// Sesuai dengan desain form teknisi (berpasangan dengan KodePanel & Dokumentasi)
 class Catatan extends StatefulWidget {
@@ -94,12 +96,12 @@ class _CatatanState extends State<Catatan> {
             Container(
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF), // Soft light blue
+                color: AppColors.infoBackground, // Soft light blue
                 borderRadius: BorderRadius.circular(9),
               ),
               child: const Icon(
                 Icons.content_paste_outlined,
-                color: Color(0xFF2563EB), // Primary blue
+                color: AppColors.accentBlue, // Primary blue
                 size: 20,
               ),
             ),
@@ -113,7 +115,7 @@ class _CatatanState extends State<Catatan> {
                       Text(
                         displayTitle,
                         style: const TextStyle(
-                          color: Color(0xFF1E293B),
+                          color: AppColors.textHeading,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -123,7 +125,7 @@ class _CatatanState extends State<Catatan> {
                         const Text(
                           '(Opsional)',
                           style: TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.textSubtle,
                             fontSize: 14,
                             fontWeight: FontWeight.normal,
                           ),
@@ -135,7 +137,7 @@ class _CatatanState extends State<Catatan> {
                   Text(
                     displaySubtitle,
                     style: const TextStyle(
-                      color: Color(0xFF94A3B8),
+                      color: AppColors.textSubtle,
                       fontSize: 12.5,
                       fontWeight: FontWeight.normal,
                     ),
@@ -154,7 +156,7 @@ class _CatatanState extends State<Catatan> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isFocused ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+              color: isFocused ? AppColors.accentBlue : AppColors.borderLight,
               width: isFocused ? 1.5 : 1.0,
             ),
           ),
@@ -164,14 +166,14 @@ class _CatatanState extends State<Catatan> {
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             style: const TextStyle(
-              color: Color(0xFF1E293B),
+              color: AppColors.textHeading,
               fontSize: 14,
               fontWeight: FontWeight.w400,
             ),
             decoration: InputDecoration(
               hintText: widget.hintText,
               hintStyle: const TextStyle(
-                color: Color(0xFF94A3B8),
+                color: AppColors.textSubtle,
                 fontSize: 14,
               ),
               contentPadding: const EdgeInsets.symmetric(
@@ -186,4 +188,3 @@ class _CatatanState extends State<Catatan> {
     );
   }
 }
-

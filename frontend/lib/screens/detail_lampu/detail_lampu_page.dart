@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../models/installation_model.dart';
 import '../../services/installation_service.dart';
 import '../../services/project_service.dart';
@@ -131,7 +132,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
   void _handleEditData() async {
     final isProjectClosed =
         ProjectService.selectedProject?.status == 'closed' ||
-            ProjectService.selectedProject?.status == 'selesai';
+        ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       CustomFeedbackMessage.showError(
         context,
@@ -154,9 +155,15 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         idInstallation: _effectiveId,
         initialKodeLampu: _effectiveCode,
         initialLongitude:
-            _currentInstallation?.longitude ?? widget.installation?.longitude ?? widget.longitude ?? '',
+            _currentInstallation?.longitude ??
+            widget.installation?.longitude ??
+            widget.longitude ??
+            '',
         initialLatitude:
-            _currentInstallation?.latitude ?? widget.installation?.latitude ?? widget.latitude ?? '',
+            _currentInstallation?.latitude ??
+            widget.installation?.latitude ??
+            widget.latitude ??
+            '',
         initialAlamat: effectiveNotes,
         initialCatatan: effectiveNotes,
         initialTipeLampu: _effectiveType,
@@ -172,7 +179,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
   void _handleHapusData() {
     final isProjectClosed =
         ProjectService.selectedProject?.status == 'closed' ||
-            ProjectService.selectedProject?.status == 'selesai';
+        ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       CustomFeedbackMessage.showError(
         context,
@@ -194,10 +201,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           }
           if (_effectiveId == null) {
             if (mounted) {
-              CustomFeedbackMessage.showError(
-                context,
-                'ID data tidak valid.',
-              );
+              CustomFeedbackMessage.showError(context, 'ID data tidak valid.');
             }
             return;
           }
@@ -210,8 +214,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           } catch (e) {
             debugPrint('Error deleting installation: $e');
             if (mounted) {
-              final errorMsg =
-                  e.toString().replaceFirst('Exception: ', '').trim();
+              final errorMsg = e
+                  .toString()
+                  .replaceFirst('Exception: ', '')
+                  .trim();
               CustomFeedbackMessage.showError(
                 context,
                 errorMsg.isNotEmpty ? errorMsg : 'Data gagal dihapus',
@@ -228,15 +234,12 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     final inst = _currentInstallation ?? widget.installation;
     final code = _effectiveCode;
     final type = _effectiveType;
-    final currentStatus =
-        inst?.status ?? widget.status ?? 'Tersimpan';
+    final currentStatus = inst?.status ?? widget.status ?? 'Tersimpan';
     final isTersimpan = currentStatus == 'Tersimpan';
 
-    final effectivePanelCode =
-        inst?.panelCode ?? widget.panelCode;
+    final effectivePanelCode = inst?.panelCode ?? widget.panelCode;
     final effectiveInputMethod = (() {
-      final value =
-          inst?.inputMethod ?? widget.inputMethod;
+      final value = inst?.inputMethod ?? widget.inputMethod;
 
       if (value == null || value.trim().isEmpty) {
         return '-';
@@ -255,19 +258,15 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       return value;
     })();
 
-    final effectiveDistrictName =
-        inst?.districtName ?? widget.districtName;
-    final effectiveLatitude =
-        inst?.latitude ?? widget.latitude;
-    final effectiveLongitude =
-        inst?.longitude ?? widget.longitude;
+    final effectiveDistrictName = inst?.districtName ?? widget.districtName;
+    final effectiveLatitude = inst?.latitude ?? widget.latitude;
+    final effectiveLongitude = inst?.longitude ?? widget.longitude;
 
-    final coords = (effectiveLatitude != null &&
-            effectiveLongitude != null)
+    final coords = (effectiveLatitude != null && effectiveLongitude != null)
         ? '$effectiveLatitude, $effectiveLongitude'
         : (widget.latitude != null && widget.longitude != null
-            ? '${widget.latitude}, ${widget.longitude}'
-            : null);
+              ? '${widget.latitude}, ${widget.longitude}'
+              : null);
 
     final effectivePhotos = inst?.photos.isNotEmpty == true
         ? inst!.photos
@@ -281,10 +280,8 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         ? inst!.updatedAt.toString()
         : widget.updatedAt;
 
-    final projectName =
-        ProjectService.selectedProject?.projectName ?? '-';
-    final projectLocation =
-        ProjectService.selectedProject?.location ?? '-';
+    final projectName = ProjectService.selectedProject?.projectName ?? '-';
+    final projectLocation = ProjectService.selectedProject?.location ?? '-';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -342,7 +339,8 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                     LampuHeaderCard(
                       code: code,
                       isTersimpan: isTersimpan,
-                      updatedAt: inst?.updatedAt ??
+                      updatedAt:
+                          inst?.updatedAt ??
                           (effectiveUpdatedAt != null
                               ? DateTime.tryParse(effectiveUpdatedAt)
                               : null),
@@ -412,118 +410,120 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                InformasiRecordCard(
-                createdAt: effectiveCreatedAt,
-                updatedAt: effectiveUpdatedAt,
-                createdBy:
-                AuthService.currentUser?.name ?? '-',
-),
+                    InformasiRecordCard(
+                      createdAt: effectiveCreatedAt,
+                      updatedAt: effectiveUpdatedAt,
+                      createdBy: AuthService.currentUser?.name ?? '-',
+                    ),
 
                     const SizedBox(height: 24),
 
-              // Bottom Action Buttons: Edit Data & Hapus atau Banner Read-Only
-              Builder(
-                builder: (context) {
-                  final isProjectClosed =
-                      ProjectService.selectedProject?.status == 'closed' ||
-                          ProjectService.selectedProject?.status == 'selesai';
+                    // Bottom Action Buttons: Edit Data & Hapus atau Banner Read-Only
+                    Builder(
+                      builder: (context) {
+                        final isProjectClosed =
+                            ProjectService.selectedProject?.status ==
+                                'closed' ||
+                            ProjectService.selectedProject?.status == 'selesai';
 
-                  if (isProjectClosed) {
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.lock_outline_rounded,
-                            color: Color(0xFF64748B),
-                            size: 18,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Project Selesai — Mode Baca Saja (Read-Only)',
-                            style: TextStyle(
-                              color: Color(0xFF64748B),
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                        if (isProjectClosed) {
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 16,
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+                            decoration: BoxDecoration(
+                              color: AppColors.divider,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.borderLight),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.lock_outline_rounded,
+                                  color: AppColors.textMuted,
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Project Selesai — Mode Baca Saja (Read-Only)',
+                                  style: TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
 
-                  return Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: SizedBox(
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: _handleEditData,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        return Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: SizedBox(
+                                height: 48,
+                                child: ElevatedButton(
+                                  onPressed: _handleEditData,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    elevation: 2,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Edit Data',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                            child: const Text(
-                              'Edit Data',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 1,
+                              child: SizedBox(
+                                height: 48,
+                                child: ElevatedButton(
+                                  onPressed: _handleHapusData,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.error,
+                                    foregroundColor: Colors.white,
+                                    elevation: 2,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Hapus',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 1,
-                        child: SizedBox(
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: _handleHapusData,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.error,
-                              foregroundColor: Colors.white,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Hapus',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                          ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 28),
+                  ],
+                ),
               ),
-
-              const SizedBox(height: 28),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    ],
-  ),
-),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../utils/app_colors.dart';
 
 class EditLampuLocation extends StatelessWidget {
@@ -28,7 +29,7 @@ class EditLampuLocation extends StatelessWidget {
             child: Text(
               errorMessage!,
               style: const TextStyle(
-                color: Color(0xFFEF4444),
+                color: AppColors.error,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.1,
@@ -72,11 +73,7 @@ class EditLampuLocation extends StatelessWidget {
             color: AppColors.primaryLight,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.primary,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppColors.primary, size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -116,7 +113,7 @@ class EditLampuLocation extends StatelessWidget {
     final isFocused = focusNode.hasFocus;
 
     final borderColor = hasError
-        ? const Color(0xFFEF4444)
+        ? AppColors.error
         : (isFocused ? AppColors.borderFocused : AppColors.border);
     final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
 
@@ -124,30 +121,17 @@ class EditLampuLocation extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: borderColor,
-          width: borderWidth,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
       ),
       child: TextField(
         controller: controller,
         focusNode: focusNode,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(
-            color: AppColors.hintColor,
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: AppColors.hintColor, fontSize: 14),
           prefixIcon: prefixIcon != null
-              ? Icon(
-                  prefixIcon,
-                  color: AppColors.iconColor,
-                  size: 20,
-                )
+              ? Icon(prefixIcon, color: AppColors.iconColor, size: 20)
               : null,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(

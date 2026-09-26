@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../utils/app_colors.dart';
 
 class InformasiLampuCard extends StatelessWidget {
@@ -21,14 +22,13 @@ class InformasiLampuCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final String method = inputMethod.trim().toLowerCase();
 
-    final bool isRealtime =
-        method == 'realtime' || method == 'real-time';
+    final bool isRealtime = method == 'realtime' || method == 'real-time';
 
     final String methodText = isRealtime
         ? 'Realtime'
         : method == 'manual'
-            ? 'Manual'
-            : '-';
+        ? 'Manual'
+        : '-';
 
     final IconData methodIcon = isRealtime
         ? Icons.bolt_rounded
@@ -40,13 +40,10 @@ class InformasiLampuCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.border,
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.border, width: 1),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppColors.shadowSubtle,
             blurRadius: 8,
             offset: Offset(0, 3),
           ),
@@ -63,11 +60,7 @@ class InformasiLampuCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
-                child: _StatusItem(
-                  status: status,
-                ),
-              ),
+              Expanded(child: _StatusItem(status: status)),
             ],
           ),
 
@@ -79,8 +72,7 @@ class InformasiLampuCard extends StatelessWidget {
               Expanded(
                 child: _InfoItem(
                   label: 'KODE PANEL',
-                  value: panelCode != null &&
-                          panelCode!.trim().isNotEmpty
+                  value: panelCode != null && panelCode!.trim().isNotEmpty
                       ? panelCode!.trim()
                       : '-',
                 ),
@@ -107,10 +99,7 @@ class _InfoItem extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoItem({
-    required this.label,
-    required this.value,
-  });
+  const _InfoItem({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -145,9 +134,7 @@ class _InfoItem extends StatelessWidget {
 class _StatusItem extends StatelessWidget {
   final String status;
 
-  const _StatusItem({
-    required this.status,
-  });
+  const _StatusItem({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -156,14 +143,14 @@ class _StatusItem extends StatelessWidget {
     final bool isVerified = s == 'terverifikasi';
 
     final Color dotColor = isDitolak
-        ? const Color(0xFFDC2626)
+        ? AppColors.statusDitolakText
         : (isVerified ? AppColors.success : AppColors.warning);
 
     final String displayStatus = isDitolak
         ? 'Ditolak'
         : (isVerified
-            ? 'Terverifikasi'
-            : (status.trim().isNotEmpty ? status : '-'));
+              ? 'Terverifikasi'
+              : (status.trim().isNotEmpty ? status : '-'));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,9 +238,7 @@ class _MethodItem extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 18,
-                color: isRealtime
-                    ? AppColors.success
-                    : AppColors.manualOrange,
+                color: isRealtime ? AppColors.success : AppColors.manualOrange,
               ),
             ),
             const SizedBox(width: 8),

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/area_model.dart';
@@ -17,10 +18,7 @@ import 'area_operasional_card.dart';
 class AreaOperasionalPage extends StatefulWidget {
   final int? idProject;
 
-  const AreaOperasionalPage({
-    super.key,
-    this.idProject,
-  });
+  const AreaOperasionalPage({super.key, this.idProject});
 
   @override
   State<AreaOperasionalPage> createState() => _AreaOperasionalPageState();
@@ -203,13 +201,8 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         _isLoadingAreas = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Gagal mengambil area: $e',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal mengambil area: $e')));
     }
   }
 
@@ -233,9 +226,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     final int areaId = area.idArea;
     final String areaName = area.areaName;
 
-    debugPrint(
-      'Area selected: $areaName (ID: $areaId)',
-    );
+    debugPrint('Area selected: $areaName (ID: $areaId)');
 
     await AppNavigator.push(
       context,
@@ -265,12 +256,9 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.inputBackground,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: const Color(0xFFCBD5E1),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.borderMedium, width: 1),
       ),
       child: TextField(
         controller: _searchController,
@@ -279,21 +267,18 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
             _searchQuery = value;
           });
         },
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           isDense: true,
           hintText: 'Cari area operasional',
           hintStyle: const TextStyle(
-            color: Color(0xFF94A3B8),
+            color: AppColors.textSubtle,
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: const Icon(
             Icons.search_rounded,
-            color: Color(0xFF64748B),
+            color: AppColors.textMuted,
             size: 22,
           ),
           suffixIcon: _searchQuery.isNotEmpty
@@ -306,7 +291,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                   },
                   child: const Icon(
                     Icons.close_rounded,
-                    color: Color(0xFF64748B),
+                    color: AppColors.textMuted,
                     size: 18,
                   ),
                 )
@@ -323,9 +308,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final projectNames = _projects
-        .map((project) => project.name)
-        .toList();
+    final projectNames = _projects.map((project) => project.name).toList();
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -349,9 +332,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
             Expanded(
               child: ListView(
                 physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28.0,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 28.0),
                 children: [
                   const SizedBox(height: 16),
 
@@ -386,16 +367,13 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                   // Loading project
                   if (_isLoadingProjects)
                     const Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 40,
-                      ),
+                      padding: EdgeInsets.symmetric(vertical: 40),
                       child: Center(
                         child: CircularProgressIndicator(
                           color: AppColors.primary,
                         ),
                       ),
                     )
-
                   // Error project (Koneksi Bermasalah) - Clean layout tanpa kotak pinggir
                   else if (_errorMessage != null)
                     Padding(
@@ -415,7 +393,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                                 width: 80,
                                 height: 80,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFFEFF6FF),
+                                  color: AppColors.infoBackground,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -473,7 +451,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ],
                       ),
                     )
-
                   // Empty State: Assignment project kosong
                   else if (_projects.isEmpty)
                     Padding(
@@ -494,7 +471,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                                 width: 80,
                                 height: 80,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFFEFF6FF),
+                                  color: AppColors.infoBackground,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -533,7 +510,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ],
                       ),
                     )
-
                   // Belum memilih project
                   else if (_selectedProject == null)
                     Container(
@@ -545,9 +521,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.border,
-                        ),
+                        border: Border.all(color: AppColors.border),
                         boxShadow: const [
                           BoxShadow(
                             color: AppColors.shadowColor,
@@ -562,7 +536,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             width: 60,
                             height: 60,
                             decoration: const BoxDecoration(
-                              color: Color(0xFFEFF6FF),
+                              color: AppColors.infoBackground,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -594,20 +568,16 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ],
                       ),
                     )
-
                   // Loading area
                   else if (_isLoadingAreas)
                     const Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 40,
-                      ),
+                      padding: EdgeInsets.symmetric(vertical: 40),
                       child: Center(
                         child: CircularProgressIndicator(
                           color: AppColors.primary,
                         ),
                       ),
                     )
-
                   // Tidak ada area
                   else if (_areas.isEmpty)
                     Container(
@@ -619,9 +589,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.border,
-                        ),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         children: [
@@ -651,7 +619,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ],
                       ),
                     )
-
                   // Hasil search kosong
                   else if (_filteredAreas.isEmpty)
                     Container(
@@ -663,16 +630,14 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.border,
-                        ),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         children: [
                           const Icon(
                             Icons.search_off_rounded,
                             size: 44,
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.textSubtle,
                           ),
                           const SizedBox(height: 10),
                           const Text(
@@ -695,14 +660,11 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ],
                       ),
                     )
-
                   // Area dari database
                   else
                     for (final area in _filteredAreas)
                       Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: 12.0,
-                        ),
+                        padding: const EdgeInsets.only(bottom: 12.0),
                         child: AreaOperasionalCard(
                           title: area.areaName,
                           onTap: () => _handleCardTap(area),
@@ -721,15 +683,9 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         currentIndex: _currentNavIndex,
         onTap: (index) {
           if (index == 1) {
-            AppNavigator.pushTabReplacement(
-              context,
-              const HistoryPage(),
-            );
+            AppNavigator.pushTabReplacement(context, const HistoryPage());
           } else if (index == 2) {
-            AppNavigator.pushTabReplacement(
-              context,
-              const ProfilePage(),
-            );
+            AppNavigator.pushTabReplacement(context, const ProfilePage());
           } else {
             setState(() {
               _currentNavIndex = index;

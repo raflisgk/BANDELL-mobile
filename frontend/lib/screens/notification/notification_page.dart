@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../../models/notification_model.dart';
 import '../../services/notification_service.dart';
 import '../../services/project_service.dart';
@@ -93,11 +95,13 @@ class _NotificationPageState extends State<NotificationPage> {
     // Jika notifikasi penugasan baru, sinkronkan project jika tersedia
     if (item.type == NotificationType.assignment) {
       if (item.projectId != null && item.projectId! > 0) {
-        ProjectService.selectedProject =
-            ProjectService.getProjectById(item.projectId!);
+        ProjectService.selectedProject = ProjectService.getProjectById(
+          item.projectId!,
+        );
       } else if (item.projectName.isNotEmpty && item.projectName != '-') {
-        ProjectService.selectedProject =
-            ProjectService.getProjectByName(item.projectName);
+        ProjectService.selectedProject = ProjectService.getProjectByName(
+          item.projectName,
+        );
       }
     }
 
@@ -138,12 +142,12 @@ class _NotificationPageState extends State<NotificationPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.inputBackground,
       body: Column(
         children: [
           // 1. Header Sesuai Warna Layar
           Container(
-            color: const Color(0xFFF8FAFC),
+            color: AppColors.inputBackground,
             child: SafeArea(
               bottom: false,
               child: Container(
@@ -171,7 +175,9 @@ class _NotificationPageState extends State<NotificationPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48), // Menyeimbangkan tombol back agar teks tepat di tengah
+                    const SizedBox(
+                      width: 48,
+                    ), // Menyeimbangkan tombol back agar teks tepat di tengah
                   ],
                 ),
               ),
@@ -192,174 +198,167 @@ class _NotificationPageState extends State<NotificationPage> {
                   vertical: 20.0,
                 ),
                 child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Loading State
-                  if (_isLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 80),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Loading State
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 80),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-                    )
-                  // Error State
-                  else if (_hasError)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 60,
-                        horizontal: 20,
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            size: 54,
-                            color: AppColors.error,
-                          ),
-                          const SizedBox(height: 14),
-                          const Text(
-                            'Gagal Memuat Notifikasi',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                      )
+                    // Error State
+                    else if (_hasError)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 60,
+                          horizontal: 20,
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              size: 54,
+                              color: AppColors.error,
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _errorMessage,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          ElevatedButton.icon(
-                            onPressed: _loadNotifications,
-                            icon: const Icon(Icons.refresh_rounded, size: 18),
-                            label: const Text('Coba Lagi'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                            const SizedBox(height: 14),
+                            const Text(
+                              'Gagal Memuat Notifikasi',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  // Empty State
-                  else if (_notifications.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 80,
-                        horizontal: 20,
-                      ),
-                      child: Column(
-                        children: const [
-                          Icon(
-                            Icons.notifications_none_rounded,
-                            size: 54,
-                            color: Color(0xFF94A3B8),
-                          ),
-                          SizedBox(height: 14),
-                          Text(
-                            'Belum Ada Notifikasi',
+                            const SizedBox(height: 6),
+                            Text(
+                              _errorMessage,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            ElevatedButton.icon(
+                              onPressed: _loadNotifications,
+                              icon: const Icon(Icons.refresh_rounded, size: 18),
+                              label: const Text('Coba Lagi'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    // Empty State
+                    else if (_notifications.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 80,
+                          horizontal: 20,
+                        ),
+                        child: Column(
+                          children: const [
+                            Icon(
+                              Icons.notifications_none_rounded,
+                              size: 54,
+                              color: AppColors.textSubtle,
+                            ),
+                            SizedBox(height: 14),
+                            Text(
+                              'Belum Ada Notifikasi',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 6),
+                            Text(
+                              'Notifikasi penugasan dari admin akan muncul di sini.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    // Notification List
+                    else ...[
+                      // =========================
+                      // SECTION TERBARU
+                      // =========================
+                      if (terbaruList.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4, bottom: 12),
+                          child: Text(
+                            'TERBARU',
                             style: TextStyle(
-                              fontSize: 16,
+                              color: AppColors.textBody,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          SizedBox(height: 6),
-                          Text(
-                            'Notifikasi penugasan dari admin akan muncul di sini.',
-                            textAlign: TextAlign.center,
+                        ),
+
+                        // Card TERBARU
+                        ...terbaruList.map(
+                          (item) => NotificationCard(
+                            notification: item,
+                            onTap: () => _handleNotificationTap(item),
+                          ),
+                        ),
+
+                        if (sebelumnyaList.isNotEmpty)
+                          const SizedBox(height: 16),
+                      ],
+
+                      // =========================
+                      // SECTION SEBELUMNYA
+                      // =========================
+                      if (sebelumnyaList.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4, bottom: 12, top: 4),
+                          child: Text(
+                            'SEBELUMNYA',
                             style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
+                              color: AppColors.textBody,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                        ],
-                      ),
-                    )
-                  // Notification List
-                  else ...[
-                    // =========================
-                    // SECTION TERBARU
-                    // =========================
-                    if (terbaruList.isNotEmpty) ...[
-                      const Padding(
-                        padding: EdgeInsets.only(
-                          left: 4,
-                          bottom: 12,
                         ),
-                        child: Text(
-                          'TERBARU',
-                          style: TextStyle(
-                            color: Color(0xFF475569),
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+
+                        // Card SEBELUMNYA
+                        ...sebelumnyaList.map(
+                          (item) => NotificationCard(
+                            notification: item,
+                            onTap: () => _handleNotificationTap(item),
                           ),
                         ),
-                      ),
-
-                      // Card TERBARU
-                      ...terbaruList.map(
-                        (item) => NotificationCard(
-                          notification: item,
-                          onTap: () => _handleNotificationTap(item),
-                        ),
-                      ),
-
-                      if (sebelumnyaList.isNotEmpty)
-                        const SizedBox(height: 16),
-                    ],
-
-                    // =========================
-                    // SECTION SEBELUMNYA
-                    // =========================
-                    if (sebelumnyaList.isNotEmpty) ...[
-                      const Padding(
-                        padding: EdgeInsets.only(
-                          left: 4,
-                          bottom: 12,
-                          top: 4,
-                        ),
-                        child: Text(
-                          'SEBELUMNYA',
-                          style: TextStyle(
-                            color: Color(0xFF475569),
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-
-                      // Card SEBELUMNYA
-                      ...sebelumnyaList.map(
-                        (item) => NotificationCard(
-                          notification: item,
-                          onTap: () => _handleNotificationTap(item),
-                        ),
-                      ),
+                      ],
                     ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
   }
 }

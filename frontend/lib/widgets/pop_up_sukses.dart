@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../screens/history/history_page.dart';
 import '../utils/app_colors.dart';
 import '../utils/page_transitions.dart';
@@ -54,9 +55,7 @@ class PopUpSukses extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 28),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         child: Padding(
@@ -126,10 +125,7 @@ class PopUpSukses extends StatelessWidget {
                   ),
                   child: const Text(
                     'Tambah Data',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -138,7 +134,8 @@ class PopUpSukses extends StatelessWidget {
 
               // Button 2: Lihat Riwayat
               TextButton(
-                onPressed: onViewHistory ??
+                onPressed:
+                    onViewHistory ??
                     () {
                       Navigator.pop(context);
                       AppNavigator.pushTabReplacement(
@@ -215,11 +212,11 @@ class _AnimatedCheckBadgeState extends State<_AnimatedCheckBadge>
         width: 68,
         height: 68,
         decoration: BoxDecoration(
-          color: const Color(0xFF15803D),
+          color: AppColors.statusTerverifikasiText,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF15803D).withValues(alpha: 0.3),
+              color: AppColors.statusTerverifikasiText.withValues(alpha: 0.3),
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),
@@ -237,7 +234,7 @@ class _AnimatedCheckBadgeState extends State<_AnimatedCheckBadge>
               ),
               child: const Icon(
                 Icons.check_rounded,
-                color: Color(0xFF15803D),
+                color: AppColors.statusTerverifikasiText,
                 size: 20,
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../utils/app_colors.dart';
 
 class PilihTanggal extends StatefulWidget {
@@ -26,7 +27,7 @@ class PilihTanggal extends StatefulWidget {
     'September',
     'Oktober',
     'November',
-    'Desember'
+    'Desember',
   ];
 
   /// Helper statis untuk menampilkan bottom sheet pemilihan rentang tanggal (Riwayat)
@@ -56,10 +57,8 @@ class PilihTanggal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => PilihTanggal(
-        initialStartDate: initialDate,
-        isSingleDate: true,
-      ),
+      builder: (context) =>
+          PilihTanggal(initialStartDate: initialDate, isSingleDate: true),
     );
   }
 
@@ -125,12 +124,16 @@ class _PilihTanggalState extends State<PilihTanggal> {
   }
 
   bool _isSameDay(DateTime? a, DateTime? b) {
-    if (a == null || b == null) return false;
+    if (a == null || b == null) {
+      return false;
+    }
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   bool _isInRange(DateTime day) {
-    if (widget.isSingleDate || _startDate == null || _endDate == null) return false;
+    if (widget.isSingleDate || _startDate == null || _endDate == null) {
+      return false;
+    }
     return day.isAfter(_startDate!) && day.isBefore(_endDate!);
   }
 
@@ -169,7 +172,7 @@ class _PilihTanggalState extends State<PilihTanggal> {
                   width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
+                    color: AppColors.borderLight,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -177,7 +180,10 @@ class _PilihTanggalState extends State<PilihTanggal> {
 
               // Header Row (Title & Close Button)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -194,7 +200,7 @@ class _PilihTanggalState extends State<PilihTanggal> {
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(
                         Icons.close_rounded,
-                        color: Color(0xFF64748B),
+                        color: AppColors.textMuted,
                         size: 22,
                       ),
                       padding: EdgeInsets.zero,
@@ -204,11 +210,14 @@ class _PilihTanggalState extends State<PilihTanggal> {
                 ),
               ),
 
-              const Divider(color: Color(0xFFF1F5F9), height: 1, thickness: 1),
+              const Divider(color: AppColors.divider, height: 1, thickness: 1),
 
               // Month Navigation Row
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -242,7 +251,10 @@ class _PilihTanggalState extends State<PilihTanggal> {
 
               // Weekday Header Row (Sen, Sel, Rab, Kam, Jum, Sab, Min)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
                 child: Row(
                   children: [
                     _buildWeekdayHeader('Sen', false),
@@ -250,7 +262,10 @@ class _PilihTanggalState extends State<PilihTanggal> {
                     _buildWeekdayHeader('Rab', false),
                     _buildWeekdayHeader('Kam', false),
                     _buildWeekdayHeader('Jum', false),
-                    _buildWeekdayHeader('Sab', widget.isSingleDate ? false : true),
+                    _buildWeekdayHeader(
+                      'Sab',
+                      widget.isSingleDate ? false : true,
+                    ),
                     _buildWeekdayHeader('Min', true),
                   ],
                 ),
@@ -311,8 +326,8 @@ class _PilihTanggalState extends State<PilihTanggal> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color(0x5900569E),
-                        disabledForegroundColor: const Color(0x99FFFFFF),
+                        disabledBackgroundColor: AppColors.datePickerDisabledBg,
+                        disabledForegroundColor: AppColors.datePickerDisabledFg,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 42,
@@ -346,7 +361,7 @@ class _PilihTanggalState extends State<PilihTanggal> {
         child: Text(
           label,
           style: TextStyle(
-            color: isWeekend ? const Color(0xFFDC2626) : const Color(0xFF475569),
+            color: isWeekend ? AppColors.statusDitolakText : AppColors.textBody,
             fontSize: 13,
             fontWeight: FontWeight.bold,
           ),
@@ -386,7 +401,8 @@ class _PilihTanggalState extends State<PilihTanggal> {
         final date = DateTime(year, month, dayNum);
         final isWeekend = widget.isSingleDate
             ? date.weekday == DateTime.sunday
-            : (date.weekday == DateTime.saturday || date.weekday == DateTime.sunday);
+            : (date.weekday == DateTime.saturday ||
+                  date.weekday == DateTime.sunday);
 
         currentRow.add(
           _buildDayCell(
@@ -443,16 +459,16 @@ class _PilihTanggalState extends State<PilihTanggal> {
         containerDecoration = null;
       } else if (inRange) {
         containerDecoration = const BoxDecoration(
-          color: Color(0xFFB8D5ED),
+          color: AppColors.datePickerAccent,
         );
       } else if (isStart && _endDate != null) {
         containerDecoration = const BoxDecoration(
-          color: Color(0xFFB8D5ED),
+          color: AppColors.datePickerAccent,
           borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
         );
       } else if (isEnd && _startDate != null) {
         containerDecoration = const BoxDecoration(
-          color: Color(0xFFB8D5ED),
+          color: AppColors.datePickerAccent,
           borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
         );
       }
@@ -475,13 +491,13 @@ class _PilihTanggalState extends State<PilihTanggal> {
     // Text Color
     Color textColor;
     if (!isCurrentMonth) {
-      textColor = const Color(0xFFCBD5E1);
+      textColor = AppColors.borderMedium;
     } else if (isSelected || isSingleDate) {
       textColor = Colors.white;
     } else if (isWeekend && !inRange) {
-      textColor = const Color(0xFFDC2626);
+      textColor = AppColors.statusDitolakText;
     } else {
-      textColor = const Color(0xFF1E293B);
+      textColor = AppColors.textHeading;
     }
 
     return Expanded(
@@ -541,10 +557,7 @@ class TanggalPemasangan extends StatelessWidget {
     final now = DateTime.now();
     final initial = selectedDate ?? now;
 
-    final picked = await PilihTanggal.showSingle(
-      context,
-      initialDate: initial,
-    );
+    final picked = await PilihTanggal.showSingle(context, initialDate: initial);
 
     if (picked != null) {
       onDateSelected(picked);
@@ -566,12 +579,12 @@ class TanggalPemasangan extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF), // Soft light blue
+                color: AppColors.infoBackground, // Soft light blue
                 borderRadius: BorderRadius.circular(9),
               ),
               child: const Icon(
                 Icons.event_note_outlined,
-                color: Color(0xFF2563EB), // Primary blue
+                color: AppColors.accentBlue, // Primary blue
                 size: 20,
               ),
             ),
@@ -585,7 +598,7 @@ class TanggalPemasangan extends StatelessWidget {
                       Text(
                         displayTitle,
                         style: const TextStyle(
-                          color: Color(0xFF1E293B),
+                          color: AppColors.textHeading,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -595,7 +608,7 @@ class TanggalPemasangan extends StatelessWidget {
                         const Text(
                           '*',
                           style: TextStyle(
-                            color: Color(0xFFEF4444),
+                            color: AppColors.error,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -607,7 +620,7 @@ class TanggalPemasangan extends StatelessWidget {
                   Text(
                     displaySubtitle,
                     style: const TextStyle(
-                      color: Color(0xFF94A3B8),
+                      color: AppColors.textSubtle,
                       fontSize: 12.5,
                       fontWeight: FontWeight.normal,
                     ),
@@ -632,8 +645,8 @@ class TanggalPemasangan extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: errorMessage != null
-                    ? const Color(0xFFEF4444)
-                    : const Color(0xFFE2E8F0),
+                    ? AppColors.error
+                    : AppColors.borderLight,
                 width: 1.0,
               ),
             ),
@@ -647,8 +660,8 @@ class TanggalPemasangan extends StatelessWidget {
                       : (hintText ?? 'Pilih tanggal penugasan'),
                   style: TextStyle(
                     color: selectedDate != null
-                        ? const Color(0xFF1E293B)
-                        : const Color(0xFF94A3B8),
+                        ? AppColors.textHeading
+                        : AppColors.textSubtle,
                     fontSize: 14,
                     fontWeight: selectedDate != null
                         ? FontWeight.w500
@@ -658,7 +671,7 @@ class TanggalPemasangan extends StatelessWidget {
                 const Icon(
                   Icons.calendar_today_outlined,
                   size: 18,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textSubtle,
                 ),
               ],
             ),
@@ -669,10 +682,7 @@ class TanggalPemasangan extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             errorMessage!,
-            style: const TextStyle(
-              color: Color(0xFFEF4444),
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: AppColors.error, fontSize: 12),
           ),
         ],
       ],

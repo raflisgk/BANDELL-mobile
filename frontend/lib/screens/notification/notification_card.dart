@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../models/notification_model.dart';
 import '../../utils/app_colors.dart';
 
@@ -6,11 +7,7 @@ class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
   final VoidCallback? onTap;
 
-  const NotificationCard({
-    super.key,
-    required this.notification,
-    this.onTap,
-  });
+  const NotificationCard({super.key, required this.notification, this.onTap});
 
   static String formatHeaderTime(DateTime? dt) {
     if (dt == null) return 'Baru saja';
@@ -26,11 +23,7 @@ class NotificationCard extends StatelessWidget {
     }
 
     final today = DateTime(now.year, now.month, now.day);
-    final notifDay = DateTime(
-      local.year,
-      local.month,
-      local.day,
-    );
+    final notifDay = DateTime(local.year, local.month, local.day);
 
     final daysDiff = today.difference(notifDay).inDays;
 
@@ -52,12 +45,11 @@ class NotificationCard extends StatelessWidget {
         notification.notificationType == NotificationType.assignment;
 
     final Color iconBg = isAssignment
-        ? const Color(0xFFE2EFFC) // Soft light blue circle
-        : const Color(0xFFFDE2E2); // Soft light pink/red circle
+        ? AppColors
+              .notifUnreadAvatarBg // Soft light blue circle
+        : AppColors.statusDitolakCircleBg; // Soft light pink/red circle
 
-    final Color iconColor = isAssignment
-        ? AppColors.primary
-        : AppColors.error;
+    final Color iconColor = isAssignment ? AppColors.primary : AppColors.error;
 
     final IconData iconData = isAssignment
         ? Icons.assignment_rounded
@@ -69,20 +61,17 @@ class NotificationCard extends StatelessWidget {
 
     final Color timeColor = isAssignment
         ? AppColors.primary
-        : const Color(0xFF64748B);
+        : AppColors.textMuted;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8EEF5),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.notifCardBorder, width: 1),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
+            color: AppColors.shadowMinimal,
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -108,11 +97,7 @@ class NotificationCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Icon(
-                      iconData,
-                      color: iconColor,
-                      size: 22,
-                    ),
+                    child: Icon(iconData, color: iconColor, size: 22),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -132,7 +117,7 @@ class NotificationCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
+                                color: AppColors.textHeading,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -168,7 +153,7 @@ class NotificationCard extends StatelessWidget {
                         notification.displayMessage,
                         style: const TextStyle(
                           fontSize: 13.5,
-                          color: Color(0xFF475569),
+                          color: AppColors.textBody,
                           height: 1.35,
                         ),
                       ),
@@ -183,14 +168,14 @@ class NotificationCard extends StatelessWidget {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F2FA),
+                            color: AppColors.notifSubCardBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             notification.cleanNotes!,
                             style: const TextStyle(
                               fontSize: 13.5,
-                              color: Color(0xFF1E293B),
+                              color: AppColors.textHeading,
                               fontWeight: FontWeight.w400,
                             ),
                           ),

@@ -171,12 +171,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 width: 56,
                 height: 56,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFFEE2E2),
+                  color: AppColors.logoutRedBg,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.logout_rounded,
-                  color: Color(0xFFEF4444),
+                  color: AppColors.logoutRed,
                   size: 28,
                 ),
               ),
@@ -193,7 +193,7 @@ class _ProfilePageState extends State<ProfilePage> {
               const Text(
                 'Apakah Anda yakin ingin keluar dari akun?',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 14, color: AppColors.textMuted),
               ),
               const SizedBox(height: 24),
               Row(
@@ -203,7 +203,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       onPressed: () => Navigator.pop(dialogContext),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        side: const BorderSide(color: AppColors.borderMedium),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -211,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: const Text(
                         'Batal',
                         style: TextStyle(
-                          color: Color(0xFF475569),
+                          color: AppColors.textBody,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -235,7 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF4444),
+                        backgroundColor: AppColors.logoutRed,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -267,7 +267,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final double headerTopPadding = (screenHeight >= 800) ? 12.0 : 8.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF265C8C),
+      backgroundColor: AppColors.profileGradientEnd,
       resizeToAvoidBottomInset: true,
       body: Container(
         width: double.infinity,
@@ -276,7 +276,10 @@ class _ProfilePageState extends State<ProfilePage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0072CE), Color(0xFF265C8C)],
+            colors: [
+              AppColors.profileGradientStart,
+              AppColors.profileGradientEnd,
+            ],
           ),
         ),
         child: SafeArea(
@@ -423,7 +426,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         const SizedBox(width: 6),
                                         const Icon(
                                           Icons.verified_rounded,
-                                          color: Color(0xFF0072CE),
+                                          color: AppColors.verifiedBlue,
                                           size: 20,
                                         ),
                                       ],
@@ -435,10 +438,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                         vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFEBF3FC),
+                                        color: AppColors.roleBadgeBackground,
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: const Color(0xFFBFDBFE),
+                                          color: AppColors.roleBadgeBorder,
                                           width: 1,
                                         ),
                                       ),
@@ -448,7 +451,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                           const Icon(
                                             Icons.engineering_rounded,
                                             size: 15,
-                                            color: Color(0xFF0C5DA5),
+                                            color: AppColors.roleBadgeText,
                                           ),
                                           const SizedBox(width: 6),
                                           Flexible(
@@ -457,7 +460,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
-                                                color: Color(0xFF0C5DA5),
+                                                color: AppColors.roleBadgeText,
                                                 fontSize: 12.5,
                                                 fontWeight: FontWeight.bold,
                                                 letterSpacing: 0.6,
@@ -531,7 +534,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         child: Text(
                                           'Keluar',
                                           style: TextStyle(
-                                            color: Color(0xFFEF4444),
+                                            color: AppColors.logoutRed,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -570,12 +573,12 @@ class _ProfilePageState extends State<ProfilePage> {
           width: 90,
           height: 90,
           decoration: BoxDecoration(
-            color: const Color(0xFFE2EBF8),
+            color: AppColors.avatarCircleBackground,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 4),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x1A000000),
+                color: AppColors.shadowMedium,
                 blurRadius: 10,
                 offset: Offset(0, 4),
               ),
@@ -584,7 +587,7 @@ class _ProfilePageState extends State<ProfilePage> {
           child: const Center(
             child: Icon(
               Icons.person_outline_rounded,
-              color: Color(0xFF0C5DA5),
+              color: AppColors.primary,
               size: 46,
             ),
           ),
@@ -596,12 +599,12 @@ class _ProfilePageState extends State<ProfilePage> {
             width: 26,
             height: 26,
             decoration: BoxDecoration(
-              color: const Color(0xFF0C5DA5),
+              color: AppColors.primary,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2.5),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x20000000),
+                  color: AppColors.shadowDark,
                   blurRadius: 4,
                   offset: Offset(0, 2),
                 ),

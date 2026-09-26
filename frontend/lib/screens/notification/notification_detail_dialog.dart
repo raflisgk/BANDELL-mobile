@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../../models/notification_model.dart';
 import '../../utils/app_colors.dart';
 
 class NotificationDetailDialog extends StatelessWidget {
   final NotificationModel notification;
 
-  const NotificationDetailDialog({
-    super.key,
-    required this.notification,
-  });
+  const NotificationDetailDialog({super.key, required this.notification});
 
   static Future<void> show(
     BuildContext context, {
@@ -17,9 +15,8 @@ class NotificationDetailDialog extends StatelessWidget {
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (dialogContext) => NotificationDetailDialog(
-        notification: notification,
-      ),
+      builder: (dialogContext) =>
+          NotificationDetailDialog(notification: notification),
     );
   }
 
@@ -37,8 +34,8 @@ class NotificationDetailDialog extends StatelessWidget {
 
   /// Popup Detail Laporan Ditolak (type == rejected)
   Widget _buildRejectedDialog(BuildContext context) {
-    final String projectName = notification.projectName.isNotEmpty &&
-            notification.projectName != '-'
+    final String projectName =
+        notification.projectName.isNotEmpty && notification.projectName != '-'
         ? notification.projectName
         : 'Laporan Proyek';
 
@@ -52,7 +49,8 @@ class NotificationDetailDialog extends StatelessWidget {
 
     // Untuk laporan ditolak, isi catatan HANYA berasal dari installation.note_by_admin
     final String noteText = (() {
-      final rawAdminNote = notification.installation?.note_by_admin?.trim() ??
+      final rawAdminNote =
+          notification.installation?.note_by_admin?.trim() ??
           notification.installation?.noteByAdmin?.trim();
       if (rawAdminNote != null &&
           rawAdminNote.isNotEmpty &&
@@ -66,9 +64,7 @@ class NotificationDetailDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -81,11 +77,7 @@ class NotificationDetailDialog extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: const [
-                Icon(
-                  Icons.cancel_outlined,
-                  size: 22,
-                  color: Colors.white,
-                ),
+                Icon(Icons.cancel_outlined, size: 22, color: Colors.white),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -114,7 +106,7 @@ class NotificationDetailDialog extends StatelessWidget {
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00447C),
+                      color: AppColors.dialogPrimaryDark,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.symmetric(
@@ -169,7 +161,7 @@ class NotificationDetailDialog extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFFE2E8F0),
+                        color: AppColors.borderLight,
                         width: 1,
                       ),
                     ),
@@ -182,7 +174,7 @@ class NotificationDetailDialog extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
+                            color: AppColors.textHeading,
                             letterSpacing: 0.3,
                           ),
                         ),
@@ -193,7 +185,7 @@ class NotificationDetailDialog extends StatelessWidget {
                             const Icon(
                               Icons.location_on,
                               size: 16,
-                              color: Color(0xFFEF4444),
+                              color: AppColors.error,
                             ),
                             const SizedBox(width: 6),
                             Expanded(
@@ -201,7 +193,7 @@ class NotificationDetailDialog extends StatelessWidget {
                                 district,
                                 style: const TextStyle(
                                   fontSize: 14,
-                                  color: Color(0xFF1E293B),
+                                  color: AppColors.textHeading,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -216,7 +208,7 @@ class NotificationDetailDialog extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 14,
                               fontStyle: FontStyle.italic,
-                              color: Color(0xFF334155),
+                              color: AppColors.textDark,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
@@ -234,7 +226,7 @@ class NotificationDetailDialog extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFFE2E8F0),
+                        color: AppColors.borderLight,
                         width: 1,
                       ),
                     ),
@@ -247,7 +239,7 @@ class NotificationDetailDialog extends StatelessWidget {
                             Icon(
                               Icons.info_outline_rounded,
                               size: 16,
-                              color: Color(0xFF1E293B),
+                              color: AppColors.textHeading,
                             ),
                             SizedBox(width: 6),
                             Text(
@@ -255,7 +247,7 @@ class NotificationDetailDialog extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
+                                color: AppColors.textHeading,
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -266,7 +258,7 @@ class NotificationDetailDialog extends StatelessWidget {
                           noteText,
                           style: const TextStyle(
                             fontSize: 13.5,
-                            color: Color(0xFF334155),
+                            color: AppColors.textDark,
                             height: 1.45,
                             fontWeight: FontWeight.w400,
                           ),
@@ -285,7 +277,7 @@ class NotificationDetailDialog extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
                         side: const BorderSide(
-                          color: Color(0xFFE2E8F0),
+                          color: AppColors.borderLight,
                           width: 1.2,
                         ),
                         shape: RoundedRectangleBorder(
@@ -296,7 +288,7 @@ class NotificationDetailDialog extends StatelessWidget {
                       child: const Text(
                         'Tutup',
                         style: TextStyle(
-                          color: Color(0xFF1E293B),
+                          color: AppColors.textHeading,
                           fontSize: 14.5,
                           fontWeight: FontWeight.bold,
                         ),
@@ -314,8 +306,8 @@ class NotificationDetailDialog extends StatelessWidget {
 
   /// Popup Detail Penugasan (type == assignment)
   Widget _buildAssignmentDialog(BuildContext context) {
-    final String projectName = notification.projectName.isNotEmpty &&
-            notification.projectName != '-'
+    final String projectName =
+        notification.projectName.isNotEmpty && notification.projectName != '-'
         ? notification.projectName
         : 'Proyek';
 
@@ -330,9 +322,7 @@ class NotificationDetailDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -346,7 +336,7 @@ class NotificationDetailDialog extends StatelessWidget {
                 Icon(
                   Icons.assignment_outlined,
                   size: 22,
-                  color: Color(0xFF1E293B),
+                  color: AppColors.textHeading,
                 ),
                 SizedBox(width: 10),
                 Expanded(
@@ -355,7 +345,7 @@ class NotificationDetailDialog extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16.5,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.textHeading,
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -363,11 +353,7 @@ class NotificationDetailDialog extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(
-            color: Color(0xFFE2E8F0),
-            height: 1,
-            thickness: 1,
-          ),
+          const Divider(color: AppColors.borderLight, height: 1, thickness: 1),
 
           // Isi Content
           Flexible(
@@ -441,7 +427,7 @@ class NotificationDetailDialog extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFFE2E8F0),
+                        color: AppColors.borderLight,
                         width: 1,
                       ),
                     ),
@@ -454,7 +440,7 @@ class NotificationDetailDialog extends StatelessWidget {
                             Icon(
                               Icons.info_outline_rounded,
                               size: 16,
-                              color: Color(0xFF1E293B),
+                              color: AppColors.textHeading,
                             ),
                             SizedBox(width: 6),
                             Text(
@@ -462,7 +448,7 @@ class NotificationDetailDialog extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
+                                color: AppColors.textHeading,
                                 letterSpacing: 0.4,
                               ),
                             ),
@@ -473,7 +459,7 @@ class NotificationDetailDialog extends StatelessWidget {
                           notesText,
                           style: const TextStyle(
                             fontSize: 13.5,
-                            color: Color(0xFF334155),
+                            color: AppColors.textDark,
                             height: 1.45,
                             fontWeight: FontWeight.w400,
                           ),
@@ -491,7 +477,7 @@ class NotificationDetailDialog extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
                         side: const BorderSide(
-                          color: Color(0xFFE2E8F0),
+                          color: AppColors.borderLight,
                           width: 1.2,
                         ),
                         shape: RoundedRectangleBorder(
@@ -502,7 +488,7 @@ class NotificationDetailDialog extends StatelessWidget {
                       child: const Text(
                         'Tutup',
                         style: TextStyle(
-                          color: Color(0xFF1E293B),
+                          color: AppColors.textHeading,
                           fontSize: 14.5,
                           fontWeight: FontWeight.bold,
                         ),

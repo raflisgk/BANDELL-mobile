@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../../models/history_lamp_model.dart';
 import '../../models/project_model.dart';
 import '../../services/auth_service.dart';
@@ -173,7 +175,6 @@ class _HistoryPageState extends State<HistoryPage> {
     return ProjectService.selectedProject;
   }
 
- 
   @override
   void dispose() {
     _refreshTimer?.cancel();
@@ -213,7 +214,8 @@ class _HistoryPageState extends State<HistoryPage> {
     if (startDate == null && endDate == null) return true;
 
     // HANYA gunakan created_at (tanggal record dibuat).
-    final itemDate = _extractDateOnly(item.createdAt) ??
+    final itemDate =
+        _extractDateOnly(item.createdAt) ??
         _extractDateOnly(item.installation?.createdAt);
 
     if (itemDate == null) return false;
@@ -240,7 +242,9 @@ class _HistoryPageState extends State<HistoryPage> {
             (item.districtName != null &&
                 item.districtName!.toLowerCase().contains(query)) ||
             (item.installation?.districtName != null &&
-                item.installation!.districtName!.toLowerCase().contains(query)) ||
+                item.installation!.districtName!.toLowerCase().contains(
+                  query,
+                )) ||
             item.lokasi.toLowerCase().contains(query) ||
             item.koordinat.toLowerCase().contains(query) ||
             item.status.toLowerCase().contains(query) ||
@@ -303,8 +307,9 @@ class _HistoryPageState extends State<HistoryPage> {
         ? item.idLcu!
         : (item.kode.trim().isNotEmpty ? item.kode : '-');
 
-    final double currentOffset =
-        _scrollController.hasClients ? _scrollController.offset : 0.0;
+    final double currentOffset = _scrollController.hasClients
+        ? _scrollController.offset
+        : 0.0;
 
     final result = await AppNavigator.push(
       context,
@@ -320,8 +325,12 @@ class _HistoryPageState extends State<HistoryPage> {
             ? item.koordinat.split(',')[1].trim()
             : null,
         address: item.lokasi,
-        createdAt: item.createdAt?.toIso8601String() ?? item.installation?.createdAt?.toIso8601String(),
-        updatedAt: item.updatedAt?.toIso8601String() ?? item.installation?.updatedAt?.toIso8601String(),
+        createdAt:
+            item.createdAt?.toIso8601String() ??
+            item.installation?.createdAt?.toIso8601String(),
+        updatedAt:
+            item.updatedAt?.toIso8601String() ??
+            item.installation?.updatedAt?.toIso8601String(),
         wattage: '120W',
         installation: item.installation,
         photos: item.installation?.photos,
@@ -334,21 +343,22 @@ class _HistoryPageState extends State<HistoryPage> {
       final int? deletedId = result['id'];
       if (mounted) {
         setState(() {
-          _historyItems.removeWhere((h) =>
-              (deletedId != null &&
-                  (h.idHistory == deletedId ||
-                      h.installation?.idInstallation == deletedId)));
+          _historyItems.removeWhere(
+            (h) =>
+                (deletedId != null &&
+                (h.idHistory == deletedId ||
+                    h.installation?.idInstallation == deletedId)),
+          );
         });
-        CustomFeedbackMessage.showSuccess(
-          context,
-          'Data berhasil dihapus',
-        );
+        CustomFeedbackMessage.showSuccess(context, 'Data berhasil dihapus');
         if (_scrollController.hasClients && currentOffset > 0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && _scrollController.hasClients) {
               _scrollController.jumpTo(
                 currentOffset.clamp(
-                    0.0, _scrollController.position.maxScrollExtent),
+                  0.0,
+                  _scrollController.position.maxScrollExtent,
+                ),
               );
             }
           });
@@ -363,7 +373,9 @@ class _HistoryPageState extends State<HistoryPage> {
           if (mounted && _scrollController.hasClients) {
             _scrollController.jumpTo(
               currentOffset.clamp(
-                  0.0, _scrollController.position.maxScrollExtent),
+                0.0,
+                _scrollController.position.maxScrollExtent,
+              ),
             );
           }
         });
@@ -426,12 +438,9 @@ class _HistoryPageState extends State<HistoryPage> {
                     Container(
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0F4FA),
+                        color: AppColors.surfaceSubtle,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.border,
-                          width: 1,
-                        ),
+                        border: Border.all(color: AppColors.border, width: 1),
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -498,7 +507,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                 Text(
                                   'Terbaru',
                                   style: TextStyle(
-                                    color: Color(0xFF64748B),
+                                    color: AppColors.textMuted,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -507,7 +516,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                 Icon(
                                   Icons.swap_vert_rounded,
                                   size: 14,
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.textMuted,
                                 ),
                               ],
                             ),
@@ -526,7 +535,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         Text(
                           '${filtered.length} Instalasi',
                           style: const TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.textSubtle,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w500,
                           ),
@@ -562,7 +571,9 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                        vertical: 40, horizontal: 20),
+                      vertical: 40,
+                      horizontal: 20,
+                    ),
                     child: Column(
                       children: const [
                         Icon(
@@ -600,7 +611,9 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                        vertical: 40, horizontal: 20),
+                      vertical: 40,
+                      horizontal: 20,
+                    ),
                     child: Column(
                       children: [
                         const Icon(
@@ -650,16 +663,11 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
               ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 16),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavbar(
-        currentIndex: 1,
-        onTap: _handleNavTap,
-      ),
+      bottomNavigationBar: BottomNavbar(currentIndex: 1, onTap: _handleNavTap),
     );
   }
 
@@ -675,23 +683,23 @@ class _HistoryPageState extends State<HistoryPage> {
           color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
+            color: isSelected ? AppColors.primary : AppColors.borderLight,
             width: 1,
           ),
           boxShadow: isSelected
               ? const [
                   BoxShadow(
-                    color: Color(0x29000000),
+                    color: AppColors.shadowStrong,
                     blurRadius: 6,
                     offset: Offset(0, 2),
-                  )
+                  ),
                 ]
               : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF475569),
+            color: isSelected ? Colors.white : AppColors.textBody,
             fontSize: 12.5,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           ),
@@ -700,4 +708,3 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 }
-

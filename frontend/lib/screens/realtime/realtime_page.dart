@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../models/installation_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/installation_service.dart';
@@ -27,13 +28,13 @@ class RealtimePage extends StatefulWidget {
   final int? lampTypeId;
 
   const RealtimePage({
-  super.key,
-  this.idProject,
-  this.idArea,
-  this.areaName,
-  this.lampType,
-  this.lampTypeId,
-});
+    super.key,
+    this.idProject,
+    this.idArea,
+    this.areaName,
+    this.lampType,
+    this.lampTypeId,
+  });
 
   @override
   State<RealtimePage> createState() => _RealtimePageState();
@@ -228,10 +229,7 @@ class _RealtimePageState extends State<RealtimePage> {
         setState(() {
           _isLoadingLocation = false;
         });
-        CustomFeedbackMessage.showError(
-          context,
-          'Gagal mengambil lokasi GPS.',
-        );
+        CustomFeedbackMessage.showError(context, 'Gagal mengambil lokasi GPS.');
       }
     }
   }
@@ -266,7 +264,7 @@ class _RealtimePageState extends State<RealtimePage> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
+                    color: AppColors.borderMedium,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -287,15 +285,16 @@ class _RealtimePageState extends State<RealtimePage> {
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.camera_alt_rounded,
-                        color: AppColors.primary),
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   title: const Text(
                     'Ambil Foto Kamera',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  subtitle:
-                      const Text('Buka kamera untuk mengambil foto baru'),
+                  subtitle: const Text('Buka kamera untuk mengambil foto baru'),
                   onTap: () {
                     Navigator.pop(bottomSheetContext);
                     _pickImage(ImageSource.camera);
@@ -309,8 +308,10 @@ class _RealtimePageState extends State<RealtimePage> {
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.photo_library_rounded,
-                        color: AppColors.primary),
+                    child: const Icon(
+                      Icons.photo_library_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                   title: const Text(
                     'Pilih dari Galeri',
@@ -346,10 +347,7 @@ class _RealtimePageState extends State<RealtimePage> {
     } catch (e) {
       debugPrint('Error picking image: $e');
       if (mounted) {
-        CustomFeedbackMessage.showError(
-          context,
-          'Gagal mengambil foto.',
-        );
+        CustomFeedbackMessage.showError(context, 'Gagal mengambil foto.');
       }
     }
   }
@@ -367,7 +365,7 @@ class _RealtimePageState extends State<RealtimePage> {
 
     final isProjectClosed =
         ProjectService.selectedProject?.status == 'closed' ||
-            ProjectService.selectedProject?.status == 'selesai';
+        ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
       CustomFeedbackMessage.showError(
         context,
@@ -379,10 +377,7 @@ class _RealtimePageState extends State<RealtimePage> {
     final projectId =
         widget.idProject ?? ProjectService.selectedProject?.idProject;
     if (projectId == null || projectId <= 0) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Project belum dipilih.',
-      );
+      CustomFeedbackMessage.showError(context, 'Project belum dipilih.');
       return;
     }
 
@@ -407,10 +402,7 @@ class _RealtimePageState extends State<RealtimePage> {
     final lampTypeId = widget.lampTypeId;
     if ((lampTypeId == null || lampTypeId <= 0) &&
         (widget.lampType == null || widget.lampType!.trim().isEmpty)) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Jenis lampu belum dipilih.',
-      );
+      CustomFeedbackMessage.showError(context, 'Jenis lampu belum dipilih.');
       return;
     }
 
@@ -489,10 +481,7 @@ class _RealtimePageState extends State<RealtimePage> {
           _isSubmitting = false;
         });
 
-        CustomFeedbackMessage.showSuccess(
-          context,
-          'Data berhasil disimpan',
-        );
+        CustomFeedbackMessage.showSuccess(context, 'Data berhasil disimpan');
 
         PopUpSukses.show(
           context,
@@ -538,10 +527,7 @@ class _RealtimePageState extends State<RealtimePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppTopBar(
-                showDropdown: false,
-                onBackPressed: _handleBack,
-              ),
+              AppTopBar(showDropdown: false, onBackPressed: _handleBack),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
@@ -583,7 +569,10 @@ class _RealtimePageState extends State<RealtimePage> {
 
                     const SizedBox(height: 20),
                     const Divider(
-                        color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+                      color: AppColors.borderLight,
+                      height: 1,
+                      thickness: 1,
+                    ),
                     const SizedBox(height: 20),
 
                     // 2. LOKASI KOORDINAT SECTION (GPS)
@@ -599,7 +588,10 @@ class _RealtimePageState extends State<RealtimePage> {
 
                     const SizedBox(height: 20),
                     const Divider(
-                        color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+                      color: AppColors.borderLight,
+                      height: 1,
+                      thickness: 1,
+                    ),
                     const SizedBox(height: 20),
 
                     // 3. KODE PANEL SECTION
@@ -610,7 +602,10 @@ class _RealtimePageState extends State<RealtimePage> {
 
                     const SizedBox(height: 20),
                     const Divider(
-                        color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+                      color: AppColors.borderLight,
+                      height: 1,
+                      thickness: 1,
+                    ),
                     const SizedBox(height: 20),
 
                     // CATATAN SECTION
@@ -621,7 +616,10 @@ class _RealtimePageState extends State<RealtimePage> {
 
                     const SizedBox(height: 20),
                     const Divider(
-                        color: Color(0xFFE2E8F0), height: 1, thickness: 1),
+                      color: AppColors.borderLight,
+                      height: 1,
+                      thickness: 1,
+                    ),
                     const SizedBox(height: 20),
 
                     // 4. DOKUMENTASI SECTION

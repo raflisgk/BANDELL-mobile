@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../utils/app_colors.dart';
 
 class RealtimeBarcodeSection extends StatelessWidget {
@@ -21,13 +22,13 @@ class RealtimeBarcodeSection extends StatelessWidget {
     if (hasScanned || isInvalid) {
       final Color cardBg = isInvalid
           ? AppColors.popupRedLight
-          : const Color(0xFFC7DBEC);
+          : AppColors.barcodeBorderInactive;
       final Color cardBorder = isInvalid
-          ? const Color(0xFFFECACA)
-          : const Color(0xFFA3C7E8);
+          ? AppColors.feedbackErrorBorder
+          : AppColors.barcodeTint;
       final Color iconCircleBg = isInvalid
           ? AppColors.error
-          : const Color(0xFF16A34A);
+          : AppColors.realtimeGreen;
       final IconData statusIcon = isInvalid
           ? Icons.close_rounded
           : Icons.check_rounded;
@@ -36,13 +37,13 @@ class RealtimeBarcodeSection extends StatelessWidget {
           : 'TERIDENTIFIKASI';
       final Color titleColor = isInvalid
           ? AppColors.error
-          : const Color(0xFF16A34A);
+          : AppColors.realtimeGreen;
       final String statusSubtitle = isInvalid
           ? 'Barcode tidak valid'
           : scannedBarcode!;
       final Color subtitleColor = isInvalid
           ? AppColors.textSecondary
-          : const Color(0xFF1E2B45);
+          : AppColors.barcodeTextDark;
       final double subtitleSize = isInvalid ? 15.0 : 21.0;
       final FontWeight subtitleWeight = isInvalid
           ? FontWeight.w600
@@ -53,10 +54,7 @@ class RealtimeBarcodeSection extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: cardBorder,
-            width: 1.2,
-          ),
+          border: Border.all(color: cardBorder, width: 1.2),
         ),
         child: Row(
           children: [
@@ -66,23 +64,16 @@ class RealtimeBarcodeSection extends StatelessWidget {
               decoration: BoxDecoration(
                 color: iconCircleBg,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white,
-                  width: 2.5,
-                ),
+                border: Border.all(color: Colors.white, width: 2.5),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x1A000000),
+                    color: AppColors.shadowMedium,
                     blurRadius: 4,
                     offset: Offset(0, 1),
                   ),
                 ],
               ),
-              child: Icon(
-                statusIcon,
-                color: Colors.white,
-                size: 18,
-              ),
+              child: Icon(statusIcon, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -152,7 +143,7 @@ class RealtimeBarcodeSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1A0C5DA5),
+            color: AppColors.shadowColor,
             blurRadius: 8,
             offset: Offset(0, 3),
           ),
@@ -171,8 +162,8 @@ class RealtimeBarcodeSection extends StatelessWidget {
                 height: 14,
                 decoration: const BoxDecoration(
                   border: Border(
-                    top: BorderSide(color: Color(0x66FFFFFF), width: 2),
-                    left: BorderSide(color: Color(0x66FFFFFF), width: 2),
+                    top: BorderSide(color: AppColors.whiteOverlay, width: 2),
+                    left: BorderSide(color: AppColors.whiteOverlay, width: 2),
                   ),
                 ),
               ),
@@ -185,8 +176,8 @@ class RealtimeBarcodeSection extends StatelessWidget {
                 height: 14,
                 decoration: const BoxDecoration(
                   border: Border(
-                    top: BorderSide(color: Color(0x66FFFFFF), width: 2),
-                    right: BorderSide(color: Color(0x66FFFFFF), width: 2),
+                    top: BorderSide(color: AppColors.whiteOverlay, width: 2),
+                    right: BorderSide(color: AppColors.whiteOverlay, width: 2),
                   ),
                 ),
               ),
@@ -199,8 +190,8 @@ class RealtimeBarcodeSection extends StatelessWidget {
                 height: 14,
                 decoration: const BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: Color(0x66FFFFFF), width: 2),
-                    left: BorderSide(color: Color(0x66FFFFFF), width: 2),
+                    bottom: BorderSide(color: AppColors.whiteOverlay, width: 2),
+                    left: BorderSide(color: AppColors.whiteOverlay, width: 2),
                   ),
                 ),
               ),
@@ -213,8 +204,8 @@ class RealtimeBarcodeSection extends StatelessWidget {
                 height: 14,
                 decoration: const BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: Color(0x66FFFFFF), width: 2),
-                    right: BorderSide(color: Color(0x66FFFFFF), width: 2),
+                    bottom: BorderSide(color: AppColors.whiteOverlay, width: 2),
+                    right: BorderSide(color: AppColors.whiteOverlay, width: 2),
                   ),
                 ),
               ),
@@ -222,8 +213,7 @@ class RealtimeBarcodeSection extends StatelessWidget {
 
             // Content Row
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
               child: Row(
                 children: [
                   const Icon(

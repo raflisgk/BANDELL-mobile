@@ -1,6 +1,8 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../area_operasional/area_operasional_page.dart';
@@ -14,8 +16,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage>
-    with TickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -66,32 +67,30 @@ class _LoginPageState extends State<LoginPage>
       curve: const Interval(0.20, 1.0, curve: Curves.easeOut),
     );
 
-    _formSlideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.08),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+    _formSlideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.08), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _shakeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
     );
 
-    _shakeAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: -8.0), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -8.0, end: 8.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 8.0, end: -6.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 6.0, end: -3.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -3.0, end: 0.0), weight: 1),
-    ]).animate(CurvedAnimation(
-      parent: _shakeController,
-      curve: Curves.easeInOut,
-    ));
+    _shakeAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0.0, end: -8.0), weight: 1),
+          TweenSequenceItem(tween: Tween(begin: -8.0, end: 8.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 8.0, end: -6.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: 6.0, end: -3.0), weight: 2),
+          TweenSequenceItem(tween: Tween(begin: -3.0, end: 0.0), weight: 1),
+        ]).animate(
+          CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut),
+        );
 
     _animController.forward();
     _loadSavedCredentials();
@@ -204,10 +203,7 @@ class _LoginPageState extends State<LoginPage>
         _isLoading = false;
       });
 
-      AppNavigator.pushAndRemoveUntil(
-        context,
-        const AreaOperasionalPage(),
-      );
+      AppNavigator.pushAndRemoveUntil(context, const AreaOperasionalPage());
     } catch (e, stackTrace) {
       if (!mounted) return;
 
@@ -275,11 +271,6 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Future<void> _handleContactAdmin() async {
-
-
-
-
-    
     const adminPhone = '6283143198347';
     final message = Uri.encodeComponent(
       'Halo Admin, saya ingin menghubungi Admin terkait akun aplikasi.',
@@ -293,7 +284,7 @@ class _LoginPageState extends State<LoginPage>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('WhatsApp tidak tersedia di perangkat.'),
-              backgroundColor: Color(0xFFDC2626),
+              backgroundColor: AppColors.error,
               duration: Duration(seconds: 2),
             ),
           );
@@ -310,7 +301,7 @@ class _LoginPageState extends State<LoginPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('WhatsApp tidak tersedia di perangkat.'),
-            backgroundColor: Color(0xFFDC2626),
+            backgroundColor: AppColors.error,
             duration: Duration(seconds: 2),
           ),
         );
@@ -320,7 +311,7 @@ class _LoginPageState extends State<LoginPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('WhatsApp tidak tersedia di perangkat.'),
-            backgroundColor: Color(0xFFDC2626),
+            backgroundColor: AppColors.error,
             duration: Duration(seconds: 2),
           ),
         );
@@ -438,198 +429,204 @@ class _LoginPageState extends State<LoginPage>
                         position: _formSlideAnimation,
                         child: Container(
                           decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppColors.loginBlueGradientStart,
-                            AppColors.loginBlueGradientEnd,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(32),
-                          topRight: Radius.circular(32),
-                        ),
-                      ),
-                      padding: EdgeInsets.only(
-                        left: 24.0,
-                        right: 24.0,
-                        top: 32.0,
-                        bottom: 32.0 + mediaQuery.padding.bottom,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 8),
-
-                          _buildErrorMessage(),
-
-                          // Username Field Container
-                          _buildInputFieldContainer(
-                            icon: Icons.person_outline_rounded,
-                            label: 'Username',
-                            hint: 'Masukkan username',
-                            controller: _usernameController,
-                            focusNode: _usernameFocusNode,
-                            hasError: _errorMessage != null,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                AppColors.loginBlueGradientStart,
+                                AppColors.loginBlueGradientEnd,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(32),
+                              topRight: Radius.circular(32),
+                            ),
                           ),
-
-                          const SizedBox(height: 16),
-
-                          // Password Field Container
-                          _buildInputFieldContainer(
-                            icon: Icons.lock_outline_rounded,
-                            label: 'Password',
-                            hint: 'Masukkan password',
-                            controller: _passwordController,
-                            focusNode: _passwordFocusNode,
-                            isPassword: true,
-                            isPasswordVisible: _isPasswordVisible,
-                            hasError: _errorMessage != null,
-                            onTogglePasswordVisibility: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
+                          padding: EdgeInsets.only(
+                            left: 24.0,
+                            right: 24.0,
+                            top: 32.0,
+                            bottom: 32.0 + mediaQuery.padding.bottom,
                           ),
-
-                          const SizedBox(height: 14),
-
-                          // Remember Me & Forgot Password Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Remember Me Checkbox
+                              const SizedBox(height: 8),
+
+                              _buildErrorMessage(),
+
+                              // Username Field Container
+                              _buildInputFieldContainer(
+                                icon: Icons.person_outline_rounded,
+                                label: 'Username',
+                                hint: 'Masukkan username',
+                                controller: _usernameController,
+                                focusNode: _usernameFocusNode,
+                                hasError: _errorMessage != null,
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Password Field Container
+                              _buildInputFieldContainer(
+                                icon: Icons.lock_outline_rounded,
+                                label: 'Password',
+                                hint: 'Masukkan password',
+                                controller: _passwordController,
+                                focusNode: _passwordFocusNode,
+                                isPassword: true,
+                                isPasswordVisible: _isPasswordVisible,
+                                hasError: _errorMessage != null,
+                                onTogglePasswordVisibility: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              // Remember Me & Forgot Password Row
                               Row(
-                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: Checkbox(
-                                      value: _rememberMe,
-                                      onChanged: _handleRememberMeChanged,
-                                      activeColor: Colors.white,
-                                      checkColor: AppColors.primary,
-                                      side: const BorderSide(
-                                        color: Colors.white,
-                                        width: 1.5,
+                                  // Remember Me Checkbox
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: Checkbox(
+                                          value: _rememberMe,
+                                          onChanged: _handleRememberMeChanged,
+                                          activeColor: Colors.white,
+                                          checkColor: AppColors.primary,
+                                          side: const BorderSide(
+                                            color: Colors.white,
+                                            width: 1.5,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () => _handleRememberMeChanged(
+                                          !_rememberMe,
+                                        ),
+                                        child: const Text(
+                                          'Ingat saya',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
+
+                                  // Forgot Password Link
                                   GestureDetector(
-                                    onTap: () => _handleRememberMeChanged(!_rememberMe),
+                                    onTap: _handleForgotPassword,
                                     child: const Text(
-                                      'Ingat saya',
+                                      'Lupa password?',
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.loginLinkCyan,
                                         fontSize: 13,
-                                        fontWeight: FontWeight.w500,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
 
-                              // Forgot Password Link
+                              const SizedBox(height: 24),
+
+                              // Login Button (White Background)
+                              SizedBox(
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _handleLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.yellow,
+                                    foregroundColor: AppColors.primary,
+                                    disabledBackgroundColor: Colors.yellow
+                                        .withValues(alpha: 0.6),
+                                    elevation: 2,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            color: AppColors.primary,
+                                            strokeWidth: 2.2,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Login',
+                                          style: TextStyle(
+                                            color: AppColors.primary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Hubungi Admin Footer Link
                               GestureDetector(
-                                onTap: _handleForgotPassword,
-                                child: const Text(
-                                  'Lupa password?',
-                                  style: TextStyle(
-                                    color: AppColors.loginLinkCyan,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
+                                onTap: _handleContactAdmin,
+                                child: Center(
+                                  child: Text.rich(
+                                    TextSpan(
+                                      text: 'Belum punya akun? ',
+                                      style: const TextStyle(
+                                        color: AppColors.whiteAlpha85,
+                                        fontSize: 12.5,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      children: const [
+                                        TextSpan(
+                                          text: 'Hubungi Admin',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.bold,
+                                            fontStyle: FontStyle.normal,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
+
+                              const SizedBox(height: 16),
                             ],
                           ),
-
-                          const SizedBox(height: 24),
-
-                          // Login Button (White Background)
-                          SizedBox(
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _handleLogin,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.yellow,
-                                foregroundColor: AppColors.primary,
-                                disabledBackgroundColor: Colors.yellow.withValues(alpha: 0.6),
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primary,
-                                        strokeWidth: 2.2,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Login',
-                                      style: TextStyle(
-                                        color: AppColors.primary,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Hubungi Admin Footer Link
-                          GestureDetector(
-                            onTap: _handleContactAdmin,
-                            child: Center(
-                              child: Text.rich(
-                                TextSpan(
-                                  text: 'Belum punya akun? ',
-                                  style: const TextStyle(
-                                    color: Color(0xD9FFFFFF),
-                                    fontSize: 12.5,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  children: const [
-                                    TextSpan(
-                                      text: 'Hubungi Admin',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.bold,
-                                        fontStyle: FontStyle.normal,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   Widget _buildInputFieldContainer({
@@ -646,7 +643,7 @@ class _LoginPageState extends State<LoginPage>
     final isFocused = focusNode.hasFocus;
 
     final borderColor = hasError
-        ? const Color(0xFFEF4444)
+        ? AppColors.error
         : (isFocused ? AppColors.primary : AppColors.border);
     final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
 
@@ -655,10 +652,7 @@ class _LoginPageState extends State<LoginPage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: borderColor,
-          width: borderWidth,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
@@ -669,11 +663,7 @@ class _LoginPageState extends State<LoginPage>
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: AppColors.hintColor,
-            size: 20,
-          ),
+          Icon(icon, color: AppColors.hintColor, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -749,7 +739,7 @@ class _LoginPageState extends State<LoginPage>
           child: Text(
             _errorMessage!,
             style: const TextStyle(
-              color: Color(0xFFFF6B6B),
+              color: AppColors.loginErrorRed,
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
               letterSpacing: -0.1,

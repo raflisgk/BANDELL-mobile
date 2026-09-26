@@ -1,11 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../utils/app_colors.dart';
 
-enum FeedbackType {
-  success,
-  error,
-}
+enum FeedbackType { success, error }
 
 /// Global Reusable Feedback Widget & Overlay Manager for BANDELL Mobile
 class CustomFeedback extends StatelessWidget {
@@ -82,16 +81,21 @@ class CustomFeedback extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isSuccess = type == FeedbackType.success;
 
-    final Color bgColor =
-        isSuccess ? AppColors.realtimeBackground : const Color(0xFFFEF2F2);
-    final Color borderColor =
-        isSuccess ? AppColors.realtimeBorder : const Color(0xFFFECACA);
-    final Color iconColor =
-        isSuccess ? AppColors.realtimeGreen : AppColors.error;
-    final Color textColor =
-        isSuccess ? const Color(0xFF166534) : const Color(0xFF991B1B);
-    final IconData iconData =
-        isSuccess ? Icons.check_circle_rounded : Icons.error_outline_rounded;
+    final Color bgColor = isSuccess
+        ? AppColors.realtimeBackground
+        : AppColors.feedbackErrorBg;
+    final Color borderColor = isSuccess
+        ? AppColors.realtimeBorder
+        : AppColors.feedbackErrorBorder;
+    final Color iconColor = isSuccess
+        ? AppColors.realtimeGreen
+        : AppColors.error;
+    final Color textColor = isSuccess
+        ? AppColors.feedbackSuccessText
+        : AppColors.feedbackErrorText;
+    final IconData iconData = isSuccess
+        ? Icons.check_circle_rounded
+        : Icons.error_outline_rounded;
 
     return Material(
       color: Colors.transparent,
@@ -106,7 +110,7 @@ class CustomFeedback extends StatelessWidget {
             border: Border.all(color: borderColor, width: 1),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x14000000),
+                color: AppColors.shadowLight,
                 blurRadius: 10,
                 offset: Offset(0, 4),
               ),
@@ -115,11 +119,7 @@ class CustomFeedback extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                iconData,
-                color: iconColor,
-                size: 20,
-              ),
+              Icon(iconData, color: iconColor, size: 20),
               const SizedBox(width: 10),
               Flexible(
                 child: Text(
@@ -239,4 +239,3 @@ class _FloatingFeedbackOverlayState extends State<_FloatingFeedbackOverlay>
     );
   }
 }
-

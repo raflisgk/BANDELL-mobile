@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../utils/app_colors.dart';
 
 class LokasiCard extends StatelessWidget {
@@ -19,7 +20,8 @@ class LokasiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveDistrict = (districtName != null &&
+    final effectiveDistrict =
+        (districtName != null &&
             districtName!.trim().isNotEmpty &&
             districtName!.trim() != '-')
         ? districtName!.trim()
@@ -65,7 +67,7 @@ class LokasiCard extends StatelessWidget {
             padding: EdgeInsets.only(top: 2),
             child: Icon(
               Icons.location_on_outlined,
-              color: Color(0xFF94A3B8),
+              color: AppColors.textSubtle,
               size: 18,
             ),
           ),
@@ -87,7 +89,7 @@ class LokasiCard extends StatelessWidget {
                 Text(
                   effectiveCoords,
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: AppColors.textMuted,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w400,
                   ),
