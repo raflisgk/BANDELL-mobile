@@ -5,9 +5,15 @@ import '../../utils/app_colors.dart';
 
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
+  final bool isExpanded;
   final VoidCallback? onTap;
 
-  const NotificationCard({super.key, required this.notification, this.onTap});
+  const NotificationCard({
+    super.key,
+    required this.notification,
+    this.isExpanded = false,
+    this.onTap,
+  });
 
   static String formatHeaderTime(DateTime? dt) {
     if (dt == null) return 'Baru saja';
@@ -39,6 +45,36 @@ class NotificationCard extends StatelessWidget {
     return '${notifDay.day}/${notifDay.month}/${notifDay.year}';
   }
 
+  static String formatFullDateTime(DateTime? dt) {
+    if (dt == null) return '-';
+    final local = dt.toLocal();
+    final d = local.day.toString().padLeft(2, '0');
+    final m = _monthName(local.month);
+    final y = local.year;
+    final h = local.hour.toString().padLeft(2, '0');
+    final min = local.minute.toString().padLeft(2, '0');
+    return '$d $m $y • $h:$min WIB';
+  }
+
+  static String _monthName(int month) {
+    const months = [
+      '',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return (month >= 1 && month <= 12) ? months[month] : '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isAssignment =
@@ -59,22 +95,44 @@ class NotificationCard extends StatelessWidget {
         ? notification.time
         : formatHeaderTime(notification.assignedAt ?? notification.createdAt);
 
-    final Color timeColor = isAssignment
-        ? AppColors.primary
-        : AppColors.textMuted;
+    final Color badgeBg = isAssignment
+        ? AppColors.roleBadgeBackground
+        : AppColors.statusDitolakCircleBg;
 
-    return Container(
+    final Color badgeTextColor = isAssignment
+        ? AppColors.primary
+        : AppColors.error;
+
+    final String badgeLabel = isAssignment ? 'Penugasan' : 'Ditolak';
+
+    final Color activeBorder = isExpanded
+        ? (isAssignment
+              ? AppColors.primary.withValues(alpha: 0.45)
+              : AppColors.error.withValues(alpha: 0.45))
+        : AppColors.notifCardBorder;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOutCubic,
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.notifCardBorder, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowMinimal,
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
+        border: Border.all(color: activeBorder, width: isExpanded ? 1.5 : 1),
+        boxShadow: [
+          if (isExpanded)
+            BoxShadow(
+              color: (isAssignment ? AppColors.primary : AppColors.error)
+                  .withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            )
+          else
+            const BoxShadow(
+              color: AppColors.shadowMinimal,
+              blurRadius: 10,
+              offset: Offset(0, 2),
+            ),
         ],
       ),
       child: Material(
@@ -85,103 +143,151 @@ class NotificationCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon Avatar
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Icon(iconData, color: iconColor, size: 22),
-                  ),
-                ),
-                const SizedBox(width: 14),
+                // ==================== TOP SUMMARY ROW ====================
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icon Avatar
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: iconBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Icon(iconData, color: iconColor, size: 22),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
 
-                // Main Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header Row: Title, Time, Unread Dot
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                    // Title, Badge, Time, and Chevron
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              notification.displayTitle,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textHeading,
+                          // Header: Title & Unread indicator
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  notification.displayTitle,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textHeading,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              if (notification.isUnread) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(width: 6),
+                              AnimatedRotation(
+                                turns: isExpanded ? 0.5 : 0.0,
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeInOutCubic,
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 22,
+                                  color: isExpanded
+                                      ? (isAssignment
+                                            ? AppColors.primary
+                                            : AppColors.error)
+                                      : AppColors.textSubtle,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(height: 5),
+
+                          // Badge Type & Relative Time
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: badgeBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  badgeLabel,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: badgeTextColor,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                timeText,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+
+                          // Message description
                           Text(
-                            timeText,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: isAssignment
-                                  ? FontWeight.w500
-                                  : FontWeight.w400,
-                              color: timeColor,
-                            ),
-                          ),
-                          if (notification.isUnread) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-
-                      // Description
-                      Text(
-                        notification.displayMessage,
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          color: AppColors.textBody,
-                          height: 1.35,
-                        ),
-                      ),
-
-                      // Catatan container (only if notes available)
-                      if (notification.cleanNotes != null) ...[
-                        const SizedBox(height: 10),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.notifSubCardBg,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            notification.cleanNotes!,
+                            notification.displayMessage,
                             style: const TextStyle(
                               fontSize: 13.5,
-                              color: AppColors.textHeading,
-                              fontWeight: FontWeight.w400,
+                              color: AppColors.textBody,
+                              height: 1.35,
                             ),
                           ),
-                        ),
-                      ],
-                    ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                // ==================== EXPANDED DETAIL SECTION ====================
+                ClipRect(
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: isExpanded
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 14),
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: AppColors.borderLight,
+                                ),
+                              ),
+                              if (isAssignment)
+                                _buildAssignmentDetail(context)
+                              else
+                                _buildRejectedDetail(context),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
                   ),
                 ),
               ],
@@ -189,6 +295,389 @@ class NotificationCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Detail section untuk Notifikasi Penugasan
+  Widget _buildAssignmentDetail(BuildContext context) {
+    final String projectName =
+        notification.projectName.isNotEmpty && notification.projectName != '-'
+        ? notification.projectName
+        : 'Proyek';
+
+    final String rawNotes = (() {
+      final raw = notification.cleanNotes ?? notification.notes;
+      if (raw == null || raw.trim().isEmpty) return '';
+      return raw
+          .replaceFirst(RegExp(r'^catatan:\s*', caseSensitive: false), '')
+          .trim();
+    })();
+
+    final DateTime? assignDt =
+        notification.assignedAt ?? notification.createdAt;
+    final String formattedDate = formatFullDateTime(assignDt);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 1. Box Nama Proyek (Navy elegan)
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.cardPrimary,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.domain_rounded,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'NAMA PROYEK',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white.withValues(alpha: 0.85),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      projectName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // 2. Waktu Penugasan Lengkap
+        if (assignDt != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.inputBackground,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.borderLight, width: 0.8),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.access_time_rounded,
+                  size: 15,
+                  color: AppColors.textMuted,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Waktu Penugasan: $formattedDate',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+
+        // 3. Catatan / Instruksi Khusus
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.notifSubCardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.borderLight, width: 1),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: const [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 15,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'CATATAN KHUSUS',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textHeading,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                rawNotes.isNotEmpty
+                    ? rawNotes
+                    : 'Tidak ada catatan khusus dari admin.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: rawNotes.isNotEmpty
+                      ? AppColors.textDark
+                      : AppColors.textMuted,
+                  height: 1.4,
+                  fontStyle: rawNotes.isNotEmpty
+                      ? FontStyle.normal
+                      : FontStyle.italic,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Detail section untuk Notifikasi Laporan Ditolak
+  Widget _buildRejectedDetail(BuildContext context) {
+    final String projectName =
+        notification.projectName.isNotEmpty && notification.projectName != '-'
+        ? notification.projectName
+        : 'Laporan Proyek';
+
+    final String district = notification.district.isNotEmpty
+        ? notification.district
+        : '-';
+
+    final String idLcu = notification.idLcu.isNotEmpty
+        ? notification.idLcu
+        : '-';
+
+    final String noteText = (() {
+      final rawAdminNote =
+          notification.installation?.note_by_admin?.trim() ??
+          notification.installation?.noteByAdmin?.trim();
+      if (rawAdminNote != null &&
+          rawAdminNote.isNotEmpty &&
+          rawAdminNote != '-' &&
+          rawAdminNote.toLowerCase() != 'null') {
+        return rawAdminNote;
+      }
+      final clean = notification.cleanNotes;
+      if (clean != null && clean.isNotEmpty) {
+        return clean
+            .replaceFirst(RegExp(r'^catatan:\s*', caseSensitive: false), '')
+            .trim();
+      }
+      return 'Tidak ada catatan penolakan spesifik dari admin.';
+    })();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 1. Box Proyek & Status Ditolak
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.statusDitolakCircleBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.error.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'STATUS LAPORAN: DITOLAK',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.error,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      projectName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textHeading,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // 2. Detail Pemasangan (Lokasi & ID LCU)
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.borderLight, width: 1),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'DETAIL PEMASANGAN',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHeading,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    size: 15,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      district,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textHeading,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.qr_code_2_rounded,
+                    size: 15,
+                    color: AppColors.textMuted,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'ID LCU: $idLcu',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // 3. Alasan Penolakan dari Admin
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.statusDitolakCircleBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.error.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.cancel_outlined, size: 15, color: AppColors.error),
+                  SizedBox(width: 6),
+                  Text(
+                    'ALASAN PENOLAKAN DARI ADMIN',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.error,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                noteText,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textDark,
+                  height: 1.4,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

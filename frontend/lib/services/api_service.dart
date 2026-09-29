@@ -21,7 +21,7 @@ class ApiException implements Exception {
 
 class ApiService {
   /// Base URL endpoint Laravel backend API
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'http://192.168.1.100:8000/api';
 
   /// Returns the base URL for public storage files
   /// (e.g. http://10.0.2.2:8000/storage)
@@ -34,7 +34,7 @@ class ApiService {
       return '${uri.scheme}://${uri.host}$portPart/storage';
     }
 
-    return 'http://10.0.2.2:8000/storage';
+    return 'http://192.168.1.100:8000/storage';
   }
 
   /// Converts any photo path or partial URL into a fully-qualified,
