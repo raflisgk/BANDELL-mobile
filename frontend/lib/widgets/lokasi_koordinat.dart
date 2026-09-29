@@ -227,7 +227,7 @@ class LokasiKoordinat extends StatelessWidget {
                     'Ambil koordinat otomatis dari GPS',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.white70,
+                      color: AppColors.whiteAlpha70,
                       fontWeight: FontWeight.w400,
                     ),
                   ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -22,7 +23,9 @@ class ProjectService {
     final targetUserId = userId ?? AuthService.currentUser?.idUser;
 
     if (targetUserId == null || targetUserId <= 0) {
-      debugPrint('ProjectService: user_id tidak valid ($targetUserId), daftar project kosong.');
+      debugPrint(
+        'ProjectService: user_id tidak valid ($targetUserId), daftar project kosong.',
+      );
       _projects = [];
       return [];
     }
@@ -34,7 +37,8 @@ class ProjectService {
       final Map<int, ProjectModel> uniqueProjects = {};
 
       for (final item in rawList) {
-        if (item is Map<String, dynamic> && item['project'] is Map<String, dynamic>) {
+        if (item is Map<String, dynamic> &&
+            item['project'] is Map<String, dynamic>) {
           final project = ProjectModel.fromJson(
             item['project'] as Map<String, dynamic>,
           );
@@ -56,9 +60,7 @@ class ProjectService {
   /// Ambil project berdasarkan ID
   static ProjectModel? getProjectById(int id) {
     try {
-      return _projects.firstWhere(
-        (project) => project.id == id,
-      );
+      return _projects.firstWhere((project) => project.id == id);
     } catch (_) {
       return null;
     }
@@ -67,9 +69,7 @@ class ProjectService {
   /// Ambil project berdasarkan nama
   static ProjectModel? getProjectByName(String name) {
     try {
-      return _projects.firstWhere(
-        (project) => project.name == name,
-      );
+      return _projects.firstWhere((project) => project.name == name);
     } catch (_) {
       return null;
     }
@@ -78,9 +78,7 @@ class ProjectService {
   /// Mengambil area berdasarkan project
   Future<List<dynamic>> getAreas(int projectId) async {
     final response = await http.get(
-      Uri.parse(
-        '${ApiService.baseUrl}/projects/$projectId/areas',
-      ),
+      Uri.parse('${ApiService.baseUrl}/projects/$projectId/areas'),
       headers: ApiService.defaultHeaders,
     );
 

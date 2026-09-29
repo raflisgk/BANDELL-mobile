@@ -25,7 +25,7 @@ class PopUpSukses extends StatelessWidget {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: AppColors.barrierOverlay,
       builder: (dialogContext) => PopScope(
         canPop: false,
         child: PopUpSukses(

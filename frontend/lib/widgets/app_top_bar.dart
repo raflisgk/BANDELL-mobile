@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+
 import '../screens/notification/notification_page.dart';
 import '../utils/app_colors.dart';
 import '../utils/page_transitions.dart';
@@ -15,6 +17,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   final bool? showDropdown;
   final Color? backgroundColor;
   final Color? iconColor;
+  final bool isLoading;
 
   const AppTopBar({
     super.key,
@@ -29,6 +32,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.showDropdown,
     this.backgroundColor,
     this.iconColor,
+    this.isLoading = false,
   });
 
   @override
@@ -97,8 +101,9 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
                           ? AppColors.primary
                           : AppColors.textPrimary,
                       fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -128,11 +133,14 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     final bool shouldShowBack = showBackButton ?? canPop;
     final GlobalKey dropdownKey = GlobalKey();
 
-    final String displayText = selectedValue ?? title ?? 'Pilih Project';
+    final String displayText = isLoading
+        ? 'Memuat Proyek...'
+        : (selectedValue ?? title ?? 'Pilih Project');
     final bool isDropdown =
-        showDropdown ?? (dropdownItems != null || selectedValue != null);
+        showDropdown ??
+        (dropdownItems != null || selectedValue != null || isLoading);
     final bool isDropdownInteractive =
-        dropdownItems != null && dropdownItems!.isNotEmpty;
+        !isLoading && dropdownItems != null && dropdownItems!.isNotEmpty;
 
     final Color effectiveBgColor = backgroundColor ?? Colors.transparent;
     final Color effectiveIconColor = iconColor ?? AppColors.primary;
@@ -153,10 +161,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
                 size: 26,
               ),
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 40,
-                minHeight: 40,
-              ),
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             )
           else
             const SizedBox(width: 40),
@@ -166,64 +171,70 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
           // Middle: Dropdown, Title, or Empty Spacer
           Expanded(
             child: isDropdown
-                ? GestureDetector(
-                    key: dropdownKey,
-                    onTap: isDropdownInteractive
-                        ? () => _showDropdownMenu(context, dropdownKey)
-                        : null,
-                    child: Container(
-                      height: 42,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppColors.border,
-                          width: 1.2,
+                ? Skeletonizer(
+                    enabled: isLoading,
+                    child: GestureDetector(
+                      key: dropdownKey,
+                      onTap: isDropdownInteractive
+                          ? () => _showDropdownMenu(context, dropdownKey)
+                          : null,
+                      child: Container(
+                        height: 42,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1.2,
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              displayText,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: (selectedValue == null && title == null)
-                                    ? AppColors.textSecondary
-                                    : AppColors.textPrimary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                displayText,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color:
+                                      (selectedValue == null &&
+                                          title == null &&
+                                          !isLoading)
+                                      ? AppColors.textSecondary
+                                      : AppColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: isDropdownInteractive
-                                ? AppColors.primary
-                                : AppColors.iconColor,
-                            size: 22,
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: isDropdownInteractive
+                                  ? AppColors.primary
+                                  : AppColors.iconColor,
+                              size: 22,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   )
                 : (title != null
-                    ? Center(
-                        child: Text(
-                          title!,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: (iconColor == Colors.white)
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                      ? Center(
+                          child: Text(
+                            title!,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: (iconColor == Colors.white)
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      )
-                    : const SizedBox.shrink()),
+                        )
+                      : const SizedBox.shrink()),
           ),
 
           const SizedBox(width: 8),
@@ -238,10 +249,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
                 size: 26,
               ),
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 40,
-                minHeight: 40,
-              ),
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             )
           else
             const SizedBox(width: 40),

@@ -30,7 +30,7 @@ class AreaOperasionalCard extends StatelessWidget {
         ],
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
@@ -47,7 +47,7 @@ class AreaOperasionalCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.cardTextWhite,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.1,
@@ -63,7 +63,7 @@ class AreaOperasionalCard extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.cardButtonWhite,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(

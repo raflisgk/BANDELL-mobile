@@ -21,7 +21,7 @@ class ApiException implements Exception {
 
 class ApiService {
   /// Base URL endpoint Laravel backend API
-  static const String baseUrl = 'http://192.168.1.110:8000/api';
+  static const String baseUrl = 'http://192.168.1.100:8000/api';
 
   /// Returns the base URL for public storage files
   /// (e.g. http://192.168.1.110:8000/storage)
@@ -34,7 +34,7 @@ class ApiService {
       return '${uri.scheme}://${uri.host}$portPart/storage';
     }
 
-    return 'http://192.168.1.110:8000/storage';
+    return 'http://192.168.1.100:8000/storage';
   }
 
   /// Converts any photo path or partial URL into a fully-qualified,
@@ -113,10 +113,7 @@ class ApiService {
     final response = await http.put(
       Uri.parse('$baseUrl/profile/phone'),
       headers: defaultHeaders,
-      body: jsonEncode({
-        'user_id': userId,
-        'phone_number': phoneNumber,
-      }),
+      body: jsonEncode({'user_id': userId, 'phone_number': phoneNumber}),
     );
 
     debugPrint('UPDATE PROFILE STATUS: ${response.statusCode}');
@@ -135,8 +132,7 @@ class ApiService {
     }
 
     throw Exception(
-      responseData['message']?.toString() ??
-          'Gagal memperbarui nomor telepon.',
+      responseData['message']?.toString() ?? 'Gagal memperbarui nomor telepon.',
     );
   }
 
@@ -160,18 +156,18 @@ class ApiService {
 
   /// Default headers yang akan dikirim pada setiap request API
   static Map<String, String> get defaultHeaders => {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Connection': 'close',
-        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
-      };
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'Connection': 'close',
+    if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+  };
 
   /// Headers untuk upload multipart (file/foto)
   static Map<String, String> get multipartHeaders => {
-        'Accept': 'application/json',
-        'Connection': 'close',
-        if (_authToken != null) 'Authorization': 'Bearer $_authToken',
-      };
+    'Accept': 'application/json',
+    'Connection': 'close',
+    if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+  };
 
   /// Endpoint login
   static Future<Map<String, dynamic>> login({
@@ -185,10 +181,7 @@ class ApiService {
           .post(
             Uri.parse('$baseUrl/login'),
             headers: defaultHeaders,
-            body: jsonEncode({
-              'email': email,
-              'password': password,
-            }),
+            body: jsonEncode({'email': email, 'password': password}),
           )
           .timeout(const Duration(seconds: 15));
     } on TimeoutException catch (e) {
@@ -222,8 +215,9 @@ class ApiService {
 
     if (response.statusCode == 200) {
       if (data != null && data['user'] != null) {
-        AuthService.currentUser =
-            UserModel.fromJson(data['user'] as Map<String, dynamic>);
+        AuthService.currentUser = UserModel.fromJson(
+          data['user'] as Map<String, dynamic>,
+        );
       }
 
       return data ?? {};
@@ -249,12 +243,10 @@ class ApiService {
 
     // 422: Validasi input gagal dari backend
     if (response.statusCode == 422) {
-      String validationMsg =
-          'Format email atau password tidak valid.';
+      String validationMsg = 'Format email atau password tidak valid.';
 
       if (data != null) {
-        if (data['errors'] is Map &&
-            (data['errors'] as Map).isNotEmpty) {
+        if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
           final firstKey = (data['errors'] as Map).keys.first;
           final firstVal = (data['errors'] as Map)[firstKey];
 
@@ -280,10 +272,7 @@ class ApiService {
         }
       }
 
-      throw ApiException(
-        validationMsg,
-        statusCode: 422,
-      );
+      throw ApiException(validationMsg, statusCode: 422);
     }
 
     // 500+: Server error
@@ -297,7 +286,8 @@ class ApiService {
     // Status code lainnya
     final safeMsg = data?['message']?.toString();
 
-    final bool isSafe = safeMsg != null &&
+    final bool isSafe =
+        safeMsg != null &&
         safeMsg.isNotEmpty &&
         !safeMsg.toLowerCase().contains('exception') &&
         !safeMsg.toLowerCase().contains('error') &&
@@ -305,34 +295,23 @@ class ApiService {
         !safeMsg.contains('{');
 
     throw ApiException(
-      isSafe
-          ? safeMsg
-          : 'Terjadi kesalahan. Silakan coba lagi.',
+      isSafe ? safeMsg : 'Terjadi kesalahan. Silakan coba lagi.',
       statusCode: response.statusCode,
     );
   }
 
   /// Endpoint untuk mengambil notifikasi berdasarkan user_id
   static Future<List<dynamic>> getNotifications(int userId) async {
-    final uri = Uri.parse(
-      '$baseUrl/notifications?user_id=$userId',
-    );
+    final uri = Uri.parse('$baseUrl/notifications?user_id=$userId');
 
     debugPrint('DEBUG USER ID: $userId');
     debugPrint('DEBUG NOTIFICATION URL: $uri');
 
-    final response = await http.get(
-      uri,
-      headers: defaultHeaders,
-    );
+    final response = await http.get(uri, headers: defaultHeaders);
 
-    debugPrint(
-      'DEBUG NOTIFICATION STATUS: ${response.statusCode}',
-    );
+    debugPrint('DEBUG NOTIFICATION STATUS: ${response.statusCode}');
 
-    debugPrint(
-      'DEBUG NOTIFICATION BODY: ${response.body}',
-    );
+    debugPrint('DEBUG NOTIFICATION BODY: ${response.body}');
 
     if (response.statusCode == 200) {
       final dynamic decoded = jsonDecode(response.body);
@@ -349,33 +328,18 @@ class ApiService {
 
   /// Endpoint untuk mengambil assignment project teknisi
   /// berdasarkan user_id
-  static Future<List<dynamic>> getProjectAssignments(
-    int userId,
-  ) async {
-    final uri = Uri.parse(
-      '$baseUrl/project-assignments?user_id=$userId',
-    );
+  static Future<List<dynamic>> getProjectAssignments(int userId) async {
+    final uri = Uri.parse('$baseUrl/project-assignments?user_id=$userId');
 
-    debugPrint(
-      'DEBUG USER ID FOR ASSIGNMENTS: $userId',
-    );
+    debugPrint('DEBUG USER ID FOR ASSIGNMENTS: $userId');
 
-    debugPrint(
-      'DEBUG PROJECT ASSIGNMENTS URL: $uri',
-    );
+    debugPrint('DEBUG PROJECT ASSIGNMENTS URL: $uri');
 
-    final response = await http.get(
-      uri,
-      headers: defaultHeaders,
-    );
+    final response = await http.get(uri, headers: defaultHeaders);
 
-    debugPrint(
-      'DEBUG PROJECT ASSIGNMENTS STATUS: ${response.statusCode}',
-    );
+    debugPrint('DEBUG PROJECT ASSIGNMENTS STATUS: ${response.statusCode}');
 
-    debugPrint(
-      'DEBUG PROJECT ASSIGNMENTS BODY: ${response.body}',
-    );
+    debugPrint('DEBUG PROJECT ASSIGNMENTS BODY: ${response.body}');
 
     if (response.statusCode == 200) {
       final dynamic decoded = jsonDecode(response.body);
@@ -391,35 +355,20 @@ class ApiService {
   }
 
   /// Endpoint untuk menandai notifikasi telah dibaca di server
-  static Future<void> markNotificationAsRead(
-    int notificationId,
-  ) async {
+  static Future<void> markNotificationAsRead(int notificationId) async {
     try {
-      final uri = Uri.parse(
-        '$baseUrl/notifications/$notificationId/read',
-      );
+      final uri = Uri.parse('$baseUrl/notifications/$notificationId/read');
 
-      debugPrint(
-        'MARK NOTIFICATION READ URL: $uri',
-      );
+      debugPrint('MARK NOTIFICATION READ URL: $uri');
 
-      final response = await http.put(
-        uri,
-        headers: defaultHeaders,
-      );
+      final response = await http.put(uri, headers: defaultHeaders);
 
-      debugPrint(
-        'MARK NOTIFICATION READ STATUS: ${response.statusCode}',
-      );
+      debugPrint('MARK NOTIFICATION READ STATUS: ${response.statusCode}');
 
-      debugPrint(
-        'MARK NOTIFICATION READ BODY: ${response.body}',
-      );
+      debugPrint('MARK NOTIFICATION READ BODY: ${response.body}');
 
       if (response.statusCode != 200) {
-        throw Exception(
-          'Gagal menandai notifikasi sebagai sudah dibaca.',
-        );
+        throw Exception('Gagal menandai notifikasi sebagai sudah dibaca.');
       }
 
       final dynamic decoded = jsonDecode(response.body);
@@ -433,9 +382,7 @@ class ApiService {
         }
       }
     } catch (e) {
-      debugPrint(
-        'Error marking notification as read in ApiService: $e',
-      );
+      debugPrint('Error marking notification as read in ApiService: $e');
 
       rethrow;
     }

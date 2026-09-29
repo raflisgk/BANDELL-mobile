@@ -15,6 +15,8 @@ import '../notification/notification_page.dart';
 import '../profile/profile_page.dart';
 import 'lamp_type_card.dart';
 
+import 'package:skeletonizer/skeletonizer.dart';
+
 class LampPage extends StatefulWidget {
   static const String routeName = '/lamp_page';
 
@@ -233,99 +235,139 @@ class _LampPageState extends State<LampPage> {
 
                     const SizedBox(height: 20),
 
-                    // 4. Search Field
-                    Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceSubtle,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.border, width: 1),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Cari Jenis Lampu',
-                          hintStyle: TextStyle(
-                            color: AppColors.hintColor,
-                            fontSize: 14,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.search_rounded,
-                            color: AppColors.hintColor,
-                            size: 20,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // 5. List of Lamp Types
+                    // 4 & 5. Search Field & Lamp Types
                     if (_isLoading)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      )
-                    else if (filteredList.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 40.0,
-                          horizontal: 20.0,
-                        ),
+                      Skeletonizer(
+                        enabled: true,
+                        ignoreContainers: true,
                         child: Column(
-                          children: const [
-                            Icon(
-                              Icons.lightbulb_outline_rounded,
-                              size: 48,
-                              color: AppColors.textSecondary,
-                            ),
-                            SizedBox(height: 12),
-                            Text(
-                              'Belum Ada Jenis Lampu',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                          children: [
+                            Container(
+                              height: 44,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceSubtle,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.border,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.search_rounded,
+                                    color: AppColors.hintColor,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Cari Jenis Lampu',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ],
                               ),
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Data jenis lampu akan muncul setelah terhubung ke API.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
+                            const SizedBox(height: 18),
+                            ...List.generate(
+                              5,
+                              (index) => Padding(
+                                padding: const EdgeInsets.only(bottom: 14.0),
+                                child: LampTypeCard(
+                                  name: 'PJU Solar Cell All in One',
+                                  description: 'Lampu Penerangan Jalan Umum',
+                                  icon: Icons.lightbulb_outline_rounded,
+                                  onTap: () {},
+                                ),
                               ),
                             ),
                           ],
                         ),
                       )
-                    else
-                      ...filteredList.map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0),
-                          child: LampTypeCard(
-                            name: item.name,
-                            description: item.description,
-                            icon: Icons.lightbulb_outline_rounded,
-                            onTap: () => _handleLampTypeTap(item),
+                    else ...[
+                      Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceSubtle,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.border, width: 1),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 14,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Cari Jenis Lampu',
+                            hintStyle: TextStyle(
+                              color: AppColors.hintColor,
+                              fontSize: 14,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: AppColors.hintColor,
+                              size: 20,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 18),
+                      if (filteredList.isEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 40.0,
+                            horizontal: 20.0,
+                          ),
+                          child: Column(
+                            children: const [
+                              Icon(
+                                Icons.lightbulb_outline_rounded,
+                                size: 48,
+                                color: AppColors.textSecondary,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Belum Ada Jenis Lampu',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Data jenis lampu akan muncul setelah terhubung ke API.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        ...filteredList.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10.0),
+                            child: LampTypeCard(
+                              name: item.name,
+                              description: item.description,
+                              icon: Icons.lightbulb_outline_rounded,
+                              onTap: () => _handleLampTypeTap(item),
+                            ),
+                          ),
+                        ),
+                    ],
 
                     const SizedBox(height: 16),
                   ],

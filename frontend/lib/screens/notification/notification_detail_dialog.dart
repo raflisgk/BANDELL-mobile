@@ -14,7 +14,7 @@ class NotificationDetailDialog extends StatelessWidget {
   }) {
     return showDialog<void>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: AppColors.barrierOverlay,
       builder: (dialogContext) =>
           NotificationDetailDialog(notification: notification),
     );

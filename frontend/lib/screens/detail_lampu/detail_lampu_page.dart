@@ -191,7 +191,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     final code = _effectiveCode;
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: AppColors.barrierOverlay,
       builder: (dialogContext) => DialogHapusLampu(
         lampCode: code,
         onConfirmHapus: () async {

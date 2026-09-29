@@ -15,6 +15,8 @@ import '../notification/notification_page.dart';
 import '../profile/profile_page.dart';
 import 'area_operasional_card.dart';
 
+import 'package:skeletonizer/skeletonizer.dart';
+
 class AreaOperasionalPage extends StatefulWidget {
   final int? idProject;
 
@@ -253,7 +255,28 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     }).toList();
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar({bool isSkeleton = false}) {
+    if (isSkeleton) {
+      return Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: AppColors.inputBackground,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.borderMedium, width: 1),
+        ),
+        child: Row(
+          children: const [
+            Icon(Icons.search_rounded, color: AppColors.textMuted, size: 22),
+            SizedBox(width: 10),
+            Text(
+              'Cari area operasional',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       decoration: BoxDecoration(
         color: AppColors.inputBackground,
@@ -317,7 +340,10 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
           children: [
             AppTopBar(
               selectedValue: _selectedProject?.name,
-              title: _projects.isEmpty ? 'Belum Ada Proyek' : null,
+              title: (!_isLoadingProjects && _projects.isEmpty)
+                  ? 'Belum Ada Proyek'
+                  : null,
+              isLoading: _isLoadingProjects,
               dropdownItems: projectNames,
               onDropdownChanged: _onProjectSelected,
               showBackButton: false,
@@ -359,22 +385,31 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
                   const SizedBox(height: 18),
 
-                  if (_projects.isNotEmpty) ...[
-                    _buildSearchBar(),
-                    const SizedBox(height: 20),
-                  ],
-
-                  // Loading project
+                  // Loading project skeleton
                   if (_isLoadingProjects)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
+                    Skeletonizer(
+                      enabled: true,
+                      ignoreContainers: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSearchBar(isSkeleton: true),
+                          const SizedBox(height: 20),
+                          for (
+                            int i = 0;
+                            i < (_areas.isNotEmpty ? _areas.length : 1);
+                            i++
+                          )
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 16.0),
+                              child: AreaOperasionalCard(
+                                title: 'Nama Area Operasional Kecamatan',
+                              ),
+                            ),
+                        ],
                       ),
                     )
-                  // Error project (Koneksi Bermasalah) - Clean layout tanpa kotak pinggir
+                  // Error project (Koneksi Bermasalah)
                   else if (_errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -430,7 +465,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             onPressed: _loadProjects,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppColors.pureWhite,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -461,7 +496,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // [ ILUSTRASI ORANG BEKERJA DI PROYEK ]
                           Image.asset(
                             'assets/images/empty_project.png',
                             height: 180,
@@ -483,8 +517,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             },
                           ),
                           const SizedBox(height: 20),
-
-                          // Judul
                           const Text(
                             'Belum ada proyek',
                             textAlign: TextAlign.center,
@@ -496,8 +528,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-
-                          // Penjelasan
                           const Text(
                             'Saat ini belum ada proyek yang ditugaskan kepada Anda.',
                             textAlign: TextAlign.center,
@@ -519,7 +549,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         horizontal: 20,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.cardBackground,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppColors.border),
                         boxShadow: const [
@@ -568,108 +598,121 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         ],
                       ),
                     )
-                  // Loading area
-                  else if (_isLoadingAreas)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    )
-                  // Tidak ada area
-                  else if (_areas.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 44,
-                        horizontal: 20,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.map_outlined,
-                            size: 48,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Belum Ada Area Operasional',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                  // Konten Area ketika project terpilih
+                  else ...[
+                    _buildSearchBar(),
+                    const SizedBox(height: 20),
+
+                    // Loading area skeleton
+                    if (_isLoadingAreas)
+                      Skeletonizer(
+                        enabled: true,
+                        ignoreContainers: true,
+                        child: Column(
+                          children: List.generate(
+                            _areas.isNotEmpty ? _areas.length : 1,
+                            (index) => const Padding(
+                              padding: EdgeInsets.only(bottom: 16.0),
+                              child: AreaOperasionalCard(
+                                title: 'Nama Area Operasional Kecamatan',
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Project "${_selectedProject!.name}" belum memiliki area operasional.',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 13,
+                        ),
+                      )
+                    // Tidak ada area
+                    else if (_areas.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 44,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.map_outlined,
+                              size: 48,
                               color: AppColors.textSecondary,
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  // Hasil search kosong
-                  else if (_filteredAreas.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 36,
-                        horizontal: 20,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.search_off_rounded,
-                            size: 44,
-                            color: AppColors.textSubtle,
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Area Tidak Ditemukan',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Belum Ada Area Operasional',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Tidak ada area yang cocok dengan "$_searchQuery".',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
+                            const SizedBox(height: 4),
+                            Text(
+                              'Project "${_selectedProject!.name}" belum memiliki area operasional.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  // Area dari database
-                  else
-                    for (final area in _filteredAreas)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: AreaOperasionalCard(
-                          title: area.areaName,
-                          onTap: () => _handleCardTap(area),
+                          ],
                         ),
-                      ),
+                      )
+                    // Hasil search kosong
+                    else if (_filteredAreas.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 36,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.search_off_rounded,
+                              size: 44,
+                              color: AppColors.textSubtle,
+                            ),
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Area Tidak Ditemukan',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tidak ada area yang cocok dengan "$_searchQuery".',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    // Area dari database
+                    else
+                      for (final area in _filteredAreas)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: AreaOperasionalCard(
+                            title: area.areaName,
+                            onTap: () => _handleCardTap(area),
+                          ),
+                        ),
+                  ],
 
                   const SizedBox(height: 24),
                 ],

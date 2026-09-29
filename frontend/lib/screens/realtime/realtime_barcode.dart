@@ -106,10 +106,10 @@ class RealtimeBarcodeSection extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onScanBarcode,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.backgroundWhite,
                 foregroundColor: AppColors.primary,
                 elevation: 2,
-                shadowColor: Colors.black.withValues(alpha: 0.15),
+                shadowColor: AppColors.shadowMedium,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 10,
@@ -238,7 +238,7 @@ class RealtimeBarcodeSection extends StatelessWidget {
                         const Text(
                           'Pindai barcode / QR code pada lampu',
                           style: TextStyle(
-                            color: Colors.white70,
+                            color: AppColors.whiteAlpha70,
                             fontSize: 11.5,
                           ),
                         ),
@@ -246,7 +246,7 @@ class RealtimeBarcodeSection extends StatelessWidget {
                         ElevatedButton.icon(
                           onPressed: onScanBarcode,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
+                            backgroundColor: AppColors.backgroundWhite,
                             foregroundColor: AppColors.primary,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(

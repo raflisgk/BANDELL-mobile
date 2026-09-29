@@ -308,7 +308,9 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                           _isTorchOn
                               ? Icons.flashlight_on_rounded
                               : Icons.flashlight_off_rounded,
-                          color: _isTorchOn ? Colors.black : Colors.white,
+                          color: _isTorchOn
+                              ? AppColors.pureBlack
+                              : AppColors.pureWhite,
                           size: 22,
                         ),
                       ),
@@ -569,7 +571,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
               width: cameraSize,
               height: cameraSize,
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: AppColors.pureBlack,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.scanIconDark, width: 1),
               ),
@@ -609,7 +611,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                         children: [
                           const Icon(
                             Icons.videocam_off_rounded,
-                            color: Colors.white54,
+                            color: AppColors.whiteAlpha54,
                             size: 36,
                           ),
 
@@ -619,7 +621,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                             errorMessage,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              color: Colors.white70,
+                              color: AppColors.whiteAlpha70,
                               fontSize: 11.5,
                               height: 1.3,
                             ),
@@ -642,7 +644,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
                               child: const Text(
                                 'Coba Lagi',
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: AppColors.pureBlack,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),

@@ -212,7 +212,7 @@ class _EditableProfileItemState extends State<EditableProfileItem>
                       Text(
                         widget.value,
                         style: const TextStyle(
-                          color: Colors.white70,
+                          color: AppColors.whiteAlpha70,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w400,
                         ),

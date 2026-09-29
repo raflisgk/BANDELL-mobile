@@ -297,7 +297,7 @@ class Dokumentasi extends StatelessWidget {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black12,
+                                  color: AppColors.blackAlpha12,
                                   blurRadius: 4,
                                   offset: Offset(0, 2),
                                 ),

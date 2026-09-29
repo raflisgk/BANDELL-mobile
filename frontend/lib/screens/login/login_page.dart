@@ -554,10 +554,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 child: ElevatedButton(
                                   onPressed: _isLoading ? null : _handleLogin,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.yellow,
+                                    backgroundColor: AppColors.loginButtonBg,
                                     foregroundColor: AppColors.primary,
-                                    disabledBackgroundColor: Colors.yellow
-                                        .withValues(alpha: 0.6),
+                                    disabledBackgroundColor:
+                                        AppColors.loginButtonDisabledBg,
                                     elevation: 2,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),

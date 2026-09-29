@@ -9,6 +9,8 @@ import '../../utils/app_colors.dart';
 import 'notification_card.dart';
 import 'notification_detail_dialog.dart';
 
+import 'package:skeletonizer/skeletonizer.dart';
+
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
 
@@ -202,11 +204,26 @@ class _NotificationPageState extends State<NotificationPage> {
                   children: [
                     // Loading State
                     if (_isLoading)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 80),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
+                      Skeletonizer(
+                        enabled: true,
+                        child: Column(
+                          children: List.generate(
+                            4,
+                            (index) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: NotificationCard(
+                                notification: NotificationModel(
+                                  id: index,
+                                  title: 'Penugasan Baru Diterima',
+                                  projectName: 'Pemasangan Lampu Jalan Utama',
+                                  message:
+                                      'Anda telah ditugaskan untuk proyek ini',
+                                  time: '10 menit yang lalu',
+                                  isUnread: true,
+                                  notes: 'Harap selesaikan sebelum jam 5 sore',
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       )

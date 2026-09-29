@@ -177,7 +177,7 @@ class FotoDokumentasiCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                color: Colors.black,
+                color: AppColors.photoPreviewBackground,
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height * 0.75,
                 ),
@@ -192,7 +192,7 @@ class FotoDokumentasiCard extends StatelessWidget {
                             height: 200,
                             child: Center(
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColors.backgroundWhite,
                               ),
                             ),
                           );
@@ -203,7 +203,7 @@ class FotoDokumentasiCard extends StatelessWidget {
                               child: Center(
                                 child: Icon(
                                   Icons.broken_image_rounded,
-                                  color: Colors.white70,
+                                  color: AppColors.whiteAlpha70,
                                   size: 48,
                                 ),
                               ),
@@ -217,12 +217,12 @@ class FotoDokumentasiCard extends StatelessWidget {
               icon: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: const BoxDecoration(
-                  color: Colors.black54,
+                  color: AppColors.blackAlpha54,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.close_rounded,
-                  color: Colors.white,
+                  color: AppColors.backgroundWhite,
                   size: 20,
                 ),
               ),

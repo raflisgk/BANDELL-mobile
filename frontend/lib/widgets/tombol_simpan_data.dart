@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../utils/app_colors.dart';
 
 class TombolSimpanData extends StatelessWidget {
@@ -77,7 +78,7 @@ class TombolSimpanData extends StatelessWidget {
                     'Data akan disimpan ke daftar lampu',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.white70,
+                      color: AppColors.whiteAlpha70,
                       fontWeight: FontWeight.w400,
                     ),
                   ),

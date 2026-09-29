@@ -314,7 +314,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Text(
                             'Kelola informasi akun Anda',
                             style: TextStyle(
-                              color: Colors.white70,
+                              color: AppColors.whiteAlpha70,
                               fontSize: 13,
                               fontWeight: FontWeight.w400,
                             ),

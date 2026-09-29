@@ -1,15 +1,22 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+
 import 'screens/splash/splash_page.dart';
+import 'utils/app_colors.dart';
 import 'utils/page_transitions.dart';
 
 class LocalDevHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+      ..badCertificateCallback = (
+        X509Certificate cert,
+        String host,
+        int port,
+      ) => true;
   }
 }
 
@@ -20,7 +27,10 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Widget buildOverscrollIndicator(
-      BuildContext context, Widget child, ScrollableDetails details) {
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
     return child;
   }
 
@@ -58,6 +68,18 @@ class MyApp extends StatelessWidget {
           },
         ),
       ),
+      builder: (context, child) {
+        return SkeletonizerConfig(
+          data: SkeletonizerConfigData(
+            containersColor: AppColors.skeletonContainer,
+            effectResolver: (brightness) => const ShimmerEffect(
+              baseColor: AppColors.skeletonBase,
+              highlightColor: AppColors.skeletonHighlight,
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const SplashPage(),
     );
   }

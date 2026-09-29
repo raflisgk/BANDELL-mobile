@@ -15,6 +15,9 @@ import '../area_operasional/area_operasional_page.dart';
 import '../detail_lampu/detail_lampu_page.dart';
 import '../profile/profile_page.dart';
 import 'history_lamp_card.dart';
+
+import 'package:skeletonizer/skeletonizer.dart';
+
 import '../../widgets/pilih_tanggal.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -551,16 +554,30 @@ class _HistoryPageState extends State<HistoryPage> {
 
             // List of History Cards
             if (_isLoading)
-              const SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
-                sliver: SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                sliver: Skeletonizer.sliver(
+                  enabled: true,
+                  child: SliverList.builder(
+                    itemCount: 4,
+                    itemBuilder: (context, index) {
+                      return const HistoryLampCard(
+                        item: HistoryLampModel(
+                          userId: 0,
+                          projectId: 0,
+                          kode: 'LCU-12345678',
+                          jenis: 'PJU Solar Cell 100W',
+                          status: 'Menunggu Verifikasi',
+                          isVerified: false,
+                          lokasi: 'Jl. Jenderal Sudirman No. 123, Jakarta',
+                          koordinat: '-6.2088, 106.8456',
+                          fotoCount: '3 Foto Lampu',
+                          waktu: '2026-09-29 10:00:00',
+                          panelCode: 'PNL-01',
+                          districtName: 'Kecamatan Gambir',
+                        ),
+                      );
+                    },
                   ),
                 ),
               )

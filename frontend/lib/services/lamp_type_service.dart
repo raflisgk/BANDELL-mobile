@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -25,11 +26,7 @@ class LampTypeService {
     final List data = responseData['data'] ?? [];
 
     return data
-        .map(
-          (item) => LampTypeModel.fromJson(
-            item as Map<String, dynamic>,
-          ),
-        )
+        .map((item) => LampTypeModel.fromJson(item as Map<String, dynamic>))
         .toList();
   }
 }

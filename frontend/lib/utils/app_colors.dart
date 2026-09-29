@@ -288,4 +288,34 @@ class AppColors {
   static const Color whiteAlpha60 = Color(0x99FFFFFF); // White Alpha 60%
   static const Color whiteAlpha85 = Color(0xD9FFFFFF); // White Alpha 85%
   static const Color whiteAlpha90 = Color(0xE6FFFFFF); // White Alpha 90%
+
+  // --- SKELETON / SHIMMER LOADING ---
+  static const Color skeletonBase = Color(
+    0xFFE2E8F0,
+  ); // Slate 200 - Abu-abu dasar skeleton
+  static const Color skeletonHighlight = Color(
+    0xFFF8FAFC,
+  ); // Slate 50 - Kilau shimmer
+  static const Color skeletonContainer = Color(
+    0xFFE2E8F0,
+  ); // Container skeleton abu-abu
+
+  // --- WARNA DASAR & OVERLAY UNIVERSAL ---
+  static const Color pureWhite = Color(0xFFFFFFFF);
+  static const Color pureBlack = Color(0xFF000000);
+  static const Color transparent = Color(0x00000000);
+  static const Color whiteAlpha54 = Color(0x8AFFFFFF); // Putih 54%
+  static const Color whiteAlpha70 = Color(0xB3FFFFFF); // Putih 70%
+  static const Color blackAlpha12 = Color(0x1F000000); // Hitam 12%
+  static const Color blackAlpha54 = Color(0x8A000000); // Hitam 54%
+  static const Color barrierOverlay = Color(
+    0x80000000,
+  ); // Overlay Modal / Dialog 50%
+  static const Color loginButtonBg = Color(0xFFFFFFFF); // Tombol Login Putih
+  static const Color loginButtonDisabledBg = Color(
+    0x99FFFFFF,
+  ); // Tombol Login Disabled
+  static const Color photoPreviewBackground = Color(
+    0xFF000000,
+  ); // Latar Preview Foto
 }
