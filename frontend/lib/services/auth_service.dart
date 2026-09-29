@@ -2,6 +2,10 @@ import 'package:flutter/foundation.dart';
 
 import '../models/user_model.dart';
 import 'api_service.dart';
+import 'installation_service.dart';
+import 'lamp_type_service.dart';
+import 'notification_service.dart';
+import 'project_service.dart';
 
 class AuthService {
   static UserModel? currentUser;
@@ -30,6 +34,10 @@ class AuthService {
 
   Future<void> logout() async {
     currentUser = null;
+    ProjectService.clearCache();
+    InstallationService.clearCache();
+    LampTypeService.clearCache();
+    NotificationService.clearCache();
   }
 
   Future<UserModel?> getProfile() async {

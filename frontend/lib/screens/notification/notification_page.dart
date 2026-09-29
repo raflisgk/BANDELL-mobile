@@ -28,7 +28,7 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
+    _initFromCacheOrFetch();
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 10),
       (_) => _loadNotificationsSilently(),
@@ -41,14 +41,43 @@ class _NotificationPageState extends State<NotificationPage> {
     super.dispose();
   }
 
-  Future<void> _loadNotifications() async {
+  void _initFromCacheOrFetch() {
+    if (NotificationService.hasCache) {
+      setState(() {
+        _notifications = List<NotificationModel>.from(
+          NotificationService.cachedNotifications,
+        );
+        _isLoading = false;
+        _hasError = false;
+      });
+      _loadNotificationsSilently();
+    } else {
+      _loadNotifications();
+    }
+  }
+
+  Future<void> _loadNotifications({bool forceRefresh = false}) async {
+    if (!forceRefresh && NotificationService.hasCache) {
+      setState(() {
+        _notifications = List<NotificationModel>.from(
+          NotificationService.cachedNotifications,
+        );
+        _isLoading = false;
+        _hasError = false;
+      });
+      _loadNotificationsSilently();
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _hasError = false;
     });
 
     try {
-      final list = await NotificationService().getNotifications();
+      final list = await NotificationService().getNotifications(
+        forceRefresh: forceRefresh,
+      );
       if (mounted) {
         setState(() {
           _notifications = list;
@@ -70,7 +99,9 @@ class _NotificationPageState extends State<NotificationPage> {
 
   Future<void> _loadNotificationsSilently() async {
     try {
-      final list = await NotificationService().getNotifications();
+      final list = await NotificationService().getNotifications(
+        forceRefresh: true,
+      );
       if (mounted) {
         setState(() {
           _notifications = list;
@@ -188,13 +219,13 @@ class _NotificationPageState extends State<NotificationPage> {
 
           // 2. Konten Notifikasi
           Expanded(
-            child: ScrollConfiguration(
-              behavior: const ScrollBehavior().copyWith(
-                overscroll: false,
-                physics: const ClampingScrollPhysics(),
-              ),
+            child: RefreshIndicator(
+              onRefresh: () => _loadNotifications(forceRefresh: true),
+              color: AppColors.primary,
               child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: ClampingScrollPhysics(),
+                ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
                   vertical: 20.0,
@@ -206,25 +237,37 @@ class _NotificationPageState extends State<NotificationPage> {
                     if (_isLoading)
                       Skeletonizer(
                         enabled: true,
+                        ignoreContainers: true,
                         child: Column(
-                          children: List.generate(
-                            4,
-                            (index) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: NotificationCard(
-                                notification: NotificationModel(
-                                  id: index,
-                                  title: 'Penugasan Baru Diterima',
-                                  projectName: 'Pemasangan Lampu Jalan Utama',
-                                  message:
-                                      'Anda telah ditugaskan untuk proyek ini',
-                                  time: '10 menit yang lalu',
-                                  isUnread: true,
-                                  notes: 'Harap selesaikan sebelum jam 5 sore',
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(left: 4, bottom: 12),
+                              child: Text(
+                                'TERBARU',
+                                style: TextStyle(
+                                  color: AppColors.textBody,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
-                          ),
+                            ...List.generate(
+                              4,
+                              (index) => NotificationCard(
+                                notification: NotificationModel(
+                                  id: index,
+                                  title: 'Penugasan Baru Diterima',
+                                  projectName: 'Proyek Surabaya',
+                                  message:
+                                      'Anda telah ditugaskan untuk proyek ini.',
+                                  time: '3 jam yang lalu',
+                                  isUnread: true,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       )
                     // Error State

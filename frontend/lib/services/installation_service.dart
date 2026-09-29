@@ -13,39 +13,91 @@ import 'project_service.dart';
 import '../utils/image_compress_helper.dart';
 
 class InstallationService {
+  static final Map<String, List<HistoryLampModel>> _cachedHistory = {};
+
+  static String _historyCacheKey({
+    required int userId,
+    required int projectId,
+    String? filter,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    final sDate = startDate?.toIso8601String().split('T').first ?? '';
+    final eDate = endDate?.toIso8601String().split('T').first ?? '';
+    final f = filter?.trim() ?? '';
+    return '${userId}_${projectId}_${f}_${sDate}_$eDate';
+  }
+
+  /// Cek apakah ada riwayat di cache
+  static bool hasCachedHistory({
+    required int userId,
+    required int projectId,
+    String? filter,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    final key = _historyCacheKey(
+      userId: userId,
+      projectId: projectId,
+      filter: filter,
+      startDate: startDate,
+      endDate: endDate,
+    );
+    return _cachedHistory.containsKey(key) && _cachedHistory[key]!.isNotEmpty;
+  }
+
+  /// Ambil riwayat dari cache
+  static List<HistoryLampModel>? getCachedHistory({
+    required int userId,
+    required int projectId,
+    String? filter,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    final key = _historyCacheKey(
+      userId: userId,
+      projectId: projectId,
+      filter: filter,
+      startDate: startDate,
+      endDate: endDate,
+    );
+    return _cachedHistory[key];
+  }
+
+  /// Bersihkan seluruh cache riwayat
+  static void clearCache() {
+    _cachedHistory.clear();
+  }
+
   /// Simpan data pemasangan lampu baru ke Laravel API
   Future<InstallationModel> createInstallation(
     InstallationModel installation,
   ) async {
-    final uri = Uri.parse(
-      '${ApiService.baseUrl}/installations',
-    );
+    final uri = Uri.parse('${ApiService.baseUrl}/installations');
 
-    final request = http.MultipartRequest(
-      'POST',
-      uri,
-    );
+    final request = http.MultipartRequest('POST', uri);
 
-    request.headers.addAll(
-      ApiService.multipartHeaders,
-    );
+    request.headers.addAll(ApiService.multipartHeaders);
 
     // =========================
     // DATA INSTALLATION
     // =========================
 
-    final resolvedProjectId = (installation.idProject != null && installation.idProject! > 0)
+    final resolvedProjectId =
+        (installation.idProject != null && installation.idProject! > 0)
         ? installation.idProject
         : ProjectService.selectedProject?.idProject;
     request.fields['project_id'] = resolvedProjectId?.toString() ?? '';
 
-    final resolvedUserId = (installation.idUser != null && installation.idUser! > 0)
+    final resolvedUserId =
+        (installation.idUser != null && installation.idUser! > 0)
         ? installation.idUser
         : AuthService.currentUser?.idUser;
     request.fields['user_id'] = resolvedUserId?.toString() ?? '';
 
     // Lamp Type ID dengan auto-resolution dari nama jika id belum tersedia
-    int? resolvedLampTypeId = (installation.lampTypeId != null && installation.lampTypeId! > 0)
+    int? resolvedLampTypeId =
+        (installation.lampTypeId != null && installation.lampTypeId! > 0)
         ? installation.lampTypeId
         : null;
     if (resolvedLampTypeId == null && installation.lampType.isNotEmpty) {
@@ -66,20 +118,29 @@ class InstallationService {
     request.fields['id_lcu'] = installation.lampCode.trim();
 
     // Laravel menerima: realtime / manual
-    final method = (installation.inputMethod ?? 'realtime').trim().toLowerCase();
-    request.fields['input_method'] = method == 'real-time' ? 'realtime' : method;
+    final method = (installation.inputMethod ?? 'realtime')
+        .trim()
+        .toLowerCase();
+    request.fields['input_method'] = method == 'real-time'
+        ? 'realtime'
+        : method;
 
-    request.fields['latitude'] = (installation.latitude ?? '').replaceAll(',', '.');
+    request.fields['latitude'] = (installation.latitude ?? '').replaceAll(
+      ',',
+      '.',
+    );
 
-    request.fields['longitude'] = (installation.longitude ?? '').replaceAll(',', '.');
+    request.fields['longitude'] = (installation.longitude ?? '').replaceAll(
+      ',',
+      '.',
+    );
 
     if (installation.panelCode != null &&
         installation.panelCode!.trim().isNotEmpty) {
       request.fields['code_panel'] = installation.panelCode!.trim();
     }
 
-    if (installation.notes != null &&
-        installation.notes!.trim().isNotEmpty) {
+    if (installation.notes != null && installation.notes!.trim().isNotEmpty) {
       final noteValue = installation.notes!.trim();
       request.fields['address'] = noteValue;
       request.fields['notes'] = noteValue;
@@ -98,8 +159,10 @@ class InstallationService {
           .split('T')
           .first;
     } else {
-      request.fields['installed_at'] =
-          DateTime.now().toIso8601String().split('T').first;
+      request.fields['installed_at'] = DateTime.now()
+          .toIso8601String()
+          .split('T')
+          .first;
     }
 
     // =========================
@@ -113,8 +176,9 @@ class InstallationService {
 
       final file = File(photoPath);
       if (file.existsSync()) {
-        final compressedPath =
-            await ImageCompressHelper.compressImage(photoPath);
+        final compressedPath = await ImageCompressHelper.compressImage(
+          photoPath,
+        );
         final photo = await http.MultipartFile.fromPath(
           'photos[]',
           compressedPath,
@@ -142,9 +206,7 @@ class InstallationService {
 
     final streamedResponse = await request.send();
 
-    final response = await http.Response.fromStream(
-      streamedResponse,
-    );
+    final response = await http.Response.fromStream(streamedResponse);
 
     debugPrint('INSTALLATION STATUS: ${response.statusCode}');
     debugPrint('INSTALLATION RESPONSE: ${response.body}');
@@ -156,16 +218,13 @@ class InstallationService {
     Map<String, dynamic> responseData;
 
     try {
-      responseData =
-          jsonDecode(response.body) as Map<String, dynamic>;
+      responseData = jsonDecode(response.body) as Map<String, dynamic>;
     } catch (_) {
-      throw Exception(
-        'Response server tidak valid.',
-      );
+      throw Exception('Response server tidak valid.');
     }
 
-    if (response.statusCode == 201 &&
-        responseData['success'] == true) {
+    if (response.statusCode == 201 && responseData['success'] == true) {
+      clearCache();
       final data = responseData['data'];
 
       if (data is Map<String, dynamic>) {
@@ -213,7 +272,10 @@ class InstallationService {
     }
 
     throw Exception(
-      _extractErrorMessage(responseData, 'Gagal mengambil detail data pemasangan.'),
+      _extractErrorMessage(
+        responseData,
+        'Gagal mengambil detail data pemasangan.',
+      ),
     );
   }
 
@@ -227,14 +289,9 @@ class InstallationService {
       '${ApiService.baseUrl}/installations/$idInstallation',
     );
 
-    final request = http.MultipartRequest(
-      'POST',
-      uri,
-    );
+    final request = http.MultipartRequest('POST', uri);
 
-    request.headers.addAll(
-      ApiService.multipartHeaders,
-    );
+    request.headers.addAll(ApiService.multipartHeaders);
 
     // Method spoofing untuk Laravel
     request.fields['_method'] = 'PUT';
@@ -275,8 +332,9 @@ class InstallationService {
 
     if (installation.inputMethod != null &&
         installation.inputMethod!.trim().isNotEmpty) {
-      request.fields['input_method'] =
-          installation.inputMethod!.trim().toLowerCase();
+      request.fields['input_method'] = installation.inputMethod!
+          .trim()
+          .toLowerCase();
     }
 
     if (installation.latitude != null &&
@@ -301,8 +359,10 @@ class InstallationService {
     // Hanya kirim installed_at jika secara eksplisit diset pada installedAt.
     // JANGAN gunakan updatedAt atau createdAt untuk installed_at saat update.
     if (installation.installedAt != null) {
-      request.fields['installed_at'] =
-          installation.installedAt!.toIso8601String().split('T').first;
+      request.fields['installed_at'] = installation.installedAt!
+          .toIso8601String()
+          .split('T')
+          .first;
     }
 
     // Foto tambahan
@@ -313,8 +373,9 @@ class InstallationService {
 
       final file = File(photoPath);
       if (file.existsSync()) {
-        final compressedPath =
-            await ImageCompressHelper.compressImage(photoPath);
+        final compressedPath = await ImageCompressHelper.compressImage(
+          photoPath,
+        );
         final photo = await http.MultipartFile.fromPath(
           'photos[]',
           compressedPath,
@@ -344,6 +405,7 @@ class InstallationService {
 
     if ((response.statusCode == 200 || response.statusCode == 201) &&
         responseData['success'] == true) {
+      clearCache();
       final data = responseData['data'];
       if (data is Map<String, dynamic>) {
         return InstallationModel.fromJson(data);
@@ -374,6 +436,7 @@ class InstallationService {
     }
 
     if (response.statusCode == 200 && responseData['success'] == true) {
+      clearCache();
       return true;
     }
 
@@ -389,7 +452,20 @@ class InstallationService {
     String? filter,
     DateTime? startDate,
     DateTime? endDate,
+    bool forceRefresh = false,
   }) async {
+    final cacheKey = _historyCacheKey(
+      userId: userId,
+      projectId: projectId,
+      filter: filter,
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    if (!forceRefresh && _cachedHistory.containsKey(cacheKey)) {
+      return _cachedHistory[cacheKey]!;
+    }
+
     final queryParameters = <String, String>{
       'user_id': userId.toString(),
       'project_id': projectId.toString(),
@@ -403,27 +479,22 @@ class InstallationService {
     }
 
     if (startDate != null) {
-      queryParameters['start_date'] =
-          startDate.toIso8601String().split('T').first;
+      queryParameters['start_date'] = startDate
+          .toIso8601String()
+          .split('T')
+          .first;
     }
 
     if (endDate != null) {
-      queryParameters['end_date'] =
-          endDate.toIso8601String().split('T').first;
+      queryParameters['end_date'] = endDate.toIso8601String().split('T').first;
     }
 
-    final uri = Uri.parse(
-      '${ApiService.baseUrl}/installations',
-    ).replace(
-      queryParameters: queryParameters,
-    );
+    final uri = Uri.parse('${ApiService.baseUrl}/installations')
+        .replace(queryParameters: queryParameters);
 
     debugPrint('HISTORY URL: $uri');
 
-    final response = await http.get(
-      uri,
-      headers: ApiService.defaultHeaders,
-    );
+    final response = await http.get(uri, headers: ApiService.defaultHeaders);
 
     debugPrint('HISTORY STATUS: ${response.statusCode}');
     debugPrint('INSTALLATION RESPONSE: ${response.body}');
@@ -432,21 +503,26 @@ class InstallationService {
     try {
       responseData = jsonDecode(response.body) as Map<String, dynamic>;
     } catch (_) {
+      if (_cachedHistory.containsKey(cacheKey)) {
+        return _cachedHistory[cacheKey]!;
+      }
       throw Exception('Response server tidak valid.');
     }
 
     if (response.statusCode == 200 && responseData['success'] == true) {
       final List data = responseData['data'] ?? [];
       debugPrint('HISTORY RESPONSE COUNT: ${data.length}');
-      return data
-          .map(
-            (item) {
-              final map = item as Map<String, dynamic>;
-              debugPrint('API input_method: ${map['input_method']}');
-              return HistoryLampModel.fromJson(map);
-            },
-          )
-          .toList();
+      final list = data.map((item) {
+        final map = item as Map<String, dynamic>;
+        debugPrint('API input_method: ${map['input_method']}');
+        return HistoryLampModel.fromJson(map);
+      }).toList();
+      _cachedHistory[cacheKey] = list;
+      return list;
+    }
+
+    if (_cachedHistory.containsKey(cacheKey)) {
+      return _cachedHistory[cacheKey]!;
     }
 
     throw Exception(

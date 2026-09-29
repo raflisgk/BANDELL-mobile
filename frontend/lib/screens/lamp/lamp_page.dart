@@ -42,33 +42,64 @@ class _LampPageState extends State<LampPage> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    _loadLampTypes();
+    _initFromCacheOrFetch();
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 10),
       (_) => _loadLampTypesSilently(),
     );
   }
 
+  void _initFromCacheOrFetch() {
+    if (LampTypeService.hasCache) {
+      setState(() {
+        _lampTypes = List<LampTypeModel>.from(LampTypeService.cachedLampTypes);
+        _isLoading = false;
+      });
+      _loadLampTypesSilently();
+    } else {
+      _loadLampTypes();
+    }
+  }
+
   Future<void> _loadLampTypesSilently() async {
     try {
-      final types = await LampTypeService().getLampTypes();
+      final types = await LampTypeService().getLampTypes(forceRefresh: true);
       if (!mounted) return;
       setState(() {
         _lampTypes = types;
+        _isLoading = false;
       });
     } catch (e) {
       debugPrint('Auto refresh error in LampPage: $e');
     }
   }
 
-  Future<void> _loadLampTypes() async {
-    setState(() => _isLoading = true);
-    final types = await LampTypeService().getLampTypes();
-    if (mounted) {
+  Future<void> _loadLampTypes({bool forceRefresh = false}) async {
+    if (!forceRefresh && LampTypeService.hasCache) {
       setState(() {
-        _lampTypes = types;
+        _lampTypes = List<LampTypeModel>.from(LampTypeService.cachedLampTypes);
         _isLoading = false;
       });
+      _loadLampTypesSilently();
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final types = await LampTypeService().getLampTypes(
+        forceRefresh: forceRefresh,
+      );
+      if (mounted) {
+        setState(() {
+          _lampTypes = types;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading lamp types: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

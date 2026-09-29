@@ -47,11 +47,52 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   @override
   void initState() {
     super.initState();
-    _loadProjects();
+    _initFromCacheOrFetch();
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 10),
       (_) => _refreshSilently(),
     );
+  }
+
+  void _initFromCacheOrFetch() {
+    if (ProjectService.hasCachedProjects) {
+      final cachedProjects = List<ProjectModel>.from(
+        ProjectService.cachedProjects,
+      );
+      cachedProjects.sort((a, b) => a.id.compareTo(b.id));
+
+      ProjectModel? selected;
+      if (widget.idProject != null) {
+        final matches = cachedProjects.where((p) => p.id == widget.idProject);
+        if (matches.isNotEmpty) selected = matches.first;
+      }
+      selected ??=
+          ProjectService.selectedProject ??
+          (cachedProjects.isNotEmpty ? cachedProjects.first : null);
+
+      List<AreaModel> initialAreas = [];
+      bool hasAreas = false;
+      if (selected != null && ProjectService.hasCachedAreas(selected.id)) {
+        initialAreas = ProjectService.getCachedAreas(selected.id)
+            .whereType<Map<String, dynamic>>()
+            .map((area) => AreaModel.fromJson(area))
+            .toList();
+        hasAreas = true;
+      }
+
+      setState(() {
+        _projects = cachedProjects;
+        _selectedProject = selected;
+        _areas = initialAreas;
+        _isLoadingProjects = false;
+        _isLoadingAreas = !hasAreas && selected != null;
+      });
+
+      // Silently revalidate projects & areas in background
+      _refreshSilently();
+    } else {
+      _loadProjects();
+    }
   }
 
   @override
@@ -63,7 +104,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
   Future<void> _refreshSilently() async {
     try {
-      final projects = await _projectService.getProjects();
+      final projects = await _projectService.getProjects(null, true);
       projects.sort((a, b) => a.id.compareTo(b.id));
 
       if (!mounted) return;
@@ -93,7 +134,10 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         ProjectService.selectedProject = currentSelected;
       }
 
-      final areas = await _projectService.getAreas(currentSelected.id);
+      final areas = await _projectService.getAreas(
+        currentSelected.id,
+        forceRefresh: true,
+      );
       final updatedAreas = areas
           .whereType<Map<String, dynamic>>()
           .map((area) => AreaModel.fromJson(area))
@@ -105,20 +149,27 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         _projects = projects;
         _selectedProject = currentSelected;
         _areas = updatedAreas;
+        _isLoadingProjects = false;
+        _isLoadingAreas = false;
       });
     } catch (e) {
       debugPrint('Auto refresh error in AreaOperasionalPage: $e');
     }
   }
 
-  Future<void> _loadProjects() async {
+  Future<void> _loadProjects({bool forceRefresh = false}) async {
+    if (!forceRefresh && ProjectService.hasCachedProjects) {
+      _initFromCacheOrFetch();
+      return;
+    }
+
     setState(() {
       _isLoadingProjects = true;
       _errorMessage = null;
     });
 
     try {
-      final projects = await _projectService.getProjects();
+      final projects = await _projectService.getProjects(null, forceRefresh);
 
       projects.sort((a, b) => a.id.compareTo(b.id));
 
@@ -147,21 +198,21 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         );
 
         if (matchingProject.isNotEmpty) {
-          _selectProject(matchingProject.first);
+          _selectProject(matchingProject.first, forceRefresh: forceRefresh);
         } else {
-          _selectProject(projects.first);
+          _selectProject(projects.first, forceRefresh: forceRefresh);
         }
       } else if (ProjectService.selectedProject != null) {
         final matchingProject = projects.where(
           (project) => project.id == ProjectService.selectedProject!.id,
         );
         if (matchingProject.isNotEmpty) {
-          _selectProject(matchingProject.first);
+          _selectProject(matchingProject.first, forceRefresh: forceRefresh);
         } else if (projects.isNotEmpty) {
-          _selectProject(projects.first);
+          _selectProject(projects.first, forceRefresh: forceRefresh);
         }
       } else if (projects.isNotEmpty) {
-        _selectProject(projects.first);
+        _selectProject(projects.first, forceRefresh: forceRefresh);
       }
     } catch (e) {
       debugPrint('Error loadProjects in AreaOperasionalPage: $e');
@@ -174,8 +225,40 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     }
   }
 
-  Future<void> _selectProject(ProjectModel project) async {
+  Future<void> _selectProject(
+    ProjectModel project, {
+    bool forceRefresh = false,
+  }) async {
     ProjectService.selectedProject = project;
+
+    if (!forceRefresh && ProjectService.hasCachedAreas(project.id)) {
+      final cached = ProjectService.getCachedAreas(project.id)
+          .whereType<Map<String, dynamic>>()
+          .map((area) => AreaModel.fromJson(area))
+          .toList();
+      setState(() {
+        _selectedProject = project;
+        _areas = cached;
+        _isLoadingAreas = false;
+      });
+
+      // Silently revalidate
+      try {
+        final freshAreas = await _projectService.getAreas(
+          project.id,
+          forceRefresh: true,
+        );
+        if (!mounted) return;
+        setState(() {
+          _areas = freshAreas
+              .whereType<Map<String, dynamic>>()
+              .map((area) => AreaModel.fromJson(area))
+              .toList();
+        });
+      } catch (_) {}
+      return;
+    }
+
     setState(() {
       _selectedProject = project;
       _areas = [];
@@ -183,7 +266,10 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     });
 
     try {
-      final areas = await _projectService.getAreas(project.id);
+      final areas = await _projectService.getAreas(
+        project.id,
+        forceRefresh: forceRefresh,
+      );
 
       if (!mounted) return;
 
@@ -220,8 +306,12 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     _selectProject(matchingProjects.first);
   }
 
-  Future<void> _refreshData() async {
-    await _loadProjects();
+  Future<void> _refreshData({bool forceRefresh = false}) async {
+    if (!forceRefresh && ProjectService.hasCachedProjects) {
+      _initFromCacheOrFetch();
+      return;
+    }
+    await _loadProjects(forceRefresh: forceRefresh);
   }
 
   void _handleCardTap(AreaModel area) async {
@@ -356,366 +446,372 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
             ),
 
             Expanded(
-              child: ListView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 28.0),
-                children: [
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    'Pilih Area Operasional',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.3,
-                    ),
+              child: RefreshIndicator(
+                onRefresh: () => _refreshData(forceRefresh: true),
+                color: AppColors.primary,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
                   ),
+                  padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                  children: [
+                    const SizedBox(height: 16),
 
-                  const SizedBox(height: 4),
-
-                  const Text(
-                    'Berikut area operasional tersedia untuk Anda.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
+                    const Text(
+                      'Pilih Area Operasional',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 4),
 
-                  // Loading project skeleton
-                  if (_isLoadingProjects)
-                    Skeletonizer(
-                      enabled: true,
-                      ignoreContainers: true,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSearchBar(isSkeleton: true),
-                          const SizedBox(height: 20),
-                          for (
-                            int i = 0;
-                            i < (_areas.isNotEmpty ? _areas.length : 1);
-                            i++
-                          )
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 16.0),
-                              child: AreaOperasionalCard(
-                                title: 'Nama Area Operasional Kecamatan',
-                              ),
-                            ),
-                        ],
+                    const Text(
+                      'Berikut area operasional tersedia untuk Anda.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
                       ),
-                    )
-                  // Error project (Koneksi Bermasalah)
-                  else if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 36,
-                        horizontal: 24,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset(
-                            'assets/images/connection_error.png',
-                            height: 160,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 80,
-                                height: 80,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.infoBackground,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.wifi_off_rounded,
-                                  size: 40,
-                                  color: AppColors.primary,
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Koneksi Bermasalah',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba lagi.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: _loadProjects,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: AppColors.pureWhite,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 36,
-                                vertical: 12,
-                              ),
-                            ),
-                            child: const Text(
-                              'Coba Lagi',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  // Empty State: Assignment project kosong
-                  else if (_projects.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 36,
-                        horizontal: 24,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset(
-                            'assets/images/empty_project.png',
-                            height: 180,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 80,
-                                height: 80,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.infoBackground,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.engineering_outlined,
-                                  size: 40,
-                                  color: AppColors.primary,
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Belum ada proyek',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Saat ini belum ada proyek yang ditugaskan kepada Anda.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  // Belum memilih project
-                  else if (_selectedProject == null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 48,
-                        horizontal: 20,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.shadowColor,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: const BoxDecoration(
-                              color: AppColors.infoBackground,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.arrow_upward_rounded,
-                              size: 30,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          const Text(
-                            'Silakan Pilih Project Terlebih Dahulu',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Gunakan menu dropdown di bagian atas layar untuk menentukan project.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  // Konten Area ketika project terpilih
-                  else ...[
-                    _buildSearchBar(),
-                    const SizedBox(height: 20),
+                    ),
 
-                    // Loading area skeleton
-                    if (_isLoadingAreas)
+                    const SizedBox(height: 18),
+
+                    // Loading project skeleton
+                    if (_isLoadingProjects)
                       Skeletonizer(
                         enabled: true,
                         ignoreContainers: true,
                         child: Column(
-                          children: List.generate(
-                            _areas.isNotEmpty ? _areas.length : 1,
-                            (index) => const Padding(
-                              padding: EdgeInsets.only(bottom: 16.0),
-                              child: AreaOperasionalCard(
-                                title: 'Nama Area Operasional Kecamatan',
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSearchBar(isSkeleton: true),
+                            const SizedBox(height: 20),
+                            for (
+                              int i = 0;
+                              i < (_areas.isNotEmpty ? _areas.length : 1);
+                              i++
+                            )
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 16.0),
+                                child: AreaOperasionalCard(
+                                  title: 'Nama Area Operasional Kecamatan',
+                                ),
                               ),
-                            ),
-                          ),
+                          ],
                         ),
                       )
-                    // Tidak ada area
-                    else if (_areas.isEmpty)
-                      Container(
-                        width: double.infinity,
+                    // Error project (Koneksi Bermasalah)
+                    else if (_errorMessage != null)
+                      Padding(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 44,
-                          horizontal: 20,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
+                          vertical: 36,
+                          horizontal: 24,
                         ),
                         child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.map_outlined,
-                              size: 48,
-                              color: AppColors.textSecondary,
+                            Image.asset(
+                              'assets/images/connection_error.png',
+                              height: 160,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.infoBackground,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.wifi_off_rounded,
+                                    size: 40,
+                                    color: AppColors.primary,
+                                  ),
+                                );
+                              },
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 20),
                             const Text(
-                              'Belum Ada Area Operasional',
+                              'Koneksi Bermasalah',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
+                                letterSpacing: -0.2,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Project "${_selectedProject!.name}" belum memiliki area operasional.',
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba lagi.',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: AppColors.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: _loadProjects,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.pureWhite,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 36,
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: const Text(
+                                'Coba Lagi',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       )
-                    // Hasil search kosong
-                    else if (_filteredAreas.isEmpty)
+                    // Empty State: Assignment project kosong
+                    else if (_projects.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 36,
+                          horizontal: 24,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/images/empty_project.png',
+                              height: 180,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.infoBackground,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.engineering_outlined,
+                                    size: 40,
+                                    color: AppColors.primary,
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Belum ada proyek',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Saat ini belum ada proyek yang ditugaskan kepada Anda.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    // Belum memilih project
+                    else if (_selectedProject == null)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                          vertical: 36,
+                          vertical: 48,
                           horizontal: 20,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.cardBackground,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: AppColors.border),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: AppColors.shadowColor,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Column(
                           children: [
-                            const Icon(
-                              Icons.search_off_rounded,
-                              size: 44,
-                              color: AppColors.textSubtle,
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: const BoxDecoration(
+                                color: AppColors.infoBackground,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_upward_rounded,
+                                size: 30,
+                                color: AppColors.primary,
+                              ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 14),
                             const Text(
-                              'Area Tidak Ditemukan',
+                              'Silakan Pilih Project Terlebih Dahulu',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Tidak ada area yang cocok dengan "$_searchQuery".',
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Gunakan menu dropdown di bagian atas layar untuk menentukan project.',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: AppColors.textSecondary,
+                                height: 1.4,
                               ),
                             ),
                           ],
                         ),
                       )
-                    // Area dari database
-                    else
-                      for (final area in _filteredAreas)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: AreaOperasionalCard(
-                            title: area.areaName,
-                            onTap: () => _handleCardTap(area),
-                          ),
-                        ),
-                  ],
+                    // Konten Area ketika project terpilih
+                    else ...[
+                      _buildSearchBar(),
+                      const SizedBox(height: 20),
 
-                  const SizedBox(height: 24),
-                ],
+                      // Loading area skeleton
+                      if (_isLoadingAreas)
+                        Skeletonizer(
+                          enabled: true,
+                          ignoreContainers: true,
+                          child: Column(
+                            children: List.generate(
+                              _areas.isNotEmpty ? _areas.length : 1,
+                              (index) => const Padding(
+                                padding: EdgeInsets.only(bottom: 16.0),
+                                child: AreaOperasionalCard(
+                                  title: 'Nama Area Operasional Kecamatan',
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      // Tidak ada area
+                      else if (_areas.isEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 44,
+                            horizontal: 20,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.map_outlined,
+                                size: 48,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Belum Ada Area Operasional',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Project "${_selectedProject!.name}" belum memiliki area operasional.',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      // Hasil search kosong
+                      else if (_filteredAreas.isEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 36,
+                            horizontal: 20,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.search_off_rounded,
+                                size: 44,
+                                color: AppColors.textSubtle,
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Area Tidak Ditemukan',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Tidak ada area yang cocok dengan "$_searchQuery".',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      // Area dari database
+                      else
+                        for (final area in _filteredAreas)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: AreaOperasionalCard(
+                              title: area.areaName,
+                              onTap: () => _handleCardTap(area),
+                            ),
+                          ),
+                    ],
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
           ],
