@@ -111,12 +111,6 @@ class NotificationCard extends StatelessWidget {
 
     final String badgeLabel = isAssignment ? 'Penugasan' : 'Ditolak';
 
-    final Color activeBorder = isExpanded
-        ? (isAssignment
-              ? AppColors.primary.withValues(alpha: 0.45)
-              : AppColors.error.withValues(alpha: 0.45))
-        : AppColors.notifCardBorder;
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOutCubic,
@@ -124,20 +118,24 @@ class NotificationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: activeBorder, width: isExpanded ? 1.5 : 1),
         boxShadow: [
-          if (isExpanded)
+          if (isExpanded) ...[
             BoxShadow(
               color: (isAssignment ? AppColors.primary : AppColors.error)
-                  .withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            )
-          else
+                  .withValues(alpha: 0.10),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
             const BoxShadow(
-              color: AppColors.shadowMinimal,
-              blurRadius: 10,
+              color: AppColors.shadowSoft,
+              blurRadius: 8,
               offset: Offset(0, 2),
+            ),
+          ] else
+            const BoxShadow(
+              color: AppColors.shadowSoft,
+              blurRadius: 12,
+              offset: Offset(0, 3),
             ),
         ],
       ),
