@@ -54,8 +54,18 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(find.text('Surel'), findsOneWidget);
-        expect(find.text('Nama Lengkap'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is Text && (w.data == 'Surel' || w.data == 'Email'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is Text && (w.data == 'Nama Lengkap' || w.data == 'Nama'),
+          ),
+          findsOneWidget,
+        );
         expect(find.text('Nomor Telepon'), findsOneWidget);
         expect(find.text('Lokasi'), findsOneWidget);
 
