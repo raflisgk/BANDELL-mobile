@@ -48,7 +48,9 @@ class _NotificationPageState extends State<NotificationPage> {
     });
 
     try {
-      final list = await NotificationService().getNotifications();
+      final list = await NotificationService().getNotifications(
+        forceRefresh: true,
+      );
       if (mounted) {
         setState(() {
           _notifications = list;
@@ -122,8 +124,8 @@ class _NotificationPageState extends State<NotificationPage> {
 
     final sorted = List<NotificationModel>.from(_notifications)
       ..sort((a, b) {
-        final aDate = a.assignedAt ?? a.createdAt ?? DateTime(1970);
-        final bDate = b.assignedAt ?? b.createdAt ?? DateTime(1970);
+        final aDate = a.createdAt ?? a.assignedAt ?? DateTime(1970);
+        final bDate = b.createdAt ?? b.assignedAt ?? DateTime(1970);
         return bDate.compareTo(aDate);
       });
 
@@ -131,7 +133,7 @@ class _NotificationPageState extends State<NotificationPage> {
     final sebelumnyaList = <NotificationModel>[];
 
     for (final item in sorted) {
-      final dt = item.assignedAt?.toLocal() ?? item.createdAt?.toLocal();
+      final dt = item.createdAt?.toLocal() ?? item.assignedAt?.toLocal();
 
       if (dt == null) {
         sebelumnyaList.add(item);
@@ -140,7 +142,7 @@ class _NotificationPageState extends State<NotificationPage> {
 
       final itemDay = DateTime(dt.year, dt.month, dt.day);
 
-      if (itemDay == today) {
+      if (itemDay == today || itemDay.isAfter(today)) {
         terbaruList.add(item);
       } else {
         sebelumnyaList.add(item);

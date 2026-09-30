@@ -22,27 +22,33 @@ class NotificationCard extends StatelessWidget {
     final local = dt.toLocal();
     final diff = now.difference(local);
 
-    if (diff.isNegative || diff.inSeconds < 60) {
-      return 'Baru saja';
-    } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes} menit yang lalu';
-    }
-
     final today = DateTime(now.year, now.month, now.day);
     final notifDay = DateTime(local.year, local.month, local.day);
-
     final daysDiff = today.difference(notifDay).inDays;
 
-    if (daysDiff == 0) {
-      final hours = diff.inHours;
-      return '$hours jam yang lalu';
-    } else if (daysDiff == 1) {
-      return 'Kemarin';
-    } else if (daysDiff > 1 && daysDiff < 7) {
-      return '$daysDiff hari yang lalu';
-    }
+    final hourStr = local.hour.toString().padLeft(2, '0');
+    final minStr = local.minute.toString().padLeft(2, '0');
+    final timeStr = '$hourStr:$minStr';
 
-    return '${notifDay.day}/${notifDay.month}/${notifDay.year}';
+    // Hari ini (notif dibuat hari ini)
+    if (daysDiff == 0) {
+      if (diff.inMinutes < 1) {
+        return 'Baru saja';
+      } else if (diff.inMinutes < 60) {
+        return '${diff.inMinutes} menit yang lalu';
+      } else {
+        return '${diff.inHours} jam yang lalu';
+      }
+    } else if (daysDiff == 1) {
+      // Kemarin baru jamnya
+      return 'Kemarin $timeStr';
+    } else {
+      // 2 hari yang lalu atau lebih lama: tanggal bulan tahun sama jamnya
+      final day = local.day.toString().padLeft(2, '0');
+      final month = _monthName(local.month);
+      final year = local.year;
+      return '$day $month $year $timeStr';
+    }
   }
 
   static String formatFullDateTime(DateTime? dt) {
@@ -93,7 +99,7 @@ class NotificationCard extends StatelessWidget {
 
     final String timeText = notification.time.isNotEmpty
         ? notification.time
-        : formatHeaderTime(notification.assignedAt ?? notification.createdAt);
+        : formatHeaderTime(notification.createdAt ?? notification.assignedAt);
 
     final Color badgeBg = isAssignment
         ? AppColors.roleBadgeBackground
@@ -313,10 +319,6 @@ class NotificationCard extends StatelessWidget {
           .trim();
     })();
 
-    final DateTime? assignDt =
-        notification.assignedAt ?? notification.createdAt;
-    final String formattedDate = formatFullDateTime(assignDt);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -376,40 +378,7 @@ class NotificationCard extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        // 2. Waktu Penugasan Lengkap
-        if (assignDt != null) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.inputBackground,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.borderLight, width: 0.8),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.access_time_rounded,
-                  size: 15,
-                  color: AppColors.textMuted,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Waktu Penugasan: $formattedDate',
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
-
-        // 3. Catatan / Instruksi Khusus
+        // 2. Catatan / Instruksi Khusus
         Container(
           width: double.infinity,
           decoration: BoxDecoration(

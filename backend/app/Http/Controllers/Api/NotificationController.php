@@ -47,11 +47,19 @@ class NotificationController extends Controller
                 '=',
                 'districts.id'
             )
-            ->leftJoin(
-                'project_assignments',
+            ->leftJoinSub(
+                DB::table('project_assignments')
+                    ->select('project_id', 'user_id', 'notes as assignment_notes', 'assigned_at as assignment_assigned_at')
+                    ->whereIn('id', function ($query) use ($userId) {
+                        $query->selectRaw('MAX(id)')
+                            ->from('project_assignments')
+                            ->where('user_id', $userId)
+                            ->groupBy('project_id', 'user_id');
+                    }),
+                'latest_assignment',
                 function ($join) {
-                    $join->on('notifications.project_id', '=', 'project_assignments.project_id')
-                        ->on('notifications.user_id', '=', 'project_assignments.user_id');
+                    $join->on('notifications.project_id', '=', 'latest_assignment.project_id')
+                        ->on('notifications.user_id', '=', 'latest_assignment.user_id');
                 }
             )
             ->select(
@@ -61,8 +69,8 @@ class NotificationController extends Controller
                 'installations.note_by_admin as inst_note_by_admin',
                 'installations.id_lcu as inst_id_lcu',
                 'districts.name as district_name',
-                'project_assignments.notes as assignment_notes',
-                'project_assignments.assigned_at as assignment_assigned_at'
+                'latest_assignment.assignment_notes',
+                'latest_assignment.assignment_assigned_at'
             )
             ->orderByDesc('notifications.created_at')
             ->orderByDesc('notifications.id')
