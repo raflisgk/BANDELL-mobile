@@ -191,247 +191,329 @@ class _LampPageState extends State<LampPage> {
         body: SafeArea(
           bottom: false,
           child: Column(
-          children: [
-            AppTopBar(
-              showDropdown: true,
-              selectedValue: ProjectService.selectedProject?.projectName,
-              dropdownItems: ProjectService.projectOptions,
-              onDropdownChanged: (val) {
-                setState(() {
-                  ProjectService.selectedProject = val != null
-                      ? ProjectService.getProjectByName(val)
-                      : null;
-                });
-              },
-              onBackPressed: _handleBack,
-              onNotificationPressed: () async {
-                await AppNavigator.push(context, const NotificationPage());
-                if (mounted) {
-                  _loadLampTypes();
-                }
-              },
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
+            children: [
+              AppTopBar(
+                title: 'Pilih Jenis Lampu',
+                showDropdown: false,
+                onBackPressed: _handleBack,
+                onNotificationPressed: () async {
+                  await AppNavigator.push(context, const NotificationPage());
+                  if (mounted) {
+                    _loadLampTypes();
+                  }
+                },
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
 
-                    if (isProjectClosed)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.divider,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.borderMedium),
-                        ),
-                        child: Row(
-                          children: const [
-                            Icon(
-                              Icons.lock_outline_rounded,
-                              color: AppColors.textMuted,
-                              size: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Project Selesai (Read-Only): Penambahan data baru tidak tersedia.',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textBody,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // 2. Title
-                    const Text(
-                      'Pilih Jenis Lampu',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // 3. Subtitle
-                    const Text(
-                      'Pilih jenis lampu yang akan dipasang.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // 4 & 5. Search Field & Lamp Types
-                    if (_isLoading)
-                      Skeletonizer(
-                        enabled: true,
-                        ignoreContainers: true,
-                        child: Column(
-                          children: [
-                            Container(
-                              height: 44,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceSubtle,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColors.border,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: const [
-                                  Icon(
-                                    Icons.search_rounded,
-                                    color: AppColors.hintColor,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    'Cari Jenis Lampu',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            ...List.generate(
-                              5,
-                              (index) => Padding(
-                                padding: const EdgeInsets.only(bottom: 14.0),
-                                child: LampTypeCard(
-                                  name: 'PJU Solar Cell All in One',
-                                  description: 'Lampu Penerangan Jalan Umum',
-                                  icon: Icons.lightbulb_outline_rounded,
-                                  onTap: () {},
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else ...[
-                      Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceSubtle,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border, width: 1),
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 14,
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: 'Cari Jenis Lampu',
-                            hintStyle: TextStyle(
-                              color: AppColors.hintColor,
-                              fontSize: 14,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search_rounded,
-                              color: AppColors.hintColor,
-                              size: 20,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      if (filteredList.isEmpty)
+                      if (isProjectClosed)
                         Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 40.0,
-                            horizontal: 20.0,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.divider,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.borderMedium),
                           ),
-                          child: Column(
+                          child: Row(
                             children: const [
                               Icon(
-                                Icons.lightbulb_outline_rounded,
-                                size: 48,
-                                color: AppColors.textSecondary,
+                                Icons.lock_outline_rounded,
+                                color: AppColors.textMuted,
+                                size: 20,
                               ),
-                              SizedBox(height: 12),
-                              Text(
-                                'Belum Ada Jenis Lampu',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Project Selesai (Read-Only): Penambahan data baru tidak tersedia.',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textBody,
+                                  ),
                                 ),
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Data jenis lampu akan muncul setelah terhubung ke API.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
+                            ],
+                          ),
+                        ),
+
+                      // 1. Area Context Badge (jika tersedia)
+                      if (widget.areaName != null &&
+                          widget.areaName!.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.infoBackground,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.location_on_rounded,
+                                size: 15,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Area: ${widget.areaName}',
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+
+                      // 4 & 5. Search Field & Lamp Types
+                      if (_isLoading)
+                        Skeletonizer(
+                          enabled: true,
+                          ignoreContainers: true,
+                          child: Column(
+                            children: [
+                              Container(
+                                height: 44,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceSubtle,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.border,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.search_rounded,
+                                      color: AppColors.hintColor,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Cari Jenis Lampu',
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              ...List.generate(
+                                5,
+                                (index) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 14.0),
+                                  child: LampTypeCard(
+                                    name: 'PJU Solar Cell All in One',
+                                    description: 'Lampu Penerangan Jalan Umum',
+                                    icon: Icons.lightbulb_outline_rounded,
+                                    onTap: () {},
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         )
-                      else
-                        ...filteredList.map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10.0),
-                            child: LampTypeCard(
-                              name: item.name,
-                              description: item.description,
-                              icon: Icons.lightbulb_outline_rounded,
-                              onTap: () => _handleLampTypeTap(item),
+                      else ...[
+                        Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceSubtle,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.border,
+                              width: 1,
+                            ),
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 14,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Cari Jenis Lampu',
+                              hintStyle: const TextStyle(
+                                color: AppColors.hintColor,
+                                fontSize: 14,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.search_rounded,
+                                color: AppColors.hintColor,
+                                size: 20,
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        _searchController.clear();
+                                      },
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        color: AppColors.textSecondary,
+                                        size: 18,
+                                      ),
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                             ),
                           ),
                         ),
-                    ],
+                        const SizedBox(height: 18),
+                        if (_searchQuery.isNotEmpty && filteredList.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 36.0,
+                              horizontal: 20.0,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.cardBackground,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.search_off_rounded,
+                                  size: 44,
+                                  color: AppColors.textSubtle,
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Jenis Lampu Tidak Ditemukan',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Tidak ada jenis lampu yang cocok dengan "$_searchQuery".',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                TextButton(
+                                  onPressed: () => _searchController.clear(),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.primary,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 6,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Reset Pencarian',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (filteredList.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 40.0,
+                              horizontal: 20.0,
+                            ),
+                            child: Column(
+                              children: const [
+                                Icon(
+                                  Icons.lightbulb_outline_rounded,
+                                  size: 48,
+                                  color: AppColors.textSecondary,
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  'Belum Ada Jenis Lampu',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Data jenis lampu akan muncul setelah terhubung ke API.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          ...filteredList.map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10.0),
+                              child: LampTypeCard(
+                                name: item.name,
+                                description: item.description,
+                                icon: Icons.lightbulb_outline_rounded,
+                                onTap: () => _handleLampTypeTap(item),
+                              ),
+                            ),
+                          ),
+                      ],
 
-                    const SizedBox(height: 16),
-                  ],
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+        bottomNavigationBar: BottomNavbar(
+          currentIndex: _currentNavIndex,
+          onTap: (index) {
+            if (index == 1) {
+              AppNavigator.pushTabReplacement(context, const HistoryPage());
+            } else if (index == 2) {
+              AppNavigator.pushTabReplacement(context, const ProfilePage());
+            } else {
+              setState(() {
+                _currentNavIndex = index;
+              });
+            }
+          },
         ),
       ),
-      bottomNavigationBar: BottomNavbar(
-        currentIndex: _currentNavIndex,
-        onTap: (index) {
-          if (index == 1) {
-            AppNavigator.pushTabReplacement(context, const HistoryPage());
-          } else if (index == 2) {
-            AppNavigator.pushTabReplacement(context, const ProfilePage());
-          } else {
-            setState(() {
-              _currentNavIndex = index;
-            });
-          }
-        },
-      ),
-    ),
-  );
-}
+    );
+  }
 }

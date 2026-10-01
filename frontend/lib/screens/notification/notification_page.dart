@@ -242,22 +242,28 @@ class _NotificationPageState extends State<NotificationPage> {
                       )
                     // Error State
                     else if (_hasError)
-                      Container(
-                        width: double.infinity,
+                      Padding(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 60,
+                          vertical: 40,
                           horizontal: 20,
                         ),
                         child: Column(
                           children: [
-                            const Icon(
-                              Icons.error_outline_rounded,
-                              size: 54,
-                              color: AppColors.error,
+                            Image.asset(
+                              'assets/images/connection_error.png',
+                              height: 160,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.wifi_off_rounded,
+                                  size: 54,
+                                  color: AppColors.error,
+                                );
+                              },
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 16),
                             const Text(
-                              'Gagal Memuat Notifikasi',
+                              'Koneksi Bermasalah',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

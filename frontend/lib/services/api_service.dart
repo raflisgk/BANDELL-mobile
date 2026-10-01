@@ -332,13 +332,20 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/project-assignments?user_id=$userId');
 
     debugPrint('DEBUG USER ID FOR ASSIGNMENTS: $userId');
-
     debugPrint('DEBUG PROJECT ASSIGNMENTS URL: $uri');
 
-    final response = await http.get(uri, headers: defaultHeaders);
+    final http.Response response;
+    try {
+      response = await http
+          .get(uri, headers: defaultHeaders)
+          .timeout(const Duration(milliseconds: 1500));
+    } on TimeoutException {
+      throw const ApiException('Koneksi internet lambat / timeout.');
+    } catch (_) {
+      throw const ApiException('Gagal terhubung ke server.');
+    }
 
     debugPrint('DEBUG PROJECT ASSIGNMENTS STATUS: ${response.statusCode}');
-
     debugPrint('DEBUG PROJECT ASSIGNMENTS BODY: ${response.body}');
 
     if (response.statusCode == 200) {

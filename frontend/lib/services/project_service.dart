@@ -117,10 +117,20 @@ class ProjectService {
       return _cachedAreas[projectId]!;
     }
 
-    final response = await http.get(
-      Uri.parse('${ApiService.baseUrl}/projects/$projectId/areas'),
-      headers: ApiService.defaultHeaders,
-    );
+    final http.Response response;
+    try {
+      response = await http
+          .get(
+            Uri.parse('${ApiService.baseUrl}/projects/$projectId/areas'),
+            headers: ApiService.defaultHeaders,
+          )
+          .timeout(const Duration(milliseconds: 1500));
+    } catch (_) {
+      if (_cachedAreas.containsKey(projectId)) {
+        return _cachedAreas[projectId]!;
+      }
+      throw Exception('Koneksi internet bermasalah.');
+    }
 
     debugPrint('AREA STATUS: ${response.statusCode}');
     debugPrint('AREA BODY: ${response.body}');

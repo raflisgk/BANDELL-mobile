@@ -264,6 +264,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
       _selectedProject = project;
       _areas = [];
       _isLoadingAreas = true;
+      _errorMessage = null;
     });
 
     try {
@@ -281,6 +282,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
             .toList();
 
         _isLoadingAreas = false;
+        _errorMessage = null;
       });
     } catch (e) {
       if (!mounted) return;
@@ -288,10 +290,8 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
       setState(() {
         _areas = [];
         _isLoadingAreas = false;
+        _errorMessage = e.toString();
       });
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Gagal mengambil area: $e')));
     }
   }
 
@@ -566,7 +566,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             ),
                             const SizedBox(height: 24),
                             ElevatedButton(
-                              onPressed: _loadProjects,
+                              onPressed: () => _loadProjects(forceRefresh: true),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: AppColors.pureWhite,
@@ -726,25 +726,34 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                         )
                       // Tidak ada area
                       else if (_areas.isEmpty)
-                        Container(
-                          width: double.infinity,
+                        Padding(
                           padding: const EdgeInsets.symmetric(
-                            vertical: 44,
+                            vertical: 36,
                             horizontal: 20,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.cardBackground,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
                           ),
                           child: Column(
                             children: [
-                              const Icon(
-                                Icons.map_outlined,
-                                size: 48,
-                                color: AppColors.textSecondary,
+                              Image.asset(
+                                'assets/images/empty_project.png',
+                                height: 160,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 70,
+                                    height: 70,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.infoBackground,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.map_outlined,
+                                      size: 36,
+                                      color: AppColors.primary,
+                                    ),
+                                  );
+                                },
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               const Text(
                                 'Belum Ada Area Operasional',
                                 style: TextStyle(
@@ -753,13 +762,14 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                                   color: AppColors.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               Text(
                                 'Project "${_selectedProject!.name}" belum memiliki area operasional.',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
+                                  height: 1.4,
                                 ),
                               ),
                             ],
