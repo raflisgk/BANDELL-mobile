@@ -358,26 +358,27 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                               child: Image.asset(
                                                 'assets/images/logo bandell 1.png',
                                                 fit: BoxFit.contain,
-                                                errorBuilder: (
-                                                  context,
-                                                  error,
-                                                  stackTrace,
-                                                ) {
-                                                  return Container(
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                          color:
-                                                              AppColors.primary,
-                                                          shape:
-                                                              BoxShape.circle,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Container(
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                              color: AppColors
+                                                                  .primary,
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                            ),
+                                                        child: Icon(
+                                                          Icons.shield_outlined,
+                                                          color: Colors.white,
+                                                          size: 46.r,
                                                         ),
-                                                    child: Icon(
-                                                      Icons.shield_outlined,
-                                                      color: Colors.white,
-                                                      size: 46.r,
-                                                    ),
-                                                  );
-                                                },
+                                                      );
+                                                    },
                                               ),
                                             ),
                                             SizedBox(height: 12.h),
@@ -451,9 +452,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
                                     // Username Field Container
                                     _buildInputFieldContainer(
-                                      icon: Icons.person_outline_rounded,
+                                      icon: Icons.person_rounded,
                                       label: 'Username',
-                                      hint: 'Masukkan username',
                                       controller: _usernameController,
                                       focusNode: _usernameFocusNode,
                                       hasError: _errorMessage != null,
@@ -463,9 +463,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
                                     // Password Field Container
                                     _buildInputFieldContainer(
-                                      icon: Icons.lock_outline_rounded,
+                                      icon: Icons.lock_rounded,
                                       label: 'Password',
-                                      hint: 'Masukkan password',
                                       controller: _passwordController,
                                       focusNode: _passwordFocusNode,
                                       isPassword: true,
@@ -505,10 +504,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                         ),
                                         SizedBox(width: 8.w),
                                         GestureDetector(
-                                          onTap: () =>
-                                              _handleRememberMeChanged(
-                                                !_rememberMe,
-                                              ),
+                                          onTap: () => _handleRememberMeChanged(
+                                            !_rememberMe,
+                                          ),
                                           child: Text(
                                             'Ingat saya',
                                             style: TextStyle(
@@ -538,8 +536,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                               AppColors.loginButtonDisabledBg,
                                           elevation: 2,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12.r),
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
                                           ),
                                         ),
                                         child: _isLoading
@@ -583,7 +582,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Widget _buildInputFieldContainer({
     required IconData icon,
     required String label,
-    required String hint,
     required TextEditingController controller,
     required FocusNode focusNode,
     bool isPassword = false,
@@ -593,79 +591,102 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }) {
     final isFocused = focusNode.hasFocus;
 
-    final borderColor = hasError
-        ? AppColors.error
-        : (isFocused ? AppColors.primary : AppColors.border);
-    final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 7.h),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: borderColor, width: borderWidth),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: hasError
+              ? AppColors.error
+              : (isFocused ? AppColors.primary : const Color(0xFFE2E8F0)),
+          width: hasError || isFocused ? 1.6 : 1.0,
+        ),
+        boxShadow: [
+          if (hasError)
+            BoxShadow(
+              color: AppColors.error.withValues(alpha: 0.16),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            )
+          else if (isFocused)
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.18),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            )
+          else
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
         ],
       ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.hintColor, size: 20.r),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  obscureText: isPassword && !isPasswordVisible,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 13.5.sp,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: TextStyle(
-                      color: AppColors.hintColor,
-                      fontSize: 13.5.sp,
-                    ),
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    border: InputBorder.none,
-                  ),
-                ),
-              ],
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        obscureText: isPassword && !isPasswordVisible,
+        cursorColor: AppColors.primary,
+        style: TextStyle(
+          color: const Color(0xFF0F172A),
+          fontSize: 14.5.sp,
+          fontWeight: FontWeight.normal,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: null,
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
+          labelStyle: TextStyle(
+            color: const Color(0xFF64748B),
+            fontSize: 13.5.sp,
+            fontWeight: FontWeight.normal,
+          ),
+          floatingLabelStyle: TextStyle(
+            color: hasError ? AppColors.error : AppColors.primary,
+            fontSize: 11.5.sp,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.1,
+          ),
+          prefixIcon: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: Icon(
+              icon,
+              color: hasError
+                  ? AppColors.error
+                  : (isFocused ? AppColors.primary : const Color(0xFF64748B)),
+              size: 21.r,
             ),
           ),
-          if (isPassword && onTogglePasswordVisibility != null)
-            IconButton(
-              onPressed: onTogglePasswordVisibility,
-              icon: Icon(
-                isPasswordVisible
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: AppColors.hintColor,
-                size: 20.r,
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-        ],
+          prefixIconConstraints: BoxConstraints(minWidth: 48.w),
+          suffixIcon: isPassword && onTogglePasswordVisibility != null
+              ? Padding(
+                  padding: EdgeInsets.only(right: 6.w),
+                  child: IconButton(
+                    onPressed: onTogglePasswordVisibility,
+                    icon: Icon(
+                      isPasswordVisible
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                      color: isFocused
+                          ? AppColors.primary
+                          : const Color(0xFF94A3B8),
+                      size: 20.r,
+                    ),
+                    splashRadius: 18.r,
+                  ),
+                )
+              : null,
+          filled: false,
+          isDense: false,
+          contentPadding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 10.h),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+        ),
       ),
     );
   }

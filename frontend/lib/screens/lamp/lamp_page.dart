@@ -186,9 +186,11 @@ class _LampPageState extends State<LampPage> {
         statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
+        extendBody: true,
         backgroundColor: AppColors.backgroundWhite,
         body: SafeArea(
-        child: Column(
+          bottom: false,
+          child: Column(
           children: [
             AppTopBar(
               showDropdown: true,

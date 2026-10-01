@@ -514,6 +514,7 @@ class _ProfilePageState extends State<ProfilePage> {
         statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
+        extendBody: true,
         backgroundColor: AppColors.inputBackground,
         body: Stack(
           children: [
@@ -547,264 +548,267 @@ class _ProfilePageState extends State<ProfilePage> {
                     physics: const ClampingScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(16.w, 32.h, 16.w, 28.h),
                     child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: math.max(0.0, constraints.maxHeight - 60.h),
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // --- AREA ATAS: HEADER PROFIL & ROLE ---
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Avatar Inisial
-                              Center(
-                                child: Container(
-                                  width: 80.r,
-                                  height: 80.r,
+                      constraints: BoxConstraints(
+                        minHeight: math.max(0.0, constraints.maxHeight - 60.h),
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // --- AREA ATAS: HEADER PROFIL & ROLE ---
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Avatar Inisial
+                                Center(
+                                  child: Container(
+                                    width: 80.r,
+                                    height: 80.r,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.avatarAmberBackground,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 3.5.r,
+                                      ),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: AppColors.avatarShadowBlue,
+                                          blurRadius: 14,
+                                          offset: Offset(0, 4),
+                                        ),
+                                        BoxShadow(
+                                          color: AppColors.avatarShadowAmber,
+                                          blurRadius: 8,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        _avatarInitials,
+                                        style: TextStyle(
+                                          fontSize: 32.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.avatarAmberText,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 6.h),
+
+                                // Nama Teknisi
+                                Text(
+                                  _formattedName,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 19.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textHeading,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+
+                                // Subtitle: Email
+                                Text(
+                                  _email,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.5.sp,
+                                    color: AppColors.textMuted,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                SizedBox(height: 5.h),
+
+                                // Role Badge Chip
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w,
+                                    vertical: 3.h,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.avatarAmberBackground,
-                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16.r),
                                     border: Border.all(
-                                      color: Colors.white,
-                                      width: 3.5.r,
+                                      color: AppColors.roleBadgeBorderLight,
+                                      width: 1.0,
                                     ),
                                     boxShadow: const [
                                       BoxShadow(
-                                        color: AppColors.avatarShadowBlue,
-                                        blurRadius: 14,
-                                        offset: Offset(0, 4),
-                                      ),
-                                      BoxShadow(
-                                        color: AppColors.avatarShadowAmber,
-                                        blurRadius: 8,
+                                        color: AppColors.roleBadgeShadow,
+                                        blurRadius: 6,
                                         offset: Offset(0, 2),
                                       ),
                                     ],
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      _avatarInitials,
-                                      style: TextStyle(
-                                        fontSize: 32.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.avatarAmberText,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6.r,
+                                        height: 6.r,
+                                        margin: EdgeInsets.only(right: 5.w),
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.primary,
+                                          shape: BoxShape.circle,
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 6.h),
-
-                              // Nama Teknisi
-                              Text(
-                                _formattedName,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 19.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textHeading,
-                                  letterSpacing: -0.3,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-
-                              // Subtitle: Email
-                              Text(
-                                _email,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12.5.sp,
-                                  color: AppColors.textMuted,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-
-                              // Role Badge Chip
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 10.w,
-                                  vertical: 3.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16.r),
-                                  border: Border.all(
-                                    color: AppColors.roleBadgeBorderLight,
-                                    width: 1.0,
-                                  ),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: AppColors.roleBadgeShadow,
-                                      blurRadius: 6,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 6.r,
-                                      height: 6.r,
-                                      margin: EdgeInsets.only(right: 5.w),
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.primary,
-                                        shape: BoxShape.circle,
+                                      Flexible(
+                                        child: Text(
+                                          _role,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11.5.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    Flexible(
-                                      child: Text(
-                                        _role,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      SizedBox(width: 5.w),
+                                      Text(
+                                        '•',
+                                        style: TextStyle(
+                                          color: AppColors.roleBadgeDotDivider,
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(width: 5.w),
+                                      Text(
+                                        'Aktif',
                                         style: TextStyle(
                                           fontSize: 11.5.sp,
-                                          fontWeight: FontWeight.w600,
+                                          fontWeight: FontWeight.bold,
                                           color: AppColors.primary,
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(width: 5.w),
-                                    Text(
-                                      '•',
-                                      style: TextStyle(
-                                        color: AppColors.roleBadgeDotDivider,
-                                        fontSize: 11.sp,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(width: 5.w),
-                                    Text(
-                                      'Aktif',
-                                      style: TextStyle(
-                                        fontSize: 11.5.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
 
-                          // --- AREA TENGAH: METRIK & DATA DIRI ---
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // 2 Kartu Metrik Horizontal
-                              Row(
-                                children: [
-                                  _buildMetricCard(
-                                    icon: Icons.assignment_outlined,
-                                    title: 'Proyek',
-                                    value: projectCount,
-                                  ),
-                                  SizedBox(width: 10.w),
-                                  _buildMetricCard(
-                                    icon: Icons.lightbulb_outline_rounded,
-                                    title: 'Lampu',
-                                    value: '128',
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 6.h),
-
-                              // Grup Kartu 1: Informasi Data Diri & Penugasan
-                              _buildSectionLabel('DATA DIRI & PENUGASAN'),
-                              Container(
-                                decoration: _cardDecoration,
-                                child: Column(
+                            // --- AREA TENGAH: METRIK & DATA DIRI ---
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // 2 Kartu Metrik Horizontal
+                                Row(
                                   children: [
-                                    _buildGroupRow(
-                                      icon: Icons.person_outline_rounded,
-                                      title: 'Nama',
-                                      value: _formattedName,
+                                    _buildMetricCard(
+                                      icon: Icons.assignment_outlined,
+                                      title: 'Proyek',
+                                      value: projectCount,
                                     ),
-                                    _rowDivider,
-                                    _buildGroupRow(
-                                      icon: Icons.mail_outline_rounded,
-                                      title: 'Email',
-                                      value: _email,
+                                    SizedBox(width: 10.w),
+                                    _buildMetricCard(
+                                      icon: Icons.lightbulb_outline_rounded,
+                                      title: 'Lampu',
+                                      value: '128',
                                     ),
-                                    _rowDivider,
-                                    _buildGroupRow(
-                                      icon: Icons.phone_outlined,
-                                      title: 'Nomor Telepon',
-                                      value: _phone,
-                                      showChevron: true,
-                                      actionBadge: 'Ubah',
-                                      onTap: _showEditPhoneBottomSheet,
-                                    ),
-                                    _rowDivider,
-                                    _buildLocationRow(),
                                   ],
                                 ),
-                              ),
-                            ],
-                          ),
+                                SizedBox(height: 6.h),
 
-                          // --- AREA BAWAH: AKSI NOTIFIKASI, KELUAR & VERSI ---
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Kartu Menu Notifikasi
-                              _buildActionCard(
-                                icon: Icons.notifications_outlined,
-                                iconBg: AppColors.softBlueBackground,
-                                iconColor: AppColors.primary,
-                                title: 'Notifikasi',
-                                titleColor: AppColors.textPrimary,
-                                chevronColor: AppColors.textSubtle,
-                                onTap: _handleNotification,
-                              ),
-                              SizedBox(height: 6.h),
-
-                              // Tombol Keluar
-                              _buildActionCard(
-                                icon: Icons.logout_rounded,
-                                iconBg: AppColors.logoutRedBg,
-                                iconColor: AppColors.logoutRed,
-                                title: 'Keluar',
-                                titleColor: AppColors.logoutRed,
-                                chevronColor: AppColors.logoutRed,
-                                onTap: _showLogoutDialog,
-                              ),
-                              SizedBox(height: 8.h),
-
-                              // Versi Aplikasi
-                              Text(
-                                'Versi Aplikasi v1.0.0',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11.5.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textSubtle,
-                                  letterSpacing: 0.2,
+                                // Grup Kartu 1: Informasi Data Diri & Penugasan
+                                _buildSectionLabel('DATA DIRI & PENUGASAN'),
+                                Container(
+                                  decoration: _cardDecoration,
+                                  child: Column(
+                                    children: [
+                                      _buildGroupRow(
+                                        icon: Icons.person_outline_rounded,
+                                        title: 'Nama',
+                                        value: _formattedName,
+                                      ),
+                                      _rowDivider,
+                                      _buildGroupRow(
+                                        icon: Icons.mail_outline_rounded,
+                                        title: 'Email',
+                                        value: _email,
+                                      ),
+                                      _rowDivider,
+                                      _buildGroupRow(
+                                        icon: Icons.phone_outlined,
+                                        title: 'Nomor Telepon',
+                                        value: _phone,
+                                        showChevron: true,
+                                        actionBadge: 'Ubah',
+                                        onTap: _showEditPhoneBottomSheet,
+                                      ),
+                                      _rowDivider,
+                                      _buildLocationRow(),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+
+                            // --- AREA BAWAH: AKSI NOTIFIKASI, KELUAR & VERSI ---
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Kartu Menu Notifikasi
+                                _buildActionCard(
+                                  icon: Icons.notifications_outlined,
+                                  iconBg: AppColors.softBlueBackground,
+                                  iconColor: AppColors.primary,
+                                  title: 'Notifikasi',
+                                  titleColor: AppColors.textPrimary,
+                                  chevronColor: AppColors.textSubtle,
+                                  onTap: _handleNotification,
+                                ),
+                                SizedBox(height: 6.h),
+
+                                // Tombol Keluar
+                                _buildActionCard(
+                                  icon: Icons.logout_rounded,
+                                  iconBg: AppColors.logoutRedBg,
+                                  iconColor: AppColors.logoutRed,
+                                  title: 'Keluar',
+                                  titleColor: AppColors.logoutRed,
+                                  chevronColor: AppColors.logoutRed,
+                                  onTap: _showLogoutDialog,
+                                ),
+                                SizedBox(height: 8.h),
+
+                                // Versi Aplikasi
+                                Text(
+                                  'Versi Aplikasi v1.0.0',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11.5.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSubtle,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: BottomNavbar(
+          currentIndex: 2,
+          onTap: _handleNavTap,
+        ),
       ),
-      bottomNavigationBar: BottomNavbar(currentIndex: 2, onTap: _handleNavTap),
-    ),
-  );
+    );
   }
 
   Widget _buildSectionLabel(String title) {

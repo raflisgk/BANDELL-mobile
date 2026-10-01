@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 import '../utils/app_colors.dart';
 
@@ -12,104 +14,56 @@ class BottomNavbar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadowLight,
-              blurRadius: 16,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Expanded(
-                child: _buildNavItem(
-                  index: 0,
-                  icon: Icons.cases_outlined,
-                  label: 'Proyek',
-                ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(36.w, 0, 36.w, 20.h),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
-              Expanded(
-                child: _buildNavItem(
-                  index: 1,
-                  icon: Icons.lightbulb_outline_rounded,
-                  label: 'Riwayat',
-                ),
-              ),
-              Expanded(
-                child: _buildNavItem(
-                  index: 2,
-                  icon: Icons.person_outline_rounded,
-                  label: 'Profil',
-                ),
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required int index,
-    required IconData icon,
-    required String label,
-  }) {
-    final bool isActive = index == currentIndex;
-
-    return GestureDetector(
-      onTap: () {
-        if (onTap != null) {
-          onTap!(index);
-        }
-      },
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: isActive
-            ? const EdgeInsets.symmetric(horizontal: 20, vertical: 8)
-            : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.navActiveBackground : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isActive ? AppColors.primary : AppColors.navInactive,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? AppColors.primary : AppColors.navInactive,
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            child: GNav(
+              selectedIndex: currentIndex.clamp(0, 2),
+              onTabChange: (index) => onTap?.call(index),
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              rippleColor: AppColors.primary.withValues(alpha: 0.1),
+              hoverColor: AppColors.primary.withValues(alpha: 0.05),
+              haptic: true,
+              tabBorderRadius: 20.r,
+              gap: 8.w,
+              color: const Color(0xFF64748B),
+              activeColor: AppColors.primary,
+              iconSize: 22.r,
+              tabBackgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              textStyle: TextStyle(
+                color: const Color(0xFF0F172A),
+                fontSize: 11.5.sp,
+                fontWeight: FontWeight.w700,
               ),
+              tabs: const [
+                GButton(icon: Icons.cases_rounded, text: 'Proyek'),
+                GButton(icon: Icons.lightbulb_rounded, text: 'Riwayat'),
+                GButton(icon: Icons.person_rounded, text: 'Profil'),
+              ],
             ),
-            if (isActive) ...[
-              const SizedBox(height: 4),
-              Container(
-                width: 18,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
