@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -199,9 +200,15 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
     final double topSpacing = screenHeight < 700 ? 28.0 : 48.0;
     final double midSpacing = screenHeight < 700 ? 36.0 : 60.0;
 
-    return Scaffold(
-      backgroundColor: AppColors.scanBackgroundDark,
-      body: SafeArea(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.scanBackgroundDark,
+        body: SafeArea(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: Padding(
@@ -353,8 +360,9 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildCenterScanningButton() {
     return Column(

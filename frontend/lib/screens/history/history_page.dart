@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/history_lamp_model.dart';
 import '../../models/project_model.dart';
@@ -457,9 +458,15 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget build(BuildContext context) {
     final filtered = _filteredItems;
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
-      body: SafeArea(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhite,
+        body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => _loadHistory(forceRefresh: true),
           color: AppColors.primary,
@@ -749,8 +756,9 @@ class _HistoryPageState extends State<HistoryPage> {
         ),
       ),
       bottomNavigationBar: BottomNavbar(currentIndex: 1, onTap: _handleNavTap),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildFilterPill(String label) {
     final bool isSelected = _selectedFilter == label;

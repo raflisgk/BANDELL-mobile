@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/lamp_type_model.dart';
 import '../../services/lamp_type_service.dart';
@@ -178,9 +179,15 @@ class _LampPageState extends State<LampPage> {
         ProjectService.selectedProject?.status == 'closed' ||
         ProjectService.selectedProject?.status == 'selesai';
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
-      body: SafeArea(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhite,
+        body: SafeArea(
         child: Column(
           children: [
             AppTopBar(
@@ -422,6 +429,7 @@ class _LampPageState extends State<LampPage> {
           }
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

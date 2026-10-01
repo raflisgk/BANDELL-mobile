@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../utils/app_colors.dart';
 import '../login/login_page.dart';
@@ -92,45 +93,52 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.splashButtonBg,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _opacityAnimation.value,
-              child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: Container(
-                  width: 82,
-                  height: 82,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white.withValues(
-                          alpha: 0.18 * _glowAnimation.value,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.splashButtonBg,
+        body: Center(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _opacityAnimation.value,
+                child: Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Container(
+                    width: 82,
+                    height: 82,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withValues(
+                            alpha: 0.18 * _glowAnimation.value,
+                          ),
+                          blurRadius: 28 * _glowAnimation.value,
+                          spreadRadius: 4 * _glowAnimation.value,
                         ),
-                        blurRadius: 28 * _glowAnimation.value,
-                        spreadRadius: 4 * _glowAnimation.value,
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: child,
                   ),
-                  child: child,
                 ),
-              ),
-            );
-          },
+              );
+            },
 
-          // Logo Bandell
-          child: Image.asset(
-            'assets/images/logo bandell 1.png',
-            width: 58,
-            height: 58,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.shield_rounded, color: Colors.white, size: 48),
+            // Logo Bandell
+            child: Image.asset(
+              'assets/images/logo bandell 1.png',
+              width: 58,
+              height: 58,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.shield_rounded, color: Colors.white, size: 48),
+            ),
           ),
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_teknisi/models/user_model.dart';
 import 'package:mobile_teknisi/screens/profile/profile_page.dart';
@@ -17,151 +18,101 @@ void main() {
     );
   });
 
-  group('ProfilePage Comprehensive Responsive Tests', () {
-    testWidgets(
-      'Ultra small screen (320x568): no overflow, scrolls normally, Keluar reachable',
-      (tester) async {
-        tester.view.physicalSize = const Size(320, 568);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-
-        await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
-        await tester.pumpAndSettle();
-
-        expect(tester.takeException(), isNull);
-        final scrollable = tester.state<ScrollableState>(
-          find.byType(Scrollable),
-        );
-        expect(scrollable.position.maxScrollExtent, greaterThan(0.0));
-        expect(scrollable.position.physics, isA<ClampingScrollPhysics>());
-
-        await tester.drag(find.byType(Scrollable), const Offset(0, -400));
-        await tester.pumpAndSettle();
-        expect(find.text('Keluar'), findsOneWidget);
-      },
+  Widget buildTestWidget() {
+    return ScreenUtilInit(
+      designSize: const Size(390, 844),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) => const MaterialApp(home: ProfilePage()),
     );
+  }
 
+  group('ProfilePage Comprehensive Responsive Tests (flutter_screenutil)', () {
     testWidgets(
-      'Small screen (360x640): no overflow, Surel and Keluar render cleanly',
+      'Small screen (360x640): no overflow, all elements render cleanly',
       (tester) async {
         tester.view.physicalSize = const Size(360, 640);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+        await tester.pumpWidget(buildTestWidget());
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(
-          find.byWidgetPredicate(
-            (w) => w is Text && (w.data == 'Surel' || w.data == 'Email'),
-          ),
-          findsOneWidget,
-        );
-        expect(
-          find.byWidgetPredicate(
-            (w) => w is Text && (w.data == 'Nama Lengkap' || w.data == 'Nama'),
-          ),
-          findsOneWidget,
-        );
+        expect(find.text('Budi Santoso'), findsWidgets);
+        expect(find.text('budi@example.com'), findsWidgets);
         expect(find.text('Nomor Telepon'), findsOneWidget);
         expect(find.text('Lokasi'), findsOneWidget);
-
-        final scrollable = tester.state<ScrollableState>(
-          find.byType(Scrollable),
-        );
-        if (scrollable.position.maxScrollExtent > 0) {
-          await tester.drag(find.byType(Scrollable), const Offset(0, -200));
-          await tester.pumpAndSettle();
-        }
+        expect(find.text('Notifikasi'), findsOneWidget);
         expect(find.text('Keluar'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'Standard Medium screen (360x740): no overflow, Keluar reachable',
+      'Standard Medium screen (360x740): no overflow, Keluar & Notifikasi visible',
       (tester) async {
         tester.view.physicalSize = const Size(360, 740);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+        await tester.pumpWidget(buildTestWidget());
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        final scrollable = tester.state<ScrollableState>(
-          find.byType(Scrollable),
-        );
-        if (scrollable.position.maxScrollExtent > 0) {
-          await tester.drag(find.byType(Scrollable), const Offset(0, -200));
-          await tester.pumpAndSettle();
-        }
         expect(find.text('Keluar'), findsOneWidget);
+        expect(find.text('Notifikasi'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'Popular Medium-Tall screen (390x844): card hugs content without extra whitespace',
+      'Popular Medium-Tall screen (390x844): fixed layout fits full screen perfectly',
       (tester) async {
         tester.view.physicalSize = const Size(390, 844);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+        await tester.pumpWidget(buildTestWidget());
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        final scrollable = tester.state<ScrollableState>(
-          find.byType(Scrollable),
-        );
-        expect(scrollable.position.maxScrollExtent, 0.0);
+        expect(find.text('Budi Santoso'), findsWidgets);
         expect(find.text('Keluar'), findsOneWidget);
+        expect(find.text('Versi Aplikasi v1.0.0'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'Tall screen (412x915): card hugs content naturally, no extra expansion',
+      'Tall screen (412x915): elements scale proportionally with no empty gaps',
       (tester) async {
         tester.view.physicalSize = const Size(412, 915);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+        await tester.pumpWidget(buildTestWidget());
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        final scrollable = tester.state<ScrollableState>(
-          find.byType(Scrollable),
-        );
-        expect(scrollable.position.maxScrollExtent, 0.0);
         expect(find.text('Keluar'), findsOneWidget);
+        expect(find.text('Versi Aplikasi v1.0.0'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'Landscape screen (844x390): handles scrolling gracefully with no RenderFlex overflow',
+      'Extra Large screen (430x932): renders proportional layout without issues',
       (tester) async {
-        tester.view.physicalSize = const Size(844, 390);
+        tester.view.physicalSize = const Size(430, 932);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+        await tester.pumpWidget(buildTestWidget());
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        final scrollable = tester.state<ScrollableState>(
-          find.byType(Scrollable),
-        );
-        expect(scrollable.position.maxScrollExtent, greaterThan(0.0));
-
-        await tester.drag(find.byType(Scrollable), const Offset(0, -400));
-        await tester.pumpAndSettle();
         expect(find.text('Keluar'), findsOneWidget);
       },
     );

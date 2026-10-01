@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/installation_model.dart';
 import '../../services/installation_service.dart';
@@ -283,9 +284,15 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     final projectName = ProjectService.selectedProject?.projectName ?? '-';
     final projectLocation = ProjectService.selectedProject?.location ?? '-';
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
-      body: SafeArea(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhite,
+        body: SafeArea(
         child: Column(
           children: [
             AppTopBar(
@@ -524,6 +531,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

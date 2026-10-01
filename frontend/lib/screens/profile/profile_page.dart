@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../services/auth_service.dart';
 import '../../services/project_service.dart';
@@ -18,11 +19,10 @@ import '../notification/notification_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
-
-enum ProfileEditField { none, phone }
 
 class _ProfilePageState extends State<ProfilePage> {
   String _name = '-';
@@ -30,11 +30,9 @@ class _ProfilePageState extends State<ProfilePage> {
   String _email = '-';
   String _phone = '-';
   String _location = '-';
+  bool _isEditingPhone = false;
 
-  ProfileEditField _activeEditField = ProfileEditField.none;
-
-  late TextEditingController _editController;
-  final FocusNode _editFocusNode = FocusNode();
+  late final TextEditingController _editController;
   Timer? _refreshTimer;
 
   @override
@@ -43,13 +41,8 @@ class _ProfilePageState extends State<ProfilePage> {
     _editController = TextEditingController();
 
     final user = AuthService.currentUser;
-
     if (user != null) {
-      _name = user.name.isNotEmpty ? user.name : user.username;
-      _role = user.role.isNotEmpty ? user.role : 'Teknisi Lapangan';
-      _email = user.email ?? '-';
-      _phone = user.phone ?? '-';
-      _location = user.placementArea ?? '-';
+      _applyUserData(user);
     }
 
     _loadProfile();
@@ -59,18 +52,20 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _applyUserData(dynamic user) {
+    _name = user.name.isNotEmpty ? user.name : user.username;
+    _role = user.role.isNotEmpty ? user.role : 'Teknisi Lapangan';
+    _email = user.email ?? '-';
+    if (!_isEditingPhone) {
+      _phone = user.phone ?? '-';
+    }
+    _location = user.placementArea ?? '-';
+  }
+
   Future<void> _loadProfile() async {
     final user = await AuthService().getProfile();
     if (user != null && mounted) {
-      setState(() {
-        _name = user.name.isNotEmpty ? user.name : user.username;
-        _role = user.role.isNotEmpty ? user.role : 'Teknisi Lapangan';
-        _email = user.email ?? '-';
-        if (_activeEditField != ProfileEditField.phone) {
-          _phone = user.phone ?? '-';
-        }
-        _location = user.placementArea ?? '-';
-      });
+      setState(() => _applyUserData(user));
     }
   }
 
@@ -94,28 +89,39 @@ class _ProfilePageState extends State<ProfilePage> {
         .split(RegExp(r'\s+'))
         .where((p) => p.isNotEmpty)
         .toList();
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
+    return (parts.length >= 2 ? '${parts[0][0]}${parts[1][0]}' : parts[0][0])
+        .toUpperCase();
   }
 
   @override
   void dispose() {
     _refreshTimer?.cancel();
     _editController.dispose();
-    _editFocusNode.dispose();
     super.dispose();
   }
 
-  void _startEditingPhone() {
-    _showEditPhoneBottomSheet();
-  }
+  BoxDecoration get _cardDecoration => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16.r),
+    border: Border.all(color: AppColors.borderLight, width: 0.8),
+    boxShadow: const [
+      BoxShadow(
+        color: AppColors.shadowMinimal,
+        blurRadius: 8,
+        offset: Offset(0, 2),
+      ),
+    ],
+  );
+
+  Widget get _rowDivider => Divider(
+    height: 1,
+    indent: 58.w,
+    endIndent: 14.w,
+    color: AppColors.divider,
+  );
 
   void _showEditPhoneBottomSheet() {
-    setState(() {
-      _activeEditField = ProfileEditField.phone;
-    });
+    setState(() => _isEditingPhone = true);
 
     _editController.text = _phone == '-'
         ? ''
@@ -133,10 +139,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 .bottom;
 
             return Container(
-              padding: EdgeInsets.fromLTRB(20, 20, 20, keyboardPadding + 20),
-              decoration: const BoxDecoration(
+              padding: EdgeInsets.fromLTRB(
+                20.w,
+                18.h,
+                20.w,
+                keyboardPadding + 18.h,
+              ),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -144,50 +155,50 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   Center(
                     child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
+                      width: 40.w,
+                      height: 4.h,
+                      margin: EdgeInsets.only(bottom: 16.h),
                       decoration: BoxDecoration(
                         color: AppColors.borderMedium,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(2.r),
                       ),
                     ),
                   ),
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.all(8.r),
                         decoration: BoxDecoration(
                           color: AppColors.notifUnreadAvatarBg,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.phone_rounded,
                           color: AppColors.primary,
-                          size: 20,
+                          size: 20.r,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      SizedBox(width: 12.w),
+                      Text(
                         'Ubah Nomor Telepon',
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 17.sp,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8.h),
+                  Text(
                     'Nomor telepon ini digunakan untuk koordinasi tugas lapangan (maksimal 13 digit).',
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12.5.sp,
                       color: AppColors.textMuted,
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   TextField(
                     controller: _editController,
                     keyboardType: TextInputType.phone,
@@ -198,17 +209,26 @@ class _ProfilePageState extends State<ProfilePage> {
                       LengthLimitingTextInputFormatter(13),
                     ],
                     onChanged: (_) => setModalState(() {}),
+                    style: TextStyle(fontSize: 14.5.sp),
                     decoration: InputDecoration(
                       hintText: 'Contoh: 081234567890',
+                      hintStyle: TextStyle(
+                        fontSize: 13.5.sp,
+                        color: AppColors.hintColor,
+                      ),
                       counterText: '${_editController.text.length}/13',
                       filled: true,
                       fillColor: AppColors.inputBackground,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 12.h,
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12.r),
                         borderSide: const BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12.r),
                         borderSide: const BorderSide(
                           color: AppColors.primary,
                           width: 1.5,
@@ -216,33 +236,32 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pop(modalContext);
-                          },
+                          onPressed: () => Navigator.pop(modalContext),
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
                             side: const BorderSide(
                               color: AppColors.borderMedium,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10.r),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Batal',
                             style: TextStyle(
                               color: AppColors.textBody,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12.w),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () async {
@@ -263,7 +282,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             if (success) {
                               setState(() {
                                 _phone = newValue;
-                                _activeEditField = ProfileEditField.none;
+                                _isEditingPhone = false;
                               });
                               CustomFeedback.showSuccess(
                                 context,
@@ -279,14 +298,17 @@ class _ProfilePageState extends State<ProfilePage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10.r),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Simpan',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -300,18 +322,14 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     ).then((_) {
       if (mounted) {
-        setState(() {
-          _activeEditField = ProfileEditField.none;
-        });
+        setState(() => _isEditingPhone = false);
       }
     });
   }
 
   void _handleNotification() async {
     await AppNavigator.push(context, const NotificationPage());
-    if (mounted) {
-      _loadProfile();
-    }
+    if (mounted) _loadProfile();
   }
 
   void _handleNavTap(int index) {
@@ -325,64 +343,119 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showLogoutDialog() {
     showDialog(
       context: context,
+      barrierColor: AppColors.barrierOverlay,
       builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: EdgeInsets.symmetric(horizontal: 28.w),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22.r),
+            border: Border.all(color: AppColors.borderLight, width: 1.0),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.shadowDark,
+                blurRadius: 24,
+                offset: Offset(0, 10),
+              ),
+              BoxShadow(
+                color: AppColors.shadowSubtle,
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.fromLTRB(22.w, 26.h, 22.w, 20.h),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Double Ring Soft Red Badge
               Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: AppColors.logoutRedBg,
+                width: 64.r,
+                height: 64.r,
+                decoration: BoxDecoration(
+                  color: AppColors.statusDitolakBg,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.statusDitolakBorder,
+                    width: 2.0,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.logout_rounded,
-                  color: AppColors.logoutRed,
-                  size: 28,
+                child: Center(
+                  child: Container(
+                    width: 46.r,
+                    height: 46.r,
+                    decoration: const BoxDecoration(
+                      color: AppColors.statusDitolakCircleBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.logout_rounded,
+                        color: AppColors.logoutRed,
+                        size: 24.r,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Keluar dari Akun?',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Apakah Anda yakin ingin keluar dari akun?',
+              SizedBox(height: 18.h),
+
+              // Title
+              Text(
+                'Konfirmasi Keluar',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+                style: TextStyle(
+                  fontSize: 18.5.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHeading,
+                  letterSpacing: -0.3,
+                ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 8.h),
+
+              // Subtitle
+              Text(
+                'Apakah Anda yakin ingin keluar dari akun? Anda perlu login kembali untuk mengakses data penugasan.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: AppColors.textMuted,
+                  height: 1.45,
+                ),
+              ),
+              SizedBox(height: 24.h),
+
+              // Action Buttons Row
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(dialogContext),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: AppColors.borderMedium),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                        backgroundColor: AppColors.inputBackground,
+                        padding: EdgeInsets.symmetric(vertical: 12.5.h),
+                        side: const BorderSide(
+                          color: AppColors.borderMedium,
+                          width: 1.0,
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        elevation: 0,
                       ),
-                      child: const Text(
+                      child: Text(
                         'Batal',
                         style: TextStyle(
                           color: AppColors.textBody,
+                          fontSize: 13.5.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
@@ -403,14 +476,19 @@ class _ProfilePageState extends State<ProfilePage> {
                         backgroundColor: AppColors.logoutRed,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: EdgeInsets.symmetric(vertical: 12.5.h),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
+                        shadowColor: Colors.transparent,
                       ),
-                      child: const Text(
-                        'Log Out',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      child: Text(
+                        'Keluar',
+                        style: TextStyle(
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -429,472 +507,317 @@ class _ProfilePageState extends State<ProfilePage> {
         ? ProjectService.cachedProjects.length.toString()
         : '4';
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final double availableHeight = constraints.maxHeight;
-            final double factor = ((availableHeight - 480) / 240).clamp(
-              0.0,
-              1.0,
-            );
-            double lerp(double minVal, double maxVal) =>
-                minVal + (maxVal - minVal) * factor;
-
-            final double avatarSize = lerp(72.0, 88.0);
-            final double avatarFont = lerp(29.0, 36.0);
-            final double topPadding = lerp(12.0, 28.0);
-            final double sectionGap = lerp(8.0, 10.0);
-            final double cardGap = lerp(5.0, 6.5);
-            final double dataDiriVerticalPadding = lerp(6.5, 8.5);
-            final double appRowVerticalPadding = lerp(5.5, 7.5);
-
-            return Stack(
-              children: [
-                // 1. Ambient Soft Sky-Blue Glow di bagian atas (pudar dan halus)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 220,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0xFFDCEFFE),
-                          Color(0xFFF1F8FE),
-                          Color(0x00F8FAFC),
-                        ],
-                        stops: [0.0, 0.55, 1.0],
-                      ),
-                    ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.inputBackground,
+        body: Stack(
+          children: [
+            // 1. Ambient Glow Transparan Lembut Mengalir Sampai ke Status Bar
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 280.h,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.profileAmbientGlowStart,
+                      AppColors.profileAmbientGlowMiddle,
+                      AppColors.profileAmbientGlowEnd,
+                    ],
+                    stops: [0.0, 0.55, 1.0],
                   ),
                 ),
+              ),
+            ),
 
-                // 2. Konten Profil Scrollable
-                SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(16, topPadding, 16, 12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Header Avatar di tengah
-                      Center(
-                        child: Container(
-                          width: avatarSize,
-                          height: avatarSize,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3.5),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x180284C7),
-                                blurRadius: 14,
-                                offset: Offset(0, 4),
+            // 2. Konten Profil Responsif (Menyesuaikan Tinggi Layar Tanpa Void Kosong)
+            SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(16.w, 32.h, 16.w, 28.h),
+                    child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: math.max(0.0, constraints.maxHeight - 60.h),
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // --- AREA ATAS: HEADER PROFIL & ROLE ---
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Avatar Inisial
+                              Center(
+                                child: Container(
+                                  width: 80.r,
+                                  height: 80.r,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.avatarAmberBackground,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 3.5.r,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: AppColors.avatarShadowBlue,
+                                        blurRadius: 14,
+                                        offset: Offset(0, 4),
+                                      ),
+                                      BoxShadow(
+                                        color: AppColors.avatarShadowAmber,
+                                        blurRadius: 8,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      _avatarInitials,
+                                      style: TextStyle(
+                                        fontSize: 32.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.avatarAmberText,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                              BoxShadow(
-                                color: Color(0x18B45309),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
+                              SizedBox(height: 6.h),
+
+                              // Nama Teknisi
+                              Text(
+                                _formattedName,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 19.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textHeading,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+
+                              // Subtitle: Email
+                              Text(
+                                _email,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12.5.sp,
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              SizedBox(height: 5.h),
+
+                              // Role Badge Chip
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 3.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  border: Border.all(
+                                    color: AppColors.roleBadgeBorderLight,
+                                    width: 1.0,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: AppColors.roleBadgeShadow,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6.r,
+                                      height: 6.r,
+                                      margin: EdgeInsets.only(right: 5.w),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    Flexible(
+                                      child: Text(
+                                        _role,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11.5.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 5.w),
+                                    Text(
+                                      '•',
+                                      style: TextStyle(
+                                        color: AppColors.roleBadgeDotDivider,
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(width: 5.w),
+                                    Text(
+                                      'Aktif',
+                                      style: TextStyle(
+                                        fontSize: 11.5.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                          child: Center(
-                            child: Text(
-                              _avatarInitials,
-                              style: TextStyle(
-                                fontSize: avatarFont,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFFB45309),
+
+                          // --- AREA TENGAH: METRIK & DATA DIRI ---
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 2 Kartu Metrik Horizontal
+                              Row(
+                                children: [
+                                  _buildMetricCard(
+                                    icon: Icons.assignment_outlined,
+                                    title: 'Proyek',
+                                    value: projectCount,
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  _buildMetricCard(
+                                    icon: Icons.lightbulb_outline_rounded,
+                                    title: 'Lampu',
+                                    value: '128',
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                              SizedBox(height: 6.h),
 
-                      // Nama Teknisi
-                      Text(
-                        _formattedName,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textHeading,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-
-                      // Subtitle: Email
-                      Text(
-                        _email,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-
-                      // Role Badge Chip
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFFBAE6FD),
-                            width: 1.0,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x0A0284C7),
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              margin: const EdgeInsets.only(right: 5),
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Flexible(
-                              child: Text(
-                                _role,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                              // Grup Kartu 1: Informasi Data Diri & Penugasan
+                              _buildSectionLabel('DATA DIRI & PENUGASAN'),
+                              Container(
+                                decoration: _cardDecoration,
+                                child: Column(
+                                  children: [
+                                    _buildGroupRow(
+                                      icon: Icons.person_outline_rounded,
+                                      title: 'Nama',
+                                      value: _formattedName,
+                                    ),
+                                    _rowDivider,
+                                    _buildGroupRow(
+                                      icon: Icons.mail_outline_rounded,
+                                      title: 'Email',
+                                      value: _email,
+                                    ),
+                                    _rowDivider,
+                                    _buildGroupRow(
+                                      icon: Icons.phone_outlined,
+                                      title: 'Nomor Telepon',
+                                      value: _phone,
+                                      showChevron: true,
+                                      actionBadge: 'Ubah',
+                                      onTap: _showEditPhoneBottomSheet,
+                                    ),
+                                    _rowDivider,
+                                    _buildLocationRow(),
+                                  ],
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              '•',
-                              style: TextStyle(
-                                color: Color(0xFF93C5FD),
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Aktif',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: sectionGap),
-
-                      // ==========================================
-                      // 2 KARTU METRIK HORIZONTAL
-                      // ==========================================
-                      Row(
-                        children: [
-                          _buildMetricCard(
-                            icon: Icons.assignment_outlined,
-                            title: 'Proyek',
-                            value: projectCount,
-                            color: AppColors.primary,
-                            iconBg: const Color(0xFFEFF6FF),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          _buildMetricCard(
-                            icon: Icons.lightbulb_outline_rounded,
-                            title: 'Lampu',
-                            value: '128',
-                            color: AppColors.primary,
-                            iconBg: const Color(0xFFEFF6FF),
+
+                          // --- AREA BAWAH: AKSI NOTIFIKASI, KELUAR & VERSI ---
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Kartu Menu Notifikasi
+                              _buildActionCard(
+                                icon: Icons.notifications_outlined,
+                                iconBg: AppColors.softBlueBackground,
+                                iconColor: AppColors.primary,
+                                title: 'Notifikasi',
+                                titleColor: AppColors.textPrimary,
+                                chevronColor: AppColors.textSubtle,
+                                onTap: _handleNotification,
+                              ),
+                              SizedBox(height: 6.h),
+
+                              // Tombol Keluar
+                              _buildActionCard(
+                                icon: Icons.logout_rounded,
+                                iconBg: AppColors.logoutRedBg,
+                                iconColor: AppColors.logoutRed,
+                                title: 'Keluar',
+                                titleColor: AppColors.logoutRed,
+                                chevronColor: AppColors.logoutRed,
+                                onTap: _showLogoutDialog,
+                              ),
+                              SizedBox(height: 8.h),
+
+                              // Versi Aplikasi
+                              Text(
+                                'Versi Aplikasi v1.0.0',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11.5.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textSubtle,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-
-                      SizedBox(height: cardGap),
-
-                      // ==========================================
-                      // GRUP KARTU 1: INFORMASI DATA DIRI & PENUGASAN
-                      // ==========================================
-                      _buildSectionLabel('DATA DIRI & PENUGASAN'),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 0.8,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x06000000),
-                              blurRadius: 10,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _buildGroupRow(
-                              icon: Icons.person_outline_rounded,
-                              iconBg: const Color(0xFFEFF6FF),
-                              iconColor: AppColors.primary,
-                              title: 'Nama',
-                              value: _formattedName,
-                              verticalPadding: dataDiriVerticalPadding,
-                            ),
-                            const Divider(
-                              height: 1,
-                              indent: 58,
-                              endIndent: 14,
-                              color: AppColors.divider,
-                            ),
-                            _buildGroupRow(
-                              icon: Icons.mail_outline_rounded,
-                              iconBg: const Color(0xFFEFF6FF),
-                              iconColor: AppColors.primary,
-                              title: 'Email',
-                              value: _email,
-                              verticalPadding: dataDiriVerticalPadding,
-                            ),
-                            const Divider(
-                              height: 1,
-                              indent: 58,
-                              endIndent: 14,
-                              color: AppColors.divider,
-                            ),
-                            _buildGroupRow(
-                              icon: Icons.phone_outlined,
-                              iconBg: const Color(0xFFEFF6FF),
-                              iconColor: AppColors.primary,
-                              title: 'Nomor Telepon',
-                              value: _phone,
-                              showChevron: true,
-                              actionBadge: 'Ubah',
-                              onTap: _startEditingPhone,
-                              verticalPadding: dataDiriVerticalPadding,
-                            ),
-                            const Divider(
-                              height: 1,
-                              indent: 58,
-                              endIndent: 14,
-                              color: AppColors.divider,
-                            ),
-                            _buildLocationRow(
-                              verticalPadding: dataDiriVerticalPadding,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: cardGap * 1.5),
-
-                      // ==========================================
-                      // KARTU MENU NOTIFIKASI
-                      // ==========================================
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 0.8,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x06000000),
-                              blurRadius: 10,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
-                          child: InkWell(
-                            onTap: _handleNotification,
-                            borderRadius: BorderRadius.circular(16),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: appRowVerticalPadding + 1.5,
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFEFF6FF),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.notifications_outlined,
-                                        color: AppColors.primary,
-                                        size: 19,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Notifikasi',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.chevron_right_rounded,
-                                    color: AppColors.textSubtle,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: cardGap * 1.2),
-
-                      // ==========================================
-                      // TOMBOL KELUAR
-                      // ==========================================
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 0.8,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x06000000),
-                              blurRadius: 10,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
-                          child: InkWell(
-                            onTap: _showLogoutDialog,
-                            borderRadius: BorderRadius.circular(16),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: appRowVerticalPadding + 1.5,
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.logoutRedBg,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.logout_rounded,
-                                        color: AppColors.logoutRed,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Keluar',
-                                      style: TextStyle(
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.logoutRed,
-                                      ),
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.chevron_right_rounded,
-                                    color: AppColors.logoutRed,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Versi Aplikasi Simple (Tanpa Kotak)
-                      const Text(
-                        'Versi Aplikasi v1.0.0',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF94A3B8),
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
-        ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavbar(currentIndex: 2, onTap: _handleNavTap),
-    );
+    ),
+  );
   }
 
   Widget _buildSectionLabel(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 4),
+      padding: EdgeInsets.only(left: 4.w, bottom: 4.h),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: const TextStyle(
-            fontSize: 10.5,
+          style: TextStyle(
+            fontSize: 10.5.sp,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF94A3B8),
+            color: AppColors.textSubtle,
             letterSpacing: 0.6,
           ),
         ),
@@ -906,34 +829,25 @@ class _ProfilePageState extends State<ProfilePage> {
     required IconData icon,
     required String title,
     required String value,
-    required Color color,
-    required Color iconBg,
+    Color color = AppColors.primary,
+    Color iconBg = AppColors.softBlueBackground,
     bool isStatus = false,
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x06000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
+        padding: EdgeInsets.symmetric(vertical: 9.h, horizontal: 12.w),
+        decoration: _cardDecoration,
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 38.r,
+              height: 38.r,
               decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-              child: Center(child: Icon(icon, color: color, size: 20)),
+              child: Center(
+                child: Icon(icon, color: color, size: 20.r),
+              ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -944,20 +858,19 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Text(
                       value,
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: 17.sp,
                         fontWeight: FontWeight.bold,
                         color: isStatus ? color : AppColors.textHeading,
                         letterSpacing: -0.3,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 1),
                   Text(
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11.5,
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
                       color: AppColors.textMuted,
                       fontWeight: FontWeight.w500,
                     ),
@@ -971,47 +884,104 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildGroupRow({
+  Widget _buildActionCard({
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
     required String title,
+    required Color titleColor,
+    required Color chevronColor,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: _cardDecoration,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16.r),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+            child: Row(
+              children: [
+                Container(
+                  width: 36.r,
+                  height: 36.r,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(icon, color: iconColor, size: 19.r),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: titleColor,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: chevronColor,
+                  size: 20.r,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupRow({
+    required IconData icon,
+    required String title,
     required String value,
+    Color iconBg = AppColors.softBlueBackground,
+    Color iconColor = AppColors.primary,
     bool showChevron = false,
     String? actionBadge,
     VoidCallback? onTap,
-    double verticalPadding = 7.5,
   }) {
     final Widget content = Padding(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: verticalPadding),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 36.r,
+            height: 36.r,
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Center(child: Icon(icon, color: iconColor, size: 18)),
+            child: Center(
+              child: Icon(icon, color: iconColor, size: 18.r),
+            ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 11.5,
+                  style: TextStyle(
+                    fontSize: 11.5.sp,
                     color: AppColors.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2.h),
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
@@ -1021,27 +991,27 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           if (actionBadge != null) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(6),
+                color: AppColors.softBlueBackground,
+                borderRadius: BorderRadius.circular(6.r),
               ),
               child: Text(
                 actionBadge,
-                style: const TextStyle(
-                  fontSize: 10.5,
+                style: TextStyle(
+                  fontSize: 10.5.sp,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary,
                 ),
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4.w),
           ],
           if (showChevron)
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textSubtle,
-              size: 20,
+              size: 20.r,
             ),
         ],
       ),
@@ -1057,7 +1027,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return content;
   }
 
-  Widget _buildLocationRow({double verticalPadding = 7.5}) {
+  Widget _buildLocationRow() {
     final List<String> locationList =
         _location == '-' || _location.trim().isEmpty
         ? []
@@ -1072,69 +1042,68 @@ class _ProfilePageState extends State<ProfilePage> {
         ? locationList.take(3).toList()
         : locationList;
     final int remainingCount = locationList.length - 3;
-    final List<String> remainingList = hasMoreThan3
-        ? locationList.skip(3).toList()
-        : [];
-    final String tooltipMessage = remainingList.join(', ');
+    final String tooltipMessage = hasMoreThan3
+        ? locationList.skip(3).join(', ')
+        : '';
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: verticalPadding),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 36.r,
+            height: 36.r,
             decoration: const BoxDecoration(
-              color: Color(0xFFEFF6FF),
+              color: AppColors.softBlueBackground,
               shape: BoxShape.circle,
             ),
-            child: const Center(
+            child: Center(
               child: Icon(
                 Icons.location_on_outlined,
                 color: AppColors.primary,
-                size: 18,
+                size: 18.r,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Lokasi',
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 11.5.sp,
                     color: AppColors.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 3.5),
+                SizedBox(height: 3.5.h),
                 if (locationList.isEmpty)
                   Text(
                     _location,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   )
                 else
                   Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: 6.w,
+                    runSpacing: 5.h,
                     children: [
                       ...displayedList.map((loc) {
                         return Container(
-                          constraints: const BoxConstraints(maxWidth: 175),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8.5,
-                            vertical: 3.5,
+                          constraints: BoxConstraints(maxWidth: 175.w),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.5.w,
+                            vertical: 3.5.h,
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.roleBadgeBackground,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(6.r),
                             border: Border.all(
                               color: AppColors.roleBadgeBorder,
                               width: 0.8,
@@ -1143,19 +1112,19 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.place_rounded,
-                                size: 11,
+                                size: 11.r,
                                 color: AppColors.primary,
                               ),
-                              const SizedBox(width: 3.5),
+                              SizedBox(width: 3.5.w),
                               Flexible(
                                 child: Text(
                                   loc,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 11.5,
+                                  style: TextStyle(
+                                    fontSize: 11.5.sp,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.primary,
                                   ),
@@ -1176,9 +1145,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           margin: EdgeInsets.zero,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 8.h,
                           ),
                           positionDelegate: (context) {
                             final fitsBelow =
@@ -1206,18 +1175,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                     10.0,
                                   );
 
-                            // Batas kiri: persis sejajar awal tulisan 'Lokasi' (78px dari kiri layar)
-                            const double minX = 78.0;
+                            final double minX = 78.w;
                             final double maxX = math.max(
                               minX,
                               context.overlaySize.width -
-                                  24.0 -
+                                  24.w -
                                   context.tooltipSize.width,
                             );
-
                             final double targetCenterX =
                                 context.target.dx +
-                                (context.targetSize.width / 2);
+                                context.targetSize.width / 2;
                             final double idealX =
                                 targetCenterX - (context.tooltipSize.width / 2);
                             final double x = idealX.clamp(minX, maxX);
@@ -1225,40 +1192,40 @@ class _ProfilePageState extends State<ProfilePage> {
                             return Offset(x, y);
                           },
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(8),
+                            color: AppColors.tooltipBackgroundDark,
+                            borderRadius: BorderRadius.circular(8.r),
                             boxShadow: const [
                               BoxShadow(
-                                color: Color(0x33000000),
+                                color: AppColors.tooltipShadowDark,
                                 blurRadius: 8,
                                 offset: Offset(0, 3),
                               ),
                             ],
                           ),
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
                             height: 1.35,
                           ),
                           message: tooltipMessage,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                              vertical: 3.5,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 3.5.h,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(6),
+                              color: AppColors.softBlueBackground,
+                              borderRadius: BorderRadius.circular(6.r),
                               border: Border.all(
-                                color: const Color(0xFFBFDBFE),
+                                color: AppColors.roleBadgeBorder,
                                 width: 0.8,
                               ),
                             ),
                             child: Text(
                               '+$remainingCount',
-                              style: const TextStyle(
-                                fontSize: 11.5,
+                              style: TextStyle(
+                                fontSize: 11.5.sp,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.primary,
                               ),

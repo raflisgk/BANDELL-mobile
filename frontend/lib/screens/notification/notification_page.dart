@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/notification_model.dart';
 import '../../services/notification_service.dart';
@@ -149,9 +150,15 @@ class _NotificationPageState extends State<NotificationPage> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.inputBackground,
-      body: Column(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.inputBackground,
+        body: Column(
         children: [
           // 1. Header Sesuai Warna Layar
           Container(
@@ -384,6 +391,7 @@ class _NotificationPageState extends State<NotificationPage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

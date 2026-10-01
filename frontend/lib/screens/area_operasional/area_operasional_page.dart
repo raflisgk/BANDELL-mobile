@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/area_model.dart';
 import '../../models/project_model.dart';
@@ -423,9 +424,15 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   Widget build(BuildContext context) {
     final projectNames = _projects.map((project) => project.name).toList();
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
-      body: SafeArea(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhite,
+        body: SafeArea(
         child: Column(
           children: [
             AppTopBar(
@@ -832,8 +839,9 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
           }
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // Alias class untuk kompatibilitas

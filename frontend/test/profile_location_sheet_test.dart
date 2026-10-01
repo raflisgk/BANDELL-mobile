@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_teknisi/models/user_model.dart';
 import 'package:mobile_teknisi/screens/profile/profile_page.dart';
@@ -23,7 +24,12 @@ void main() {
         placementArea: 'Area Jakarta Barat, Area Jakarta Pusat, Area Jakarta Selatan, Area Jakarta Timur, Area Depok',
       );
 
-      await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(390, 844),
+          builder: (context, child) => const MaterialApp(home: ProfilePage()),
+        ),
+      );
       await tester.pumpAndSettle();
 
       // Verify the first 3 locations are shown

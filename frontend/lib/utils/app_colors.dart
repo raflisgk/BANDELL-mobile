@@ -76,18 +76,57 @@ class AppColors {
   static const Color profileGradientEnd = Color(
     0xFF265C8C,
   ); // Gradasi Bawah Profile
+  static const Color profileAmbientGlowStart = Color(
+    0xFFDCEFFE,
+  ); // Ambient Glow Atas
+  static const Color profileAmbientGlowMiddle = Color(
+    0xFFF1F8FE,
+  ); // Ambient Glow Tengah
+  static const Color profileAmbientGlowEnd = Color(
+    0x00F8FAFC,
+  ); // Ambient Glow Bawah (Transparan Halus)
   static const Color roleBadgeBackground = Color(
     0xFFEBF3FC,
   ); // Background Pill Badge Role
   static const Color roleBadgeBorder = Color(
     0xFFBFDBFE,
   ); // Border Pill Badge Role
+  static const Color roleBadgeBorderLight = Color(
+    0xFFBAE6FD,
+  ); // Border Halus Chip Peran
+  static const Color roleBadgeShadow = Color(
+    0x0A0284C7,
+  ); // Bayangan Halus Chip Peran
+  static const Color roleBadgeDotDivider = Color(
+    0xFF93C5FD,
+  ); // Titik Pemisah di Chip Peran
   static const Color roleBadgeText = Color(
     0xFF0C5DA5,
   ); // Teks & Icon Pill Badge Role
   static const Color avatarCircleBackground = Color(
     0xFFE2EBF8,
   ); // Background Lingkaran Avatar
+  static const Color avatarAmberBackground = Color(
+    0xFFFEF3C7,
+  ); // Background Lingkaran Avatar Amber
+  static const Color avatarAmberText = Color(
+    0xFFB45309,
+  ); // Teks Inisial Avatar Amber
+  static const Color avatarShadowBlue = Color(
+    0x180284C7,
+  ); // Bayangan Biru Avatar
+  static const Color avatarShadowAmber = Color(
+    0x18B45309,
+  ); // Bayangan Amber Avatar
+  static const Color softBlueBackground = Color(
+    0xFFEFF6FF,
+  ); // Background Ikon & Chip Biru Muda
+  static const Color tooltipBackgroundDark = Color(
+    0xFF1E293B,
+  ); // Latar Hitam Tooltip
+  static const Color tooltipShadowDark = Color(
+    0x33000000,
+  ); // Bayangan Hitam Tooltip
   static const Color verifiedBlue = Color(0xFF0072CE); // Centang Biru Verified
 
   // --- STATUS & FEEDBACK (Semantic Colors) ---

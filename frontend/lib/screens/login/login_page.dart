@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -36,6 +37,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
+
+  late final AnimationController _focusAnimController;
+  late final Animation<double> _focusScaleAnimation;
+  late final Animation<double> _focusPaddingAnimation;
 
   @override
   void initState() {
@@ -92,6 +97,27 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut),
         );
 
+    _focusAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _focusScaleAnimation = Tween<double>(begin: 1.0, end: 0.72).animate(
+      CurvedAnimation(
+        parent: _focusAnimController,
+        curve: Curves.easeInOutCubic,
+        reverseCurve: Curves.easeInOutCubic,
+      ),
+    );
+
+    _focusPaddingAnimation = Tween<double>(begin: 20.0, end: 8.0).animate(
+      CurvedAnimation(
+        parent: _focusAnimController,
+        curve: Curves.easeInOutCubic,
+        reverseCurve: Curves.easeInOutCubic,
+      ),
+    );
+
     _animController.forward();
     _loadSavedCredentials();
   }
@@ -120,6 +146,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   void _onFocusChange() {
+    final hasFocus = _usernameFocusNode.hasFocus || _passwordFocusNode.hasFocus;
+    if (hasFocus) {
+      _focusAnimController.forward();
+    } else {
+      _focusAnimController.reverse();
+    }
     setState(() {});
   }
 
@@ -127,6 +159,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   void dispose() {
     _animController.dispose();
     _shakeController.dispose();
+    _focusAnimController.dispose();
     _usernameController.removeListener(_clearErrorOnTyping);
     _passwordController.removeListener(_clearErrorOnTyping);
     _usernameController.dispose();
@@ -259,369 +292,287 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     }
   }
 
-  void _handleForgotPassword() {
-    debugPrint('Lupa password clicked');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Lupa password (Aksi UI Sementara)'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
-
-  Future<void> _handleContactAdmin() async {
-    const adminPhone = '6283143198347';
-    final message = Uri.encodeComponent(
-      'Halo Admin, saya ingin menghubungi Admin terkait akun aplikasi.',
-    );
-    final whatsappUrl = Uri.parse('https://wa.me/$adminPhone?text=$message');
-
-    try {
-      final canLaunch = await canLaunchUrl(whatsappUrl);
-      if (!canLaunch) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('WhatsApp tidak tersedia di perangkat.'),
-              backgroundColor: AppColors.error,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-
-      final launched = await launchUrl(
-        whatsappUrl,
-        mode: LaunchMode.externalApplication,
-      );
-
-      if (!launched && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('WhatsApp tidak tersedia di perangkat.'),
-            backgroundColor: AppColors.error,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('WhatsApp tidak tersedia di perangkat.'),
-            backgroundColor: AppColors.error,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
-    final availableHeight = mediaQuery.size.height - mediaQuery.padding.top;
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: availableHeight > 0 ? availableHeight : 600,
-            ),
-            child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 1. TOP AREA (WHITE BACKGROUND)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.fastOutSlowIn,
-                    color: AppColors.backgroundWhite,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhite,
+        resizeToAvoidBottomInset: true,
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.opaque,
+          child: SafeArea(
+            bottom: false,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: isKeyboardOpen
+                      ? const ClampingScrollPhysics()
+                      : const NeverScrollableScrollPhysics(),
+                  child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: isKeyboardOpen ? 0 : (availableHeight * 0.55),
+                      minHeight: constraints.maxHeight,
+                      maxHeight: isKeyboardOpen
+                          ? double.infinity
+                          : constraints.maxHeight,
                     ),
-                    alignment: Alignment.center,
-                    padding: EdgeInsets.only(
-                      top: isKeyboardOpen ? 16.0 : 44.0,
-                      bottom: isKeyboardOpen ? 12.0 : 24.0,
-                      left: 24.0,
-                      right: 24.0,
-                    ),
-                    child: FadeTransition(
-                      opacity: _logoFadeAnimation,
-                      child: ScaleTransition(
-                        scale: _logoScaleAnimation,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Shield Crest BANDELL Logo with smooth AnimatedContainer sizing
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.fastOutSlowIn,
-                              width: isKeyboardOpen ? 60 : 90,
-                              height: isKeyboardOpen ? 60 : 90,
-                              child: Image.asset(
-                                'assets/images/logo bandell 1.png',
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle,
+                    child: IntrinsicHeight(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 1. TOP AREA (WHITE BACKGROUND - BANDELL BRANDING)
+                          Expanded(
+                            child: AnimatedBuilder(
+                              animation: _focusAnimController,
+                              builder: (context, child) {
+                                return Container(
+                                  color: AppColors.backgroundWhite,
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 24.w,
+                                    vertical: _focusPaddingAnimation.value.h,
+                                  ),
+                                  child: FadeTransition(
+                                    opacity: _logoFadeAnimation,
+                                    child: ScaleTransition(
+                                      scale: _logoScaleAnimation,
+                                      child: Transform.scale(
+                                        scale: _focusScaleAnimation.value,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            // Shield Crest BANDELL Logo
+                                            SizedBox(
+                                              width: 90.r,
+                                              height: 90.r,
+                                              child: Image.asset(
+                                                'assets/images/logo bandell 1.png',
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (
+                                                  context,
+                                                  error,
+                                                  stackTrace,
+                                                ) {
+                                                  return Container(
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                          color:
+                                                              AppColors.primary,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                    child: Icon(
+                                                      Icons.shield_outlined,
+                                                      color: Colors.white,
+                                                      size: 46.r,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                            SizedBox(height: 12.h),
+
+                                            // BANDELL Title Text
+                                            Text(
+                                              'BANDELL',
+                                              style: TextStyle(
+                                                color: AppColors.primary,
+                                                fontSize: 26.sp,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 1.0,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4.h),
+
+                                            // Subtitle Text
+                                            Text(
+                                              'Silakan login untuk melanjutkan',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: AppColors.primary,
+                                                fontSize: 13.5.sp,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                    child: Icon(
-                                      Icons.shield_outlined,
-                                      color: Colors.white,
-                                      size: isKeyboardOpen ? 34 : 48,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.fastOutSlowIn,
-                              height: isKeyboardOpen ? 8 : 14,
-                            ),
-
-                            // BANDELL Title Text
-                            const Text(
-                              'BANDELL',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-
-                            // Subtitle Text
-                            const Text(
-                              'Silakan login untuk melanjutkan',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // 2. BOTTOM AREA (BLUE BANDELL BACKGROUND FORM)
-                  Expanded(
-                    child: FadeTransition(
-                      opacity: _formFadeAnimation,
-                      child: SlideTransition(
-                        position: _formSlideAnimation,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                AppColors.loginBlueGradientStart,
-                                AppColors.loginBlueGradientEnd,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(32),
-                              topRight: Radius.circular(32),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                          padding: EdgeInsets.only(
-                            left: 24.0,
-                            right: 24.0,
-                            top: 32.0,
-                            bottom: 32.0 + mediaQuery.padding.bottom,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SizedBox(height: 8),
 
-                              _buildErrorMessage(),
+                          // 2. BOTTOM AREA (BLUE BANDELL BACKGROUND FORM - COMPACT & SNUG)
+                          FadeTransition(
+                            opacity: _formFadeAnimation,
+                            child: SlideTransition(
+                              position: _formSlideAnimation,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      AppColors.loginBlueGradientStart,
+                                      AppColors.loginBlueGradientEnd,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(32.r),
+                                  ),
+                                ),
+                                padding: EdgeInsets.fromLTRB(
+                                  24.w,
+                                  28.h,
+                                  24.w,
+                                  28.h +
+                                      (isKeyboardOpen
+                                          ? 0
+                                          : mediaQuery.padding.bottom),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _buildErrorMessage(),
 
-                              // Username Field Container
-                              _buildInputFieldContainer(
-                                icon: Icons.person_outline_rounded,
-                                label: 'Username',
-                                hint: 'Masukkan username',
-                                controller: _usernameController,
-                                focusNode: _usernameFocusNode,
-                                hasError: _errorMessage != null,
-                              ),
+                                    // Username Field Container
+                                    _buildInputFieldContainer(
+                                      icon: Icons.person_outline_rounded,
+                                      label: 'Username',
+                                      hint: 'Masukkan username',
+                                      controller: _usernameController,
+                                      focusNode: _usernameFocusNode,
+                                      hasError: _errorMessage != null,
+                                    ),
 
-                              const SizedBox(height: 16),
+                                    SizedBox(height: 14.h),
 
-                              // Password Field Container
-                              _buildInputFieldContainer(
-                                icon: Icons.lock_outline_rounded,
-                                label: 'Password',
-                                hint: 'Masukkan password',
-                                controller: _passwordController,
-                                focusNode: _passwordFocusNode,
-                                isPassword: true,
-                                isPasswordVisible: _isPasswordVisible,
-                                hasError: _errorMessage != null,
-                                onTogglePasswordVisibility: () {
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
-                                },
-                              ),
+                                    // Password Field Container
+                                    _buildInputFieldContainer(
+                                      icon: Icons.lock_outline_rounded,
+                                      label: 'Password',
+                                      hint: 'Masukkan password',
+                                      controller: _passwordController,
+                                      focusNode: _passwordFocusNode,
+                                      isPassword: true,
+                                      isPasswordVisible: _isPasswordVisible,
+                                      hasError: _errorMessage != null,
+                                      onTogglePasswordVisibility: () {
+                                        setState(() {
+                                          _isPasswordVisible =
+                                              !_isPasswordVisible;
+                                        });
+                                      },
+                                    ),
 
-                              const SizedBox(height: 14),
+                                    SizedBox(height: 12.h),
 
-                              // Remember Me & Forgot Password Row
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Remember Me Checkbox
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: Checkbox(
-                                          value: _rememberMe,
-                                          onChanged: _handleRememberMeChanged,
-                                          activeColor: Colors.white,
-                                          checkColor: AppColors.primary,
-                                          side: const BorderSide(
-                                            color: Colors.white,
-                                            width: 1.5,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              4,
+                                    // Remember Me Checkbox
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 22.r,
+                                          height: 22.r,
+                                          child: Checkbox(
+                                            value: _rememberMe,
+                                            onChanged: _handleRememberMeChanged,
+                                            activeColor: Colors.white,
+                                            checkColor: AppColors.primary,
+                                            side: BorderSide(
+                                              color: Colors.white,
+                                              width: 1.5.r,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(4.r),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () => _handleRememberMeChanged(
-                                          !_rememberMe,
-                                        ),
-                                        child: const Text(
-                                          'Ingat saya',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                  // Forgot Password Link
-                                  GestureDetector(
-                                    onTap: _handleForgotPassword,
-                                    child: const Text(
-                                      'Lupa password?',
-                                      style: TextStyle(
-                                        color: AppColors.loginLinkCyan,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Login Button (White Background)
-                              SizedBox(
-                                height: 50,
-                                child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _handleLogin,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.loginButtonBg,
-                                    foregroundColor: AppColors.primary,
-                                    disabledBackgroundColor:
-                                        AppColors.loginButtonDisabledBg,
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(
-                                            color: AppColors.primary,
-                                            strokeWidth: 2.2,
-                                          ),
-                                        )
-                                      : const Text(
-                                          'Login',
-                                          style: TextStyle(
-                                            color: AppColors.primary,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Hubungi Admin Footer Link
-                              GestureDetector(
-                                onTap: _handleContactAdmin,
-                                child: Center(
-                                  child: Text.rich(
-                                    TextSpan(
-                                      text: 'Belum punya akun? ',
-                                      style: const TextStyle(
-                                        color: AppColors.whiteAlpha85,
-                                        fontSize: 12.5,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                      children: const [
-                                        TextSpan(
-                                          text: 'Hubungi Admin',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.bold,
-                                            fontStyle: FontStyle.normal,
+                                        SizedBox(width: 8.w),
+                                        GestureDetector(
+                                          onTap: () =>
+                                              _handleRememberMeChanged(
+                                                !_rememberMe,
+                                              ),
+                                          child: Text(
+                                            'Ingat saya',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
+
+                                    SizedBox(height: 20.h),
+
+                                    // Login Button (White Background)
+                                    SizedBox(
+                                      height: 48.h,
+                                      child: ElevatedButton(
+                                        onPressed: _isLoading
+                                            ? null
+                                            : _handleLogin,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              AppColors.loginButtonBg,
+                                          foregroundColor: AppColors.primary,
+                                          disabledBackgroundColor:
+                                              AppColors.loginButtonDisabledBg,
+                                          elevation: 2,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12.r),
+                                          ),
+                                        ),
+                                        child: _isLoading
+                                            ? SizedBox(
+                                                width: 22.r,
+                                                height: 22.r,
+                                                child:
+                                                    const CircularProgressIndicator(
+                                                      color: AppColors.primary,
+                                                      strokeWidth: 2.2,
+                                                    ),
+                                              )
+                                            : Text(
+                                                'Login',
+                                                style: TextStyle(
+                                                  color: AppColors.primary,
+                                                  fontSize: 15.5.sp,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-
-                              const SizedBox(height: 16),
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ),
@@ -648,10 +599,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     final borderWidth = (hasError || isFocused) ? 1.5 : 1.0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 7.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: const [
           BoxShadow(
@@ -663,8 +614,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.hintColor, size: 20),
-          const SizedBox(width: 12),
+          Icon(icon, color: AppColors.hintColor, size: 20.r),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,26 +623,26 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2.h),
                 TextField(
                   controller: controller,
                   focusNode: focusNode,
                   obscureText: isPassword && !isPasswordVisible,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 14,
+                    fontSize: 13.5.sp,
                   ),
                   decoration: InputDecoration(
                     hintText: hint,
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       color: AppColors.hintColor,
-                      fontSize: 14,
+                      fontSize: 13.5.sp,
                     ),
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
@@ -709,7 +660,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
                 color: AppColors.hintColor,
-                size: 20,
+                size: 20.r,
               ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -725,7 +676,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 2.0),
+      padding: EdgeInsets.only(bottom: 8.h, left: 2.w),
       child: Align(
         alignment: Alignment.centerLeft,
         child: AnimatedBuilder(
@@ -738,9 +689,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           },
           child: Text(
             _errorMessage!,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.loginErrorRed,
-              fontSize: 13.5,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w600,
               letterSpacing: -0.1,
             ),

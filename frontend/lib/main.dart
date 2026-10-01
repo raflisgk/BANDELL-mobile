@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -44,6 +46,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = LocalDevHttpOverrides();
 
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+    ),
+  );
+
   await initializeDateFormatting('id_ID', null);
 
   runApp(const MyApp());
@@ -54,33 +64,40 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BANDELL Mobile',
-      debugShowCheckedModeBanner: false,
-      scrollBehavior: const AppScrollBehavior(),
-      theme: ThemeData(
-        useMaterial3: true,
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: FastPageTransitionsBuilder(),
-            TargetPlatform.iOS: FastPageTransitionsBuilder(),
-            TargetPlatform.windows: FastPageTransitionsBuilder(),
-          },
-        ),
-      ),
+    return ScreenUtilInit(
+      designSize: const Size(390, 844),
+      minTextAdapt: true,
+      splitScreenMode: true,
       builder: (context, child) {
-        return SkeletonizerConfig(
-          data: SkeletonizerConfigData(
-            containersColor: AppColors.skeletonContainer,
-            effectResolver: (brightness) => const ShimmerEffect(
-              baseColor: AppColors.skeletonBase,
-              highlightColor: AppColors.skeletonHighlight,
+        return MaterialApp(
+          title: 'BANDELL Mobile',
+          debugShowCheckedModeBanner: false,
+          scrollBehavior: const AppScrollBehavior(),
+          theme: ThemeData(
+            useMaterial3: true,
+            pageTransitionsTheme: const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: FastPageTransitionsBuilder(),
+                TargetPlatform.iOS: FastPageTransitionsBuilder(),
+                TargetPlatform.windows: FastPageTransitionsBuilder(),
+              },
             ),
           ),
-          child: child ?? const SizedBox.shrink(),
+          builder: (context, child) {
+            return SkeletonizerConfig(
+              data: SkeletonizerConfigData(
+                containersColor: AppColors.skeletonContainer,
+                effectResolver: (brightness) => const ShimmerEffect(
+                  baseColor: AppColors.skeletonBase,
+                  highlightColor: AppColors.skeletonHighlight,
+                ),
+              ),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          home: const SplashPage(),
         );
       },
-      home: const SplashPage(),
     );
   }
 }

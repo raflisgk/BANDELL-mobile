@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/installation_model.dart';
 import '../../services/auth_service.dart';
@@ -488,9 +489,15 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
-      body: SafeArea(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhite,
+        body: SafeArea(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: Column(
@@ -664,8 +671,9 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // 1. ID Barcode Section
   Widget _buildBarcodeInput() {
