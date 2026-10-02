@@ -20,8 +20,30 @@ class AuthController extends Controller
         // Cari user (termasuk yang di-soft delete agar dapat mendeteksi kondisi deleted_at)
         $user = User::withTrashed()->where('email', $credentials['email'])->first();
 
+        $inputPassword = $credentials['password'];
+        $isPasswordValid = false;
+
+        if ($user && !empty($user->password)) {
+            // 1. Cek Bcrypt dari hash SHA-256 (format standar sistem)
+            if (Hash::check($inputPassword, $user->password)) {
+                $isPasswordValid = true;
+            }
+            // 2. Cek apakah di DB tersimpan string raw SHA-256
+            elseif ($user->password === $inputPassword) {
+                $isPasswordValid = true;
+            }
+            // 3. Cek jika request dikirim via plaintext biasa (di-hash SHA-256 lalu dicocokkan)
+            elseif (Hash::check(hash('sha256', $inputPassword), $user->password)) {
+                $isPasswordValid = true;
+            }
+            // 4. Cek langsung plaintext lama jika belum di-hash SHA-256
+            elseif (Hash::check($inputPassword, $user->password)) {
+                $isPasswordValid = true;
+            }
+        }
+
         // 1. Verifikasi kredensial (user ada & password benar)
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (!$user || !$isPasswordValid) {
             return response()->json([
                 'success' => false,
                 'message' => 'Email atau password salah.',

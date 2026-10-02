@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable([
@@ -35,10 +36,25 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
             'joined_at' => 'date',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    public function setPasswordAttribute($value): void
+    {
+        if (empty($value)) {
+            return;
+        }
+
+        // Jika sudah berbentuk hash Bcrypt/Argon ($2y$... / $argon2...) simpan langsung
+        if (str_starts_with($value, '$2y$') || str_starts_with($value, '$2a$') || str_starts_with($value, '$argon2')) {
+            $this->attributes['password'] = $value;
+        } else {
+            // Jika string belum berupa SHA-256 (bukan 64 hex characters), hash SHA-256 dulu
+            $sha256 = (strlen($value) === 64 && ctype_xdigit($value)) ? $value : hash('sha256', $value);
+            $this->attributes['password'] = Hash::make($sha256);
+        }
     }
 
     public function getRoleAttribute(): ?string
