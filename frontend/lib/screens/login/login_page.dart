@@ -25,7 +25,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final FocusNode _passwordFocusNode = FocusNode();
 
   bool _isPasswordVisible = false;
-  bool _rememberMe = false;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -119,22 +118,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     );
 
     _animController.forward();
-    _loadSavedCredentials();
-  }
-
-  Future<void> _loadSavedCredentials() async {
-    try {
-      final saved = await SecureCredentialService.getSavedCredentials();
-      if (saved != null && mounted) {
-        setState(() {
-          _rememberMe = true;
-          _usernameController.text = saved['email'] ?? '';
-          _passwordController.text = saved['password'] ?? '';
-        });
-      }
-    } catch (_) {
-      // Ignore secure storage read errors gracefully
-    }
   }
 
   void _clearErrorOnTyping() {
@@ -171,19 +154,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Future<void> _handleRememberMeChanged(bool? value) async {
-    final newValue = value ?? false;
-    setState(() {
-      _rememberMe = newValue;
-    });
-
-    if (!newValue) {
-      try {
-        await SecureCredentialService.clearCredentials();
-      } catch (_) {}
-    }
-  }
-
   Future<void> _handleLogin() async {
     if (_isLoading) return;
 
@@ -211,15 +181,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         email: email,
         password: password,
       );
-
-      if (_rememberMe) {
-        await SecureCredentialService.saveCredentials(
-          email: email,
-          password: password,
-        );
-      } else {
-        await SecureCredentialService.clearCredentials();
-      }
 
       if (loginResult['user'] != null) {
         await SecureCredentialService.setSession(
@@ -478,48 +439,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                       },
                                     ),
 
-                                    SizedBox(height: 12.h),
-
-                                    // Remember Me Checkbox
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          width: 22.r,
-                                          height: 22.r,
-                                          child: Checkbox(
-                                            value: _rememberMe,
-                                            onChanged: _handleRememberMeChanged,
-                                            activeColor: Colors.white,
-                                            checkColor: AppColors.primary,
-                                            side: BorderSide(
-                                              color: Colors.white,
-                                              width: 1.5.r,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(4.r),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(width: 8.w),
-                                        GestureDetector(
-                                          onTap: () => _handleRememberMeChanged(
-                                            !_rememberMe,
-                                          ),
-                                          child: Text(
-                                            'Ingat saya',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 13.sp,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-
-                                    SizedBox(height: 20.h),
+                                    SizedBox(height: 24.h),
 
                                     // Login Button (White Background)
                                     SizedBox(

@@ -11,17 +11,21 @@ use App\Http\Controllers\Api\ProfileController;
 
 
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/projects', [ProjectController::class, 'index']);
-Route::get('/projects/{project}/areas', [ProjectController::class, 'areas']);
-Route::get('/lamp-types', [LampTypeController::class, 'index']);
-Route::post('/installations', [InstallationController::class, 'store']);
-Route::get('/project-assignments', [ProjectAssignmentController::class, 'index']);
-Route::get('/installations', [InstallationController::class, 'index']);
-Route::get('/installations/{installation}', [InstallationController::class, 'show']);
-Route::put('/installations/{installation}', [InstallationController::class, 'update']);
-Route::delete('/installations/{installation}', [InstallationController::class, 'destroy']);
-Route::get('/notifications', [NotificationController::class, 'index']);
-Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-Route::get('/profile', [ProfileController::class, 'show']);
-Route::put('/profile/phone', [ProfileController::class, 'updatePhone']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/projects', [ProjectController::class, 'index']);
+    Route::get('/projects/{project}/areas', [ProjectController::class, 'areas']);
+    Route::get('/lamp-types', [LampTypeController::class, 'index']);
+    Route::post('/installations', [InstallationController::class, 'store']);
+    Route::get('/project-assignments', [ProjectAssignmentController::class, 'index']);
+    Route::get('/installations', [InstallationController::class, 'index']);
+    Route::get('/installations/{installation}', [InstallationController::class, 'show']);
+    Route::put('/installations/{installation}', [InstallationController::class, 'update']);
+    Route::delete('/installations/{installation}', [InstallationController::class, 'destroy']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile/phone', [ProfileController::class, 'updatePhone']);
+});
 

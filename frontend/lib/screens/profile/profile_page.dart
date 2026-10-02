@@ -7,7 +7,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../services/auth_service.dart';
 import '../../services/project_service.dart';
-import '../../services/secure_credential_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/bottom_navbar.dart';
@@ -459,10 +458,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        AuthService.currentUser = null;
-                        await SecureCredentialService.setSession(
-                          isLoggedIn: false,
-                        );
+                        await AuthService().logout();
                         if (dialogContext.mounted) {
                           Navigator.pop(dialogContext);
                         }

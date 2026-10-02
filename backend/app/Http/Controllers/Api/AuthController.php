@@ -53,9 +53,14 @@ class AuthController extends Controller
         }
 
         // 5. Jika semua kondisi terpenuhi: login berhasil
+        $token = $user->createToken('mobile_app')->plainTextToken;
+
         return response()->json([
             'success' => true,
             'message' => 'Login berhasil.',
+            'token' => $token,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -66,6 +71,18 @@ class AuthController extends Controller
                 'phone_number' => $user->phone,
                 'placement_area' => $user->placement_area,
             ],
+        ]);
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        if ($request->user()) {
+            $request->user()->currentAccessToken()->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logout berhasil.',
         ]);
     }
 }

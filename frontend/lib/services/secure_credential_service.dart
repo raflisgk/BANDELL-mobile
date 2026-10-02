@@ -10,40 +10,32 @@ class SecureCredentialService {
     ),
   );
 
-  static const String _keyRememberMe = 'auth_remember_me';
-  static const String _keyEmail = 'auth_saved_email';
-  static const String _keyPassword = 'auth_saved_password';
   static const String _keyIsLoggedIn = 'auth_is_logged_in';
   static const String _keyUserData = 'auth_user_data';
+  static const String _keyAuthToken = 'auth_token';
 
-  /// Save login credentials securely
-  static Future<void> saveCredentials({
-    required String email,
-    required String password,
-  }) async {
-    await _storage.write(key: _keyRememberMe, value: 'true');
-    await _storage.write(key: _keyEmail, value: email);
-    await _storage.write(key: _keyPassword, value: password);
+  /// Save Sanctum auth token securely
+  static Future<void> saveAuthToken(String token) async {
+    await _storage.write(key: _keyAuthToken, value: token);
   }
 
-  /// Load stored credentials if remember_me was true
-  static Future<Map<String, String>?> getSavedCredentials() async {
-    final rememberMe = await _storage.read(key: _keyRememberMe);
-    if (rememberMe != 'true') {
-      return null;
-    }
+  /// Retrieve Sanctum auth token
+  static Future<String?> getAuthToken() async {
+    return await _storage.read(key: _keyAuthToken);
+  }
 
-    final email = await _storage.read(key: _keyEmail);
-    final password = await _storage.read(key: _keyPassword);
+  /// Clear Sanctum auth token
+  static Future<void> clearAuthToken() async {
+    await _storage.delete(key: _keyAuthToken);
+  }
 
-    if (email != null && password != null && email.isNotEmpty && password.isNotEmpty) {
-      return {
-        'email': email,
-        'password': password,
-      };
-    }
-
-    return null;
+  /// Clean up any legacy saved credentials (passwords/emails) from the device
+  static Future<void> cleanupLegacyCredentials() async {
+    try {
+      await _storage.delete(key: 'auth_remember_me');
+      await _storage.delete(key: 'auth_saved_email');
+      await _storage.delete(key: 'auth_saved_password');
+    } catch (_) {}
   }
 
   /// Mark session as active or inactive and optionally cache user JSON
@@ -56,6 +48,7 @@ class SecureCredentialService {
       await _storage.write(key: _keyUserData, value: userDataJson);
     } else if (!isLoggedIn) {
       await _storage.delete(key: _keyUserData);
+      await clearAuthToken();
     }
   }
 
@@ -68,12 +61,5 @@ class SecureCredentialService {
   /// Retrieve cached user data JSON string if available
   static Future<String?> getUserData() async {
     return await _storage.read(key: _keyUserData);
-  }
-
-  /// Delete saved credentials completely
-  static Future<void> clearCredentials() async {
-    await _storage.delete(key: _keyRememberMe);
-    await _storage.delete(key: _keyEmail);
-    await _storage.delete(key: _keyPassword);
   }
 }

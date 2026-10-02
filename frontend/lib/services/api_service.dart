@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/user_model.dart';
 import 'auth_service.dart';
+import 'secure_credential_service.dart';
 
 /// Clean custom exception class that shields the UI from raw system errors
 class ApiException implements Exception {
@@ -214,6 +215,13 @@ class ApiService {
     }
 
     if (response.statusCode == 200) {
+      final token = data?['token']?.toString() ??
+          data?['access_token']?.toString();
+      if (token != null && token.isNotEmpty) {
+        setAuthToken(token);
+        await SecureCredentialService.saveAuthToken(token);
+      }
+
       if (data != null && data['user'] != null) {
         AuthService.currentUser = UserModel.fromJson(
           data['user'] as Map<String, dynamic>,
@@ -298,6 +306,24 @@ class ApiService {
       isSafe ? safeMsg : 'Terjadi kesalahan. Silakan coba lagi.',
       statusCode: response.statusCode,
     );
+  }
+
+  /// Endpoint logout
+  static Future<void> logout() async {
+    try {
+      if (_authToken != null) {
+        await http
+            .post(
+              Uri.parse('$baseUrl/logout'),
+              headers: defaultHeaders,
+            )
+            .timeout(const Duration(seconds: 5));
+      }
+    } catch (e) {
+      debugPrint('Logout API error: $e');
+    }
+    setAuthToken(null);
+    await SecureCredentialService.clearAuthToken();
   }
 
   /// Endpoint untuk mengambil notifikasi berdasarkan user_id

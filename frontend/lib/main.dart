@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import 'models/user_model.dart';
 import 'screens/splash/splash_page.dart';
+import 'services/api_service.dart';
+import 'services/auth_service.dart';
+import 'services/local_cache_service.dart';
+import 'services/offline_sync_service.dart';
+import 'services/secure_credential_service.dart';
 import 'utils/app_colors.dart';
 import 'utils/page_transitions.dart';
 
@@ -55,6 +62,24 @@ Future<void> main() async {
   );
 
   await initializeDateFormatting('id_ID', null);
+  await LocalCacheService.init();
+  await OfflineSyncService().init();
+
+  // Restore Sanctum auth token & user session if available
+  try {
+    await SecureCredentialService.cleanupLegacyCredentials();
+    final token = await SecureCredentialService.getAuthToken();
+    if (token != null && token.isNotEmpty) {
+      ApiService.setAuthToken(token);
+    }
+    final userData = await SecureCredentialService.getUserData();
+    if (userData != null && userData.isNotEmpty) {
+      final decoded = jsonDecode(userData);
+      if (decoded is Map<String, dynamic>) {
+        AuthService.currentUser = UserModel.fromJson(decoded);
+      }
+    }
+  } catch (_) {}
 
   runApp(const MyApp());
 }

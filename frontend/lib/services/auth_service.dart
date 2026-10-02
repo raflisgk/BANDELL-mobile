@@ -33,6 +33,7 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    await ApiService.logout();
     currentUser = null;
     ProjectService.clearCache();
     InstallationService.clearCache();
