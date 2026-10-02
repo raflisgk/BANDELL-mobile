@@ -448,13 +448,20 @@ class NotificationCard extends StatelessWidget {
 
     final String noteText = (() {
       final rawAdminNote =
+          notification.noteByAdmin?.trim() ??
           notification.installation?.note_by_admin?.trim() ??
-          notification.installation?.noteByAdmin?.trim();
+          notification.installation?.noteByAdmin?.trim() ??
+          (notification.notificationType == NotificationType.rejected
+              ? notification.message?.trim()
+              : null) ??
+          notification.notes?.trim();
       if (rawAdminNote != null &&
           rawAdminNote.isNotEmpty &&
           rawAdminNote != '-' &&
           rawAdminNote.toLowerCase() != 'null') {
-        return rawAdminNote;
+        return rawAdminNote
+            .replaceFirst(RegExp(r'^(catatan:\s*|Catatan:\s*)', caseSensitive: false), '')
+            .trim();
       }
       final clean = notification.cleanNotes;
       if (clean != null && clean.isNotEmpty) {

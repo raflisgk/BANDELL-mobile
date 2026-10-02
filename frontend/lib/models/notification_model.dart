@@ -14,6 +14,7 @@ class NotificationModel {
   final String projectName;
   final String? message;
   final String? notes;
+  final String? noteByAdmin;
   final DateTime? assignedAt;
   final String title;
   final String time;
@@ -31,6 +32,7 @@ class NotificationModel {
     this.message,
     String? notes,
     String? note,
+    this.noteByAdmin,
     this.assignedAt,
     this.title = '',
     this.time = '',
@@ -50,26 +52,27 @@ class NotificationModel {
       return title;
     }
     return type == NotificationType.rejected
-        ? 'Laporan Ditolak'
+        ? 'Data Lampu Ditolak'
         : 'Penugasan Baru Diterima';
   }
 
   String get displayMessage {
-    if (message != null && message!.trim().isNotEmpty) {
-      return message!.trim();
-    }
     final project = projectName.trim();
     final hasProject = project.isNotEmpty && project != '-';
 
     if (type == NotificationType.rejected) {
       return hasProject
-          ? 'Laporan penugasan $project ditolak.'
-          : 'Laporan penugasan ditolak.';
-    } else {
-      return hasProject
-          ? 'Anda telah ditugaskan untuk proyek $project.'
-          : 'Anda telah ditugaskan untuk sebuah proyek.';
+          ? 'Laporan pemasangan lampu di $project ditolak.'
+          : 'Laporan pemasangan lampu ditolak.';
     }
+
+    if (message != null && message!.trim().isNotEmpty) {
+      return message!.trim();
+    }
+
+    return hasProject
+        ? 'Anda telah ditugaskan untuk proyek $project.'
+        : 'Anda telah ditugaskan untuk sebuah proyek.';
   }
 
   String? get cleanNotes {
@@ -211,7 +214,18 @@ class NotificationModel {
       );
     }
 
+    final String? rootAdminNote = json['note_by_admin']?.toString() ??
+        json['noteByAdmin']?.toString() ??
+        json['rejection_note']?.toString() ??
+        (notifType == NotificationType.rejected ? rawMessage : null);
+
     if (installation != null) {
+      final effectiveAdminNote = (installation.noteByAdmin != null &&
+              installation.noteByAdmin!.isNotEmpty &&
+              installation.noteByAdmin != '-')
+          ? installation.noteByAdmin
+          : rootAdminNote;
+
       if ((installation.districtName == null || installation.districtName!.isEmpty) &&
           rootDistrict != null &&
           rootDistrict.isNotEmpty) {
@@ -234,7 +248,7 @@ class NotificationModel {
           inputMethod: installation.inputMethod,
           photoUrl: installation.photoUrl,
           notes: installation.notes,
-          noteByAdmin: installation.noteByAdmin,
+          noteByAdmin: effectiveAdminNote,
           verificationStatus: installation.verificationStatus,
           installedAt: installation.installedAt,
           createdAt: installation.createdAt,
@@ -262,7 +276,34 @@ class NotificationModel {
           inputMethod: installation.inputMethod,
           photoUrl: installation.photoUrl,
           notes: installation.notes,
-          noteByAdmin: installation.noteByAdmin,
+          noteByAdmin: effectiveAdminNote,
+          verificationStatus: installation.verificationStatus,
+          installedAt: installation.installedAt,
+          createdAt: installation.createdAt,
+          updatedAt: installation.updatedAt,
+        );
+      } else if (effectiveAdminNote != null &&
+          effectiveAdminNote != installation.noteByAdmin) {
+        installation = InstallationModel(
+          idInstallation: installation.idInstallation,
+          idProject: installation.idProject,
+          idUser: installation.idUser,
+          idArea: installation.idArea,
+          districtName: installation.districtName,
+          lampTypeId: installation.lampTypeId,
+          idLcu: installation.idLcu,
+          lampCode: installation.lampCode,
+          lampType: installation.lampType,
+          wattage: installation.wattage,
+          status: installation.status,
+          latitude: installation.latitude,
+          longitude: installation.longitude,
+          panelCode: installation.panelCode,
+          photos: installation.photos,
+          inputMethod: installation.inputMethod,
+          photoUrl: installation.photoUrl,
+          notes: installation.notes,
+          noteByAdmin: effectiveAdminNote,
           verificationStatus: installation.verificationStatus,
           installedAt: installation.installedAt,
           createdAt: installation.createdAt,
@@ -280,6 +321,7 @@ class NotificationModel {
       projectName: projectName,
       message: rawMessage,
       notes: notes,
+      noteByAdmin: rootAdminNote ?? installation?.noteByAdmin,
       assignedAt: assignedDate,
       title: title,
       time: json['time']?.toString() ?? '',

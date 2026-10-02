@@ -66,7 +66,6 @@ class NotificationController extends Controller
                 'notifications.*',
                 'projects.name as project_name',
                 'installations.verification_status as inst_verification_status',
-                'installations.note_by_admin as inst_note_by_admin',
                 'installations.id_lcu as inst_id_lcu',
                 'districts.name as district_name',
                 'latest_assignment.assignment_notes',
@@ -76,12 +75,17 @@ class NotificationController extends Controller
             ->orderByDesc('notifications.id')
             ->get()
             ->map(function ($notif) {
+                $typeLower = strtolower((string) $notif->type);
+                $isRejection = in_array($typeLower, ['rejected', 'rejection', 'ditolak']);
+                $adminNote = $notif->note_by_admin ?? ($isRejection ? $notif->message : null);
+
                 return [
                     'id' => (int) $notif->id,
                     'user_id' => (int) $notif->user_id,
                     'type' => $notif->type,
                     'title' => $notif->title,
                     'message' => $notif->message,
+                    'note_by_admin' => $adminNote,
 
                     'project_id' => $notif->project_id ? (int) $notif->project_id : null,
                     'project_name' => $notif->project_name ?? '-',
@@ -97,7 +101,7 @@ class NotificationController extends Controller
                             'id_installation' => (int) $notif->installation_id,
                             'verification_status' => $notif->inst_verification_status,
                             'status' => $notif->inst_verification_status,
-                            'note_by_admin' => $notif->inst_note_by_admin,
+                            'note_by_admin' => $adminNote,
                             'id_lcu' => $notif->inst_id_lcu,
                             'district' => $notif->district_name,
                         ]

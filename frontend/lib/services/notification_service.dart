@@ -3,21 +3,13 @@ import 'package:flutter/foundation.dart';
 import '../models/notification_model.dart';
 import 'api_service.dart';
 import 'auth_service.dart';
+import 'local_cache_service.dart';
 
 class NotificationService {
-  static final Set<int> _readNotificationIds = <int>{};
-  static List<NotificationModel> _cachedNotifications = [];
+  static Set<int> _readNotificationIds = <int>{};
 
-  /// Cek apakah ada notifikasi di memori cache
-  static bool get hasCache => _cachedNotifications.isNotEmpty;
-
-  /// Ambil daftar notifikasi dari cache
-  static List<NotificationModel> get cachedNotifications =>
-      _cachedNotifications;
-
-  /// Bersihkan seluruh cache notifikasi
+  /// Bersihkan cache notifikasi
   static void clearCache() {
-    _cachedNotifications.clear();
     _readNotificationIds.clear();
   }
 
@@ -25,18 +17,14 @@ class NotificationService {
   static bool isReadLocally(int id) => _readNotificationIds.contains(id);
 
   /// Menandai notifikasi telah dibaca secara lokal
-  static void markLocallyAsRead(int id) {
+  static Future<void> markLocallyAsRead(int id) async {
     _readNotificationIds.add(id);
-    for (final notif in _cachedNotifications) {
-      if (notif.id == id) {
-        notif.isUnread = false;
-      }
-    }
+    await LocalCacheService.saveReadNotificationIds(_readNotificationIds);
   }
 
   /// Menandai notifikasi telah dibaca secara lokal dan database API
   Future<bool> markAsRead(int idNotification) async {
-    markLocallyAsRead(idNotification);
+    await markLocallyAsRead(idNotification);
     try {
       await ApiService.markNotificationAsRead(idNotification);
     } catch (e) {
@@ -45,42 +33,69 @@ class NotificationService {
     return true;
   }
 
-  /// Mengambil daftar notifikasi dari Laravel API atau cache
+  /// Mengambil daftar notifikasi dari Laravel API atau Storage HP
   Future<List<NotificationModel>> getNotifications({
     int? userId,
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh && _cachedNotifications.isNotEmpty) {
-      return _cachedNotifications;
-    }
-
     final targetUserId = userId ?? AuthService.currentUser?.idUser;
 
     if (targetUserId == null || targetUserId <= 0) {
       debugPrint('NotificationService: user_id tidak valid ($targetUserId)');
-      return _cachedNotifications;
+      return [];
+    }
+
+    // Ambil read IDs dari Storage HP jika belum terisi
+    if (_readNotificationIds.isEmpty) {
+      _readNotificationIds = await LocalCacheService.getReadNotificationIds();
+    }
+
+    if (!forceRefresh) {
+      final cachedJson = await LocalCacheService.getNotificationsJson(targetUserId);
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        return cachedJson
+            .whereType<Map<String, dynamic>>()
+            .map((json) {
+              final model = NotificationModel.fromJson(json);
+              if (isReadLocally(model.id)) {
+                model.isUnread = false;
+              }
+              return model;
+            })
+            .toList();
+      }
     }
 
     try {
       final rawList = await ApiService.getNotifications(targetUserId);
+      await LocalCacheService.saveNotificationsJson(targetUserId, rawList);
+
       final apiList = rawList
           .whereType<Map<String, dynamic>>()
           .map((json) => NotificationModel.fromJson(json))
           .toList();
 
-      // Pastikan status read lokal ter-update
       for (final item in apiList) {
         if (isReadLocally(item.id)) {
           item.isUnread = false;
         }
       }
 
-      _cachedNotifications = apiList;
       return apiList;
     } catch (e) {
-      debugPrint('NotificationService getNotifications error: $e');
-      if (_cachedNotifications.isNotEmpty) {
-        return _cachedNotifications;
+      debugPrint('NotificationService getNotifications error: $e. Using Storage HP.');
+      final cachedJson = await LocalCacheService.getNotificationsJson(targetUserId);
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        return cachedJson
+            .whereType<Map<String, dynamic>>()
+            .map((json) {
+              final model = NotificationModel.fromJson(json);
+              if (isReadLocally(model.id)) {
+                model.isUnread = false;
+              }
+              return model;
+            })
+            .toList();
       }
       rethrow;
     }

@@ -17,6 +17,7 @@ class Notification extends Model
         'type',
         'title',
         'message',
+        'note_by_admin',
         'project_id',
         'installation_id',
         'is_read',
