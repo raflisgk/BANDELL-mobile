@@ -506,41 +506,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                                 'closed' ||
                             ProjectService.selectedProject?.status == 'selesai';
 
-                        if (isProjectClosed) {
-                          return Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.divider,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.borderLight),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(
-                                  Icons.lock_outline_rounded,
-                                  color: AppColors.textMuted,
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Project Selesai — Mode Baca Saja (Read-Only)',
-                                  style: TextStyle(
-                                    color: AppColors.textMuted,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        if (_isVerified) {
+                        if (_isVerified || isProjectClosed) {
                           return const SizedBox.shrink();
                         }
 

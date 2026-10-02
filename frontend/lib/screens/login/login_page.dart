@@ -411,10 +411,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   children: [
                                     _buildErrorMessage(),
 
-                                    // Username Field Container
+                                    // Email Field Container
                                     _buildInputFieldContainer(
-                                      icon: Icons.person_rounded,
-                                      label: 'Username',
+                                      icon: Icons.email_outlined,
+                                      label: 'Email',
                                       controller: _usernameController,
                                       focusNode: _usernameFocusNode,
                                       hasError: _errorMessage != null,

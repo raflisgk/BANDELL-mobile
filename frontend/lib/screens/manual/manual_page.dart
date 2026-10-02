@@ -317,13 +317,6 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
     }
 
     final userId = AuthService.currentUser?.idUser ?? 0;
-    if (userId <= 0) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Sesi pengguna tidak valid. Silakan login kembali.',
-      );
-      return;
-    }
 
     final barcode = _barcodeController.text.trim();
     final latitude = _latitudeController.text.trim();
@@ -391,11 +384,11 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
 
     if (_installationDate == null) {
       setState(() {
-        _dateError = 'Tanggal penugasan wajib diisi';
+        _dateError = 'Tanggal pemasangan wajib diisi';
       });
       CustomFeedbackMessage.showError(
         context,
-        'Tanggal penugasan wajib diisi.',
+        'Tanggal pemasangan wajib diisi.',
       );
       return;
     } else {
@@ -609,8 +602,8 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
 
                           // 4. TANGGAL PENUGASAN (SHARED WIDGET)
                           TanggalPemasangan(
-                            title: 'Tanggal Penugasan',
-                            subtitle: 'Masukkan tanggal penugasan',
+                            title: 'Tanggal Pemasangan',
+                            subtitle: 'Masukkan tanggal pemasangan',
                             selectedDate: _installationDate,
                             onDateSelected: (date) {
                               setState(() {

@@ -126,7 +126,7 @@ class _RealtimePageState extends State<RealtimePage> {
         if (mounted) {
           CustomFeedbackMessage.showError(
             context,
-            'ID Barcode (LCU) ditolak. Maksimal 12 karakter.',
+            'ID Barcode maksimal 12 karakter.',
           );
         }
         return;
@@ -253,13 +253,6 @@ class _RealtimePageState extends State<RealtimePage> {
     }
 
     final userId = AuthService.currentUser?.idUser ?? 0;
-    if (userId <= 0) {
-      CustomFeedbackMessage.showError(
-        context,
-        'Sesi pengguna tidak valid. Silakan login kembali.',
-      );
-      return;
-    }
 
     final lampTypeId = widget.lampTypeId;
     if ((lampTypeId == null || lampTypeId <= 0) &&
@@ -279,7 +272,7 @@ class _RealtimePageState extends State<RealtimePage> {
     if (_scannedBarcode!.trim().length > 12) {
       CustomFeedbackMessage.showError(
         context,
-        'ID Barcode (LCU) maksimal 12 karakter.',
+        'ID Barcode maksimal 12 karakter.',
       );
       return;
     }
