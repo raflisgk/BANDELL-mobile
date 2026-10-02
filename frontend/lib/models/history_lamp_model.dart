@@ -52,6 +52,15 @@ class HistoryLampModel {
     this.installation,
   });
 
+  bool get isMenungguJaringan {
+    final s = status.trim().toLowerCase();
+    final instVerif = installation?.verificationStatus?.trim().toLowerCase();
+    final instStatus = installation?.status.trim().toLowerCase();
+    return s.contains('menunggu jaringan') ||
+        instVerif?.contains('menunggu jaringan') == true ||
+        instStatus?.contains('menunggu jaringan') == true;
+  }
+
   bool get isDitolak {
     final s = status.trim().toLowerCase();
     final instVerif = installation?.verificationStatus?.trim().toLowerCase();
@@ -99,29 +108,34 @@ class HistoryLampModel {
       instModel = InstallationModel.fromJson(json);
     } catch (_) {}
 
-    final isRejected = rawStatus.toLowerCase() == 'ditolak' ||
-        rawStatus.toLowerCase() == 'rejected' ||
-        instModel?.verificationStatus?.toLowerCase() == 'ditolak' ||
-        instModel?.verificationStatus?.toLowerCase() == 'rejected' ||
-        instModel?.status.toLowerCase() == 'ditolak' ||
-        instModel?.status.toLowerCase() == 'rejected';
+    final normStatus = rawStatus.trim().toLowerCase();
 
-    final isVerif = !isRejected &&
+    final isOffline = normStatus.contains('menunggu jaringan') ||
+        instModel?.status.trim().toLowerCase().contains('menunggu jaringan') == true;
+
+    final isRejected = !isOffline && (normStatus == 'ditolak' ||
+        normStatus == 'rejected' ||
+        instModel?.verificationStatus?.trim().toLowerCase() == 'ditolak' ||
+        instModel?.verificationStatus?.trim().toLowerCase() == 'rejected' ||
+        instModel?.status.trim().toLowerCase() == 'ditolak' ||
+        instModel?.status.trim().toLowerCase() == 'rejected');
+
+    final isVerif = !isOffline && !isRejected &&
+        !normStatus.contains('menunggu') &&
+        !normStatus.contains('pending') &&
         (json['is_verified'] == true ||
             json['is_verified'] == 1 ||
             json['is_verified'] == '1' ||
-            rawStatus.toLowerCase() == 'terverifikasi');
+            normStatus == 'terverifikasi' ||
+            normStatus == 'verified');
 
-    final String vStatus = isRejected
-        ? 'Ditolak'
-        : (isVerif
-            ? 'Terverifikasi'
-            : (rawStatus.toLowerCase() == 'menunggu verifikasi' ||
-                    rawStatus.toLowerCase() == 'pending' ||
-                    rawStatus.toLowerCase() == 'tersimpan' ||
-                    rawStatus.toLowerCase() == 'terpasang'
-                ? 'Menunggu Verifikasi'
-                : rawStatus));
+    final String vStatus = isOffline
+        ? 'Menunggu Jaringan'
+        : (isRejected
+            ? 'Ditolak'
+            : (isVerif
+                ? 'Terverifikasi'
+                : 'Menunggu Verifikasi'));
 
     final installedAt = json['installed_at'] != null
         ? DateTime.tryParse(json['installed_at'].toString())

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/custom_feedback.dart';
 import '../manual/manual_page.dart';
 import '../realtime/realtime_page.dart';
 
@@ -31,14 +33,9 @@ class MetodePendataanPage extends StatelessWidget {
         ProjectService.selectedProject?.status == 'closed' ||
         ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Realtime dinonaktifkan.',
-          ),
-          backgroundColor: AppColors.textMuted,
-          duration: const Duration(seconds: 2),
-        ),
+      CustomFeedback.showError(
+        context,
+        'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Realtime dinonaktifkan.',
       );
       return;
     }
@@ -60,14 +57,9 @@ class MetodePendataanPage extends StatelessWidget {
         ProjectService.selectedProject?.status == 'closed' ||
         ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Manual dinonaktifkan.',
-          ),
-          backgroundColor: AppColors.textMuted,
-          duration: const Duration(seconds: 2),
-        ),
+      CustomFeedback.showError(
+        context,
+        'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Manual dinonaktifkan.',
       );
       return;
     }
@@ -99,103 +91,101 @@ class MetodePendataanPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.backgroundWhite,
         body: SafeArea(
-        child: Column(
-          children: [
-            const AppTopBar(),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 16),
+          child: Column(
+            children: [
+              const AppTopBar(),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: 16.h),
 
-                    if (isProjectClosed)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.divider,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.borderMedium),
-                        ),
-                        child: Row(
-                          children: const [
-                            Icon(
-                              Icons.lock_outline_rounded,
-                              color: AppColors.textMuted,
-                              size: 22,
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Project ini telah Selesai (Read-Only). Fitur input data Realtime dan Manual dinonaktifkan.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textBody,
-                                  height: 1.35,
+                      if (isProjectClosed)
+                        Container(
+                          margin: EdgeInsets.only(bottom: 16.h),
+                          padding: EdgeInsets.all(14.w),
+                          decoration: BoxDecoration(
+                            color: AppColors.divider,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: AppColors.borderMedium),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.lock_outline_rounded,
+                                color: AppColors.textMuted,
+                                size: 22.sp,
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Text(
+                                  'Project ini telah Selesai (Read-Only). Fitur input data Realtime dan Manual dinonaktifkan.',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textBody,
+                                    height: 1.35,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ),
+
+                      // Centered Title & Subtitle
+                      Center(
+                        child: Text(
+                          'Pilih Metode Input',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Center(
+                        child: Text(
+                          'Bagaimana Anda ingin menambahkan data\nlampu?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14.sp,
+                            height: 1.4,
+                          ),
                         ),
                       ),
 
-                    // Centered Title & Subtitle
-                    const Center(
-                      child: Text(
-                        'Pilih Metode Input',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      SizedBox(height: 28.h),
+
+                      // Card 1: Realtime
+                      _buildRealtimeCard(
+                        context,
+                        isProjectClosed: isProjectClosed,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Center(
-                      child: Text(
-                        'Bagaimana Anda ingin menambahkan data\nlampu?',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
+
+                      SizedBox(height: 20.h),
+
+                      // Card 2: Manual
+                      _buildManualCard(
+                        context,
+                        isProjectClosed: isProjectClosed,
                       ),
-                    ),
 
-                    const SizedBox(height: 28),
-
-                    // Card 1: Realtime
-                    _buildRealtimeCard(
-                      context,
-                      isProjectClosed: isProjectClosed,
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Card 2: Manual
-                    _buildManualCard(context, isProjectClosed: isProjectClosed),
-
-                    const SizedBox(height: 24),
-
-                    // Information / Tips Card
-                    _buildTipsCard(),
-
-                    const SizedBox(height: 24),
-                  ],
+                      SizedBox(height: 24.h),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildRealtimeCard(
     BuildContext context, {
@@ -206,13 +196,13 @@ class MetodePendataanPage extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.realtimeBackground,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.realtimeBorder, width: 1.5),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppColors.realtimeBorder, width: 1.5.w),
+          boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor,
-              blurRadius: 6,
-              offset: Offset(0, 3),
+              blurRadius: 6.r,
+              offset: Offset(0, 3.h),
             ),
           ],
         ),
@@ -220,9 +210,9 @@ class MetodePendataanPage extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () => _handleSelectRealtime(context),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(16.r),
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: EdgeInsets.all(20.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -230,44 +220,44 @@ class MetodePendataanPage extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: EdgeInsets.all(10.w),
                         decoration: BoxDecoration(
                           color: AppColors.backgroundWhite,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: AppColors.realtimeBorder,
-                            width: 1,
+                            width: 1.w,
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.qr_code_scanner_rounded,
                           color: AppColors.realtimeGreen,
-                          size: 24,
+                          size: 24.sp,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      SizedBox(width: 12.w),
+                      Text(
                         'Realtime',
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 18,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14.h),
 
                   // Description
-                  const Text(
+                  Text(
                     'Gunakan kamera dan GPS untuk mendapatkan data lampu secara langsung dari lokasi.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 13,
+                      fontSize: 13.sp,
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14.h),
 
                   // Features Checklist
                   _buildCheckFeature(
@@ -275,39 +265,39 @@ class MetodePendataanPage extends StatelessWidget {
                     label: 'Scan Barcode',
                     color: AppColors.realtimeGreen,
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6.h),
                   _buildCheckFeature(
                     icon: Icons.check_circle_outline_rounded,
                     label: 'GPS Otomatis',
                     color: AppColors.realtimeGreen,
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6.h),
                   _buildCheckFeature(
                     icon: Icons.check_circle_outline_rounded,
                     label: 'Lokasi Terkini',
                     color: AppColors.realtimeGreen,
                   ),
 
-                  const SizedBox(height: 16),
-                  const Divider(color: AppColors.realtimeBorder, height: 1),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 16.h),
+                  Divider(color: AppColors.realtimeBorder, height: 1.h),
+                  SizedBox(height: 14.h),
 
                   // Card Action Footer
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Text(
                         'Gunakan Realtime',
                         style: TextStyle(
                           color: AppColors.realtimeGreen,
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Icon(
                         Icons.arrow_forward_rounded,
                         color: AppColors.realtimeGreen,
-                        size: 20,
+                        size: 20.sp,
                       ),
                     ],
                   ),
@@ -329,13 +319,13 @@ class MetodePendataanPage extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.manualBackground,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.manualBorder, width: 1.5),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppColors.manualBorder, width: 1.5.w),
+          boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor,
-              blurRadius: 6,
-              offset: Offset(0, 3),
+              blurRadius: 6.r,
+              offset: Offset(0, 3.h),
             ),
           ],
         ),
@@ -343,9 +333,9 @@ class MetodePendataanPage extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () => _handleSelectManual(context),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(16.r),
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: EdgeInsets.all(20.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -353,44 +343,44 @@ class MetodePendataanPage extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: EdgeInsets.all(10.w),
                         decoration: BoxDecoration(
                           color: AppColors.backgroundWhite,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: AppColors.manualBorder,
-                            width: 1,
+                            width: 1.w,
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.keyboard_outlined,
                           color: AppColors.manualOrange,
-                          size: 24,
+                          size: 24.sp,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      SizedBox(width: 12.w),
+                      Text(
                         'Manual',
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 18,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14.h),
 
                   // Description
-                  const Text(
+                  Text(
                     'Masukkan koordinat, alamat, dan informasi lampu secara manual.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 13,
+                      fontSize: 13.sp,
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14.h),
 
                   // Features Checklist
                   _buildCheckFeature(
@@ -398,39 +388,39 @@ class MetodePendataanPage extends StatelessWidget {
                     label: 'Input Long / Lat',
                     color: AppColors.manualOrange,
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6.h),
                   _buildCheckFeature(
                     icon: Icons.bolt_rounded,
                     label: 'Input Address',
                     color: AppColors.manualOrange,
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6.h),
                   _buildCheckFeature(
                     icon: Icons.bolt_rounded,
                     label: 'Dokumentasi Manual',
                     color: AppColors.manualOrange,
                   ),
 
-                  const SizedBox(height: 16),
-                  const Divider(color: AppColors.manualBorder, height: 1),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 16.h),
+                  Divider(color: AppColors.manualBorder, height: 1.h),
+                  SizedBox(height: 14.h),
 
                   // Card Action Footer
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Text(
                         'Gunakan Manual',
                         style: TextStyle(
                           color: AppColors.manualOrange,
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Icon(
                         Icons.arrow_forward_rounded,
                         color: AppColors.manualOrange,
-                        size: 20,
+                        size: 20.sp,
                       ),
                     ],
                   ),
@@ -450,62 +440,17 @@ class MetodePendataanPage extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(icon, color: color, size: 16),
-        const SizedBox(width: 8),
+        Icon(icon, color: color, size: 16.sp),
+        SizedBox(width: 8.w),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 13,
+            fontSize: 13.sp,
             fontWeight: FontWeight.w500,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildTipsCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.infoBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.infoBorder, width: 1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.info_outline_rounded,
-            color: AppColors.infoBlue,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                text: 'Tips: ',
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.bold,
-                ),
-                children: const [
-                  TextSpan(
-                    text: 'Gunakan Realtime jika barcode dan GPS tersedia. Pilih Manual jika Anda perlu memasukkan data secara langsung karena kendala sinyal atau perangkat.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w400,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

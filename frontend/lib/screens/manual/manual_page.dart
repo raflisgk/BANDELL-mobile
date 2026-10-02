@@ -416,6 +416,8 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
         idProject: projectId,
         idUser: userId,
         idArea: areaId,
+        districtName: widget.areaName ??
+            ProjectService.getAreaName(projectId, areaId),
         lampTypeId: widget.lampTypeId,
         lampCode: barcode,
         lampType: widget.lampType ?? '',

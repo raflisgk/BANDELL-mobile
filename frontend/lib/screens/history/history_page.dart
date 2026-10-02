@@ -7,6 +7,8 @@ import '../../models/history_lamp_model.dart';
 import '../../models/project_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/installation_service.dart';
+import '../../services/local_cache_service.dart';
+import '../../services/offline_sync_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -36,51 +38,173 @@ class _HistoryPageState extends State<HistoryPage> {
   String _selectedFilter = '1 Bulan';
   DateTime? _rangeStartDate;
   DateTime? _rangeEndDate;
-  String? _selectedProject;
+
   List<HistoryLampModel> _historyItems = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
-    _selectedProject = ProjectService.selectedProject?.projectName;
-    _initFromCacheOrFetch();
+    final proj = _currentProject;
+    final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
+    final userId = AuthService.currentUser?.idUser ?? 0;
+    if (proj != null) {
+      final sDate = startDate?.toIso8601String().split('T').first ?? '';
+      final eDate = endDate?.toIso8601String().split('T').first ?? '';
+      final syncJson = LocalCacheService.getHistoryJsonSync(
+        userId: userId,
+        projectId: proj.idProject,
+        filter: _selectedFilter,
+        start: sDate,
+        end: eDate,
+      );
+      final offlineItems = OfflineSyncService.getQueueSync(
+        userId: userId,
+        projectId: proj.idProject,
+      ).map((e) => e.toHistoryLampModel()).toList();
+
+      if (syncJson != null || offlineItems.isNotEmpty) {
+        final cached = (syncJson ?? [])
+            .map((item) =>
+                HistoryLampModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+        _historyItems = [...offlineItems, ...cached];
+        _isLoading = false;
+      } else {
+        _isLoading = true;
+      }
+    } else {
+      _isLoading = true;
+    }
+
+    _initProjectAndHistory();
+    OfflineSyncService().pendingCountNotifier.addListener(_onPendingCountChanged);
     _refreshTimer = Timer.periodic(
-      const Duration(seconds: 10),
+      const Duration(seconds: 15),
       (_) => _loadHistorySilently(),
     );
   }
 
-  void _initFromCacheOrFetch() {
-    final proj = _currentProject;
-    final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
-    final userId = AuthService.currentUser?.idUser ?? 0;
+  void _onPendingCountChanged() {
+    if (mounted) {
+      _loadHistorySilently();
+    }
+  }
 
-    if (proj != null &&
-        InstallationService.hasCachedHistory(
-          userId: userId,
-          projectId: proj.idProject,
-          filter: _selectedFilter,
-          startDate: startDate,
-          endDate: endDate,
-        )) {
-      final cached = InstallationService.getCachedHistory(
-        userId: userId,
-        projectId: proj.idProject,
-        filter: _selectedFilter,
-        startDate: startDate,
-        endDate: endDate,
-      );
-      if (cached != null) {
-        _historyItems = cached;
-        _isLoading = false;
-        _loadHistorySilently();
-        return;
+  Future<void> _initProjectAndHistory() async {
+    final userId = AuthService.currentUser?.idUser ?? 0;
+    ProjectModel? activeProject = ProjectService.selectedProject;
+
+    if (activeProject == null) {
+      List<ProjectModel> loadedProjects = [];
+      if (ProjectService.hasCachedProjects) {
+        loadedProjects = List<ProjectModel>.from(ProjectService.cachedProjects);
+      } else {
+        final cachedJson = await LocalCacheService.getProjectsJson(userId);
+        if (cachedJson != null && cachedJson.isNotEmpty) {
+          final projects = await ProjectService().getProjects(userId);
+          loadedProjects = List<ProjectModel>.from(projects);
+        }
+      }
+
+      loadedProjects.sort((a, b) => a.id.compareTo(b.id));
+
+      final savedId = await LocalCacheService.getSelectedProjectId();
+      if (savedId != null && loadedProjects.isNotEmpty) {
+        final matches = loadedProjects.where((p) => p.id == savedId);
+        if (matches.isNotEmpty) activeProject = matches.first;
+      }
+
+      if (activeProject == null && loadedProjects.isNotEmpty) {
+        activeProject = loadedProjects.first;
+      }
+
+      if (activeProject != null) {
+        ProjectService.selectedProject = activeProject;
+        await LocalCacheService.saveSelectedProjectId(activeProject.id);
       }
     }
 
-    _loadHistory();
+    _initFromCacheOrFetch(activeProject);
+  }
+
+  void _initFromCacheOrFetch([ProjectModel? projectOverride]) async {
+    final proj = projectOverride ?? _currentProject;
+    if (proj == null) {
+      if (mounted) {
+        setState(() {
+          _historyItems = [];
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
+    final userId = AuthService.currentUser?.idUser ?? 0;
+    final sDate = startDate?.toIso8601String().split('T').first ?? '';
+    final eDate = endDate?.toIso8601String().split('T').first ?? '';
+
+    final syncJson = LocalCacheService.getHistoryJsonSync(
+      userId: userId,
+      projectId: proj.idProject,
+      filter: _selectedFilter,
+      start: sDate,
+      end: eDate,
+    );
+    final offlineItems = OfflineSyncService.getQueueSync(
+      userId: userId,
+      projectId: proj.idProject,
+    ).map((e) => e.toHistoryLampModel()).toList();
+
+    if (syncJson != null || offlineItems.isNotEmpty) {
+      final cached = (syncJson ?? [])
+          .map((item) =>
+              HistoryLampModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+      final combined = [...offlineItems, ...cached];
+      if (mounted) {
+        setState(() {
+          _historyItems = combined;
+          _isLoading = false;
+        });
+      }
+      _loadHistorySilently();
+      return;
+    }
+
+    final cachedJson = await LocalCacheService.getHistoryJson(
+      userId: userId,
+      projectId: proj.idProject,
+      filter: _selectedFilter,
+      start: sDate,
+      end: eDate,
+    );
+    final offlineQueue = await OfflineSyncService().getQueue(
+      userId: userId,
+      projectId: proj.idProject,
+    );
+    final asyncOfflineItems =
+        offlineQueue.map((e) => e.toHistoryLampModel()).toList();
+
+    if (cachedJson != null || asyncOfflineItems.isNotEmpty) {
+      final cached = (cachedJson ?? [])
+          .map((item) =>
+              HistoryLampModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+      final combined = [...asyncOfflineItems, ...cached];
+      if (mounted) {
+        setState(() {
+          _historyItems = combined;
+          _isLoading = false;
+        });
+      }
+      _loadHistorySilently();
+      return;
+    }
+
+    _loadHistory(forceRefresh: true);
   }
 
   Future<void> _loadHistorySilently() async {
@@ -88,17 +212,28 @@ class _HistoryPageState extends State<HistoryPage> {
     if (proj == null) return;
 
     final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
+    final userId = AuthService.currentUser?.idUser ?? 0;
 
     try {
       final history = await InstallationService().getHistory(
-        userId: AuthService.currentUser?.idUser ?? 0,
+        userId: userId,
         projectId: proj.idProject,
         startDate: startDate,
         endDate: endDate,
+        forceRefresh: true,
       );
+
+      final offlineQueue = await OfflineSyncService().getQueue(
+        userId: userId,
+        projectId: proj.idProject,
+      );
+      final offlineModels =
+          offlineQueue.map((e) => e.toHistoryLampModel()).toList();
+      final combined = [...offlineModels, ...history];
+
       if (!mounted) return;
       setState(() {
-        _historyItems = history;
+        _historyItems = combined;
       });
     } catch (e) {
       debugPrint('Auto refresh error in HistoryPage: $e');
@@ -182,32 +317,43 @@ class _HistoryPageState extends State<HistoryPage> {
     debugPrint('START DATE: $startDate');
     debugPrint('END DATE: $endDate');
 
-    if (!forceRefresh &&
-        InstallationService.hasCachedHistory(
-          userId: userId,
-          projectId: proj.idProject,
-          filter: _selectedFilter,
-          startDate: startDate,
-          endDate: endDate,
-        )) {
-      final cached = InstallationService.getCachedHistory(
+    final sDate = startDate?.toIso8601String().split('T').first ?? '';
+    final eDate = endDate?.toIso8601String().split('T').first ?? '';
+
+    if (!forceRefresh) {
+      final cachedJson = await LocalCacheService.getHistoryJson(
         userId: userId,
         projectId: proj.idProject,
         filter: _selectedFilter,
-        startDate: startDate,
-        endDate: endDate,
+        start: sDate,
+        end: eDate,
       );
-      if (cached != null) {
-        setState(() {
-          _historyItems = cached;
-          _isLoading = false;
-        });
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        final cached = cachedJson
+            .map((item) =>
+                HistoryLampModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+        final offlineQueue = await OfflineSyncService().getQueue(
+          userId: userId,
+          projectId: proj.idProject,
+        );
+        final offlineItems =
+            offlineQueue.map((e) => e.toHistoryLampModel()).toList();
+        final combined = [...offlineItems, ...cached];
+        if (mounted) {
+          setState(() {
+            _historyItems = combined;
+            _isLoading = false;
+          });
+        }
         _loadHistorySilently();
         return;
       }
     }
 
-    setState(() => _isLoading = true);
+    if (_historyItems.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     try {
       final history = await InstallationService().getHistory(
         userId: userId,
@@ -216,29 +362,47 @@ class _HistoryPageState extends State<HistoryPage> {
         endDate: endDate,
         forceRefresh: forceRefresh,
       );
+
+      final offlineQueue = await OfflineSyncService().getQueue(
+        userId: userId,
+        projectId: proj.idProject,
+      );
+      final offlineModels =
+          offlineQueue.map((e) => e.toHistoryLampModel()).toList();
+      final combined = [...offlineModels, ...history];
+
       if (mounted) {
         setState(() {
-          _historyItems = history;
+          _historyItems = combined;
           _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading history: $e');
+      final offlineQueue = await OfflineSyncService().getQueue(
+        userId: userId,
+        projectId: proj.idProject,
+      );
+      final offlineModels =
+          offlineQueue.map((e) => e.toHistoryLampModel()).toList();
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          if (offlineModels.isNotEmpty && _historyItems.isEmpty) {
+            _historyItems = offlineModels;
+          }
+          _isLoading = false;
+        });
       }
     }
   }
 
   ProjectModel? get _currentProject {
-    if (_selectedProject != null) {
-      return ProjectService.getProjectByName(_selectedProject!);
-    }
     return ProjectService.selectedProject;
   }
 
   @override
   void dispose() {
+    OfflineSyncService().pendingCountNotifier.removeListener(_onPendingCountChanged);
     _refreshTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
@@ -275,12 +439,13 @@ class _HistoryPageState extends State<HistoryPage> {
     final (startDate, endDate) = _getDateRangeForFilter(filter);
     if (startDate == null && endDate == null) return true;
 
-    // HANYA gunakan created_at (tanggal record dibuat).
     final itemDate =
         _extractDateOnly(item.createdAt) ??
-        _extractDateOnly(item.installation?.createdAt);
+        _extractDateOnly(item.installation?.createdAt) ??
+        _extractDateOnly(item.installedAt) ??
+        _extractDateOnly(item.tanggal);
 
-    if (itemDate == null) return false;
+    if (itemDate == null) return true;
 
     if (startDate != null && itemDate.isBefore(startDate)) {
       return false;
@@ -377,6 +542,8 @@ class _HistoryPageState extends State<HistoryPage> {
       context,
       DetailLampuPage(
         idInstallation: item.idHistory,
+        idArea: item.areaId ?? item.installation?.idArea,
+        idProject: item.projectId,
         lampCode: effectiveCode,
         lampType: item.jenis,
         status: item.status,

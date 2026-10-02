@@ -5,11 +5,13 @@ import 'package:flutter/services.dart';
 
 import '../../models/lamp_type_model.dart';
 import '../../services/lamp_type_service.dart';
+import '../../services/local_cache_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/bottom_navbar.dart';
+import '../../widgets/custom_feedback.dart';
 import '../history/history_page.dart';
 import '../metode_pendataan/metode_pendataan_page.dart';
 import '../notification/notification_page.dart';
@@ -45,21 +47,27 @@ class _LampPageState extends State<LampPage> {
     _searchController.addListener(_onSearchChanged);
     _initFromCacheOrFetch();
     _refreshTimer = Timer.periodic(
-      const Duration(seconds: 10),
+      const Duration(seconds: 15),
       (_) => _loadLampTypesSilently(),
     );
   }
 
-  void _initFromCacheOrFetch() {
-    if (LampTypeService.hasCache) {
+  void _initFromCacheOrFetch() async {
+    // 1. Baca dari Storage HP secara instan
+    final localJson = await LocalCacheService.getLampTypesJson();
+    if (localJson != null && localJson.isNotEmpty && mounted) {
+      final types = localJson
+          .map((item) => LampTypeModel.fromJson(item as Map<String, dynamic>))
+          .toList();
       setState(() {
-        _lampTypes = List<LampTypeModel>.from(LampTypeService.cachedLampTypes);
+        _lampTypes = types;
         _isLoading = false;
       });
       _loadLampTypesSilently();
-    } else {
-      _loadLampTypes();
+      return;
     }
+
+    _loadLampTypes();
   }
 
   Future<void> _loadLampTypesSilently() async {
@@ -76,16 +84,9 @@ class _LampPageState extends State<LampPage> {
   }
 
   Future<void> _loadLampTypes({bool forceRefresh = false}) async {
-    if (!forceRefresh && LampTypeService.hasCache) {
-      setState(() {
-        _lampTypes = List<LampTypeModel>.from(LampTypeService.cachedLampTypes);
-        _isLoading = false;
-      });
-      _loadLampTypesSilently();
-      return;
+    if (_lampTypes.isEmpty) {
+      setState(() => _isLoading = true);
     }
-
-    setState(() => _isLoading = true);
     try {
       final types = await LampTypeService().getLampTypes(
         forceRefresh: forceRefresh,
@@ -139,14 +140,9 @@ class _LampPageState extends State<LampPage> {
         ProjectService.selectedProject?.status == 'closed' ||
         ProjectService.selectedProject?.status == 'selesai';
     if (isProjectClosed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Penambahan data lampu baru tidak tersedia.',
-          ),
-          backgroundColor: AppColors.textMuted,
-          duration: const Duration(seconds: 2),
-        ),
+      CustomFeedback.showError(
+        context,
+        'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Penambahan data lampu baru tidak tersedia.',
       );
       return;
     }

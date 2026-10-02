@@ -4,20 +4,26 @@ import 'package:flutter/services.dart';
 import '../../models/installation_model.dart';
 import '../../services/installation_service.dart';
 import '../../services/lamp_type_service.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/validators.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/catatan.dart';
+import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
+import '../../widgets/kode_panel.dart';
 import 'edit_lampu_action_buttons.dart';
 import 'edit_lampu_location.dart';
 import 'edit_lampu_type.dart';
 
 class EditDataLampuPage extends StatefulWidget {
   final int? idInstallation;
+  final int? idProject;
+  final int? idArea;
   final bool isEdit;
   final String? scannedCode;
   final String? initialKodeLampu;
+  final String? initialKodePanel;
   final String? initialLongitude;
   final String? initialLatitude;
   final String? initialAlamat;
@@ -28,9 +34,12 @@ class EditDataLampuPage extends StatefulWidget {
   const EditDataLampuPage({
     super.key,
     this.idInstallation,
+    this.idProject,
+    this.idArea,
     this.isEdit = false,
     this.scannedCode,
     this.initialKodeLampu,
+    this.initialKodePanel,
     this.initialLongitude,
     this.initialLatitude,
     this.initialAlamat,
@@ -46,14 +55,18 @@ class EditDataLampuPage extends StatefulWidget {
 class _EditDataLampuPageState extends State<EditDataLampuPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
+  int? _existingAreaId;
+  int? _existingProjectId;
 
   late TextEditingController _kodeLampuController;
+  late TextEditingController _panelCodeController;
   late TextEditingController _longitudeController;
   late TextEditingController _latitudeController;
   late TextEditingController _catatanController;
   late TextEditingController _tipeLampuController;
 
   final FocusNode _kodeLampuFocusNode = FocusNode();
+  final FocusNode _panelCodeFocusNode = FocusNode();
   final FocusNode _longitudeFocusNode = FocusNode();
   final FocusNode _latitudeFocusNode = FocusNode();
   final FocusNode _catatanFocusNode = FocusNode();
@@ -75,6 +88,13 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
               ? widget.initialKodeLampu!
               : '')
         : (widget.scannedCode ?? '');
+    final defaultPanel = widget.isEdit
+        ? ((widget.initialKodePanel != null &&
+                  widget.initialKodePanel!.isNotEmpty &&
+                  widget.initialKodePanel != '-')
+              ? widget.initialKodePanel!
+              : '')
+        : '';
     final defaultLong = widget.isEdit
         ? ((widget.initialLongitude != null &&
                   widget.initialLongitude!.isNotEmpty &&
@@ -107,12 +127,14 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
         : '';
 
     _kodeLampuController = TextEditingController(text: defaultKode);
+    _panelCodeController = TextEditingController(text: defaultPanel);
     _longitudeController = TextEditingController(text: defaultLong);
     _latitudeController = TextEditingController(text: defaultLat);
     _catatanController = TextEditingController(text: defaultCatatan);
     _tipeLampuController = TextEditingController(text: defaultTipe);
 
     _kodeLampuFocusNode.addListener(_onFocusChange);
+    _panelCodeFocusNode.addListener(_onFocusChange);
     _longitudeFocusNode.addListener(_onFocusChange);
     _latitudeFocusNode.addListener(_onFocusChange);
     _catatanFocusNode.addListener(_onFocusChange);
@@ -138,8 +160,16 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       );
       if (detail != null && mounted) {
         setState(() {
+          _existingAreaId = detail.idArea;
+          _existingProjectId = detail.idProject;
           if (_photos.isEmpty && detail.photos.isNotEmpty) {
             _photos.addAll(detail.photos.where((p) => p.trim().isNotEmpty));
+          }
+          if (_panelCodeController.text.isEmpty &&
+              detail.panelCode != null &&
+              detail.panelCode!.isNotEmpty &&
+              detail.panelCode != '-') {
+            _panelCodeController.text = detail.panelCode!;
           }
           if (_catatanController.text.isEmpty &&
               detail.notes != null &&
@@ -190,12 +220,14 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   @override
   void dispose() {
     _kodeLampuController.dispose();
+    _panelCodeController.dispose();
     _longitudeController.dispose();
     _latitudeController.dispose();
     _catatanController.dispose();
     _tipeLampuController.dispose();
 
     _kodeLampuFocusNode.removeListener(_onFocusChange);
+    _panelCodeFocusNode.removeListener(_onFocusChange);
     _longitudeFocusNode.removeListener(_onFocusChange);
     _latitudeFocusNode.removeListener(_onFocusChange);
     _catatanFocusNode.removeListener(_onFocusChange);
@@ -204,6 +236,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _longitudeController.removeListener(_onCoordinateChanged);
 
     _kodeLampuFocusNode.dispose();
+    _panelCodeFocusNode.dispose();
     _longitudeFocusNode.dispose();
     _latitudeFocusNode.dispose();
     _catatanFocusNode.dispose();
@@ -222,18 +255,18 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       setState(() {
         _photos.removeAt(index);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Foto berhasil dihapus'),
-          backgroundColor: AppColors.primary,
-          duration: Duration(seconds: 1),
-        ),
-      );
+      CustomFeedback.showSuccess(context, 'Foto berhasil dihapus');
     }
   }
 
   Future<void> _handleSubmit() async {
     if (_isSubmitting) return;
+
+    if (widget.isEdit &&
+        (widget.idInstallation == null || widget.idInstallation! <= 0)) {
+      CustomFeedback.showError(context, 'ID data lampu tidak valid.');
+      return;
+    }
 
     final latitude = _latitudeController.text.trim();
     final longitude = _longitudeController.text.trim();
@@ -256,15 +289,33 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       }
     }
 
+    if (_panelCodeController.text.trim().length > 12) {
+      CustomFeedback.showError(
+        context,
+        'Kode panel maksimal 12 karakter.',
+      );
+      _panelCodeFocusNode.requestFocus();
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
 
     try {
+      final resolvedProjectId = widget.idProject ??
+          _existingProjectId ??
+          ProjectService.selectedProject?.idProject;
+      final resolvedAreaId = widget.idArea ?? _existingAreaId ?? 0;
+
       final updatedData = InstallationModel(
         idInstallation: widget.idInstallation ?? 0,
-        idArea: 101,
+        idProject: resolvedProjectId,
+        idArea: resolvedAreaId,
         lampCode: _kodeLampuController.text.trim(),
+        panelCode: _panelCodeController.text.trim().isNotEmpty
+            ? _panelCodeController.text.trim()
+            : null,
         lampType: _tipeLampuController.text.trim(),
         latitude: latitude.replaceAll(',', '.'),
         longitude: longitude.replaceAll(',', '.'),
@@ -276,7 +327,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
 
       if (widget.isEdit) {
         debugPrint('Simpan Perubahan (ID: ${widget.idInstallation})');
-        await InstallationService().updateInstallation(
+        final result = await InstallationService().updateInstallation(
           widget.idInstallation ?? 0,
           updatedData,
         );
@@ -285,30 +336,32 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
           setState(() {
             _isSubmitting = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Perubahan data lampu berhasil disimpan'),
-              backgroundColor: AppColors.primary,
-              duration: Duration(seconds: 2),
-            ),
+          CustomFeedback.showSuccess(
+            context,
+            'Perubahan data lampu berhasil disimpan',
           );
-          Navigator.pop(context);
+          Navigator.pop(context, result);
         }
       } else {
         debugPrint('Simpan Data Pendataan Baru');
-        await InstallationService().createInstallation(updatedData);
+        final created =
+            await InstallationService().createInstallation(updatedData);
 
         if (mounted) {
           setState(() {
             _isSubmitting = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Pendataan lampu berhasil disimpan'),
-              backgroundColor: AppColors.success,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          if (created.status == 'Menunggu Jaringan') {
+            CustomFeedback.showSuccess(
+              context,
+              'Data tersimpan di HP (Offline). Otomatis diunggah saat ada sinyal.',
+            );
+          } else {
+            CustomFeedback.showSuccess(
+              context,
+              'Pendataan lampu berhasil disimpan',
+            );
+          }
           Navigator.pop(context);
         }
       }
@@ -318,12 +371,12 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
         setState(() {
           _isSubmitting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal menyimpan perubahan. Silakan coba lagi.'),
-            backgroundColor: AppColors.error,
-            duration: Duration(seconds: 2),
-          ),
+        final rawMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        CustomFeedback.showError(
+          context,
+          rawMsg.isNotEmpty
+              ? rawMsg
+              : 'Gagal menyimpan perubahan. Silakan coba lagi.',
         );
       }
     }
@@ -340,175 +393,154 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       child: Scaffold(
         backgroundColor: AppColors.backgroundWhite,
         body: SafeArea(
-        child: Column(
-          children: [
-            AppTopBar(
-              showBackButton: true,
-              showNotification: false,
-              showDropdown: false,
-              onBackPressed: _handleBack,
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 12),
+          child: Column(
+            children: [
+              AppTopBar(
+                title: widget.isEdit ? 'Edit Data' : 'Tambah Data',
+                showBackButton: true,
+                showNotification: false,
+                showDropdown: false,
+                onBackPressed: _handleBack,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 8),
 
-                      // Title & Subtitle Header
-                      Center(
-                        child: Text(
-                          widget.isEdit ? 'Edit Data' : 'Tambah Data',
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                        // Large White Card Form Container
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: AppColors.shadowColor,
+                                blurRadius: 6,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Center(
-                        child: Text(
-                          widget.isEdit
-                              ? 'Edit data lampu secara manual'
-                              : 'Masukkan detail data fisik pemasangan lampu.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
+                          padding: const EdgeInsets.all(20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 1. KODE LAMPU
+                              _buildSectionHeader(
+                                icon: Icons.lightbulb_outline_rounded,
+                                title: 'Kode Lampu',
+                                subtitle: 'Masukkan kode lampu',
+                              ),
+                              const SizedBox(height: 12),
+                              _buildCustomTextField(
+                                controller: _kodeLampuController,
+                                focusNode: _kodeLampuFocusNode,
+                                hint: 'Masukkan kode lampu',
+                              ),
 
-                      const SizedBox(height: 20),
+                              const SizedBox(height: 20),
+                              const Divider(color: AppColors.border, height: 1),
+                              const SizedBox(height: 20),
 
-                      // Large White Card Form Container
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: AppColors.shadowColor,
-                              blurRadius: 6,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 1. KODE LAMPU
-                            _buildSectionHeader(
-                              icon: Icons.lightbulb_outline_rounded,
-                              title: 'Kode Lampu',
-                              subtitle: 'Masukkan kode lampu',
-                            ),
-                            const SizedBox(height: 12),
-                            _buildCustomTextField(
-                              controller: _kodeLampuController,
-                              focusNode: _kodeLampuFocusNode,
-                              hint: 'Masukkan kode lampu',
-                            ),
+                              // 2. KODE PANEL
+                              KodePanel(
+                                controller: _panelCodeController,
+                                focusNode: _panelCodeFocusNode,
+                              ),
 
-                            const SizedBox(height: 20),
-                            const Divider(color: AppColors.border, height: 1),
-                            const SizedBox(height: 20),
+                              const SizedBox(height: 20),
+                              const Divider(color: AppColors.border, height: 1),
+                              const SizedBox(height: 20),
 
-                            // 2. LOKASI KOORDINAT
-                            EditLampuLocation(
-                              longitudeController: _longitudeController,
-                              latitudeController: _latitudeController,
-                              longitudeFocusNode: _longitudeFocusNode,
-                              latitudeFocusNode: _latitudeFocusNode,
-                              errorMessage: _coordinateError,
-                            ),
+                              // 3. LOKASI KOORDINAT
+                              EditLampuLocation(
+                                longitudeController: _longitudeController,
+                                latitudeController: _latitudeController,
+                                longitudeFocusNode: _longitudeFocusNode,
+                                latitudeFocusNode: _latitudeFocusNode,
+                                errorMessage: _coordinateError,
+                              ),
 
-                            const SizedBox(height: 20),
-                            const Divider(color: AppColors.border, height: 1),
-                            const SizedBox(height: 20),
+                              const SizedBox(height: 20),
+                              const Divider(color: AppColors.border, height: 1),
+                              const SizedBox(height: 20),
 
-                            // 3. TIPE LAMPU
-                            EditLampuType(
-                              tipeLampuController: _tipeLampuController,
-                              tipeLampuFocusNode: _tipeLampuFocusNode,
-                              lampTypeOptions: _lampTypeOptions,
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
+                              // 3. TIPE LAMPU
+                              EditLampuType(
+                                tipeLampuController: _tipeLampuController,
+                                tipeLampuFocusNode: _tipeLampuFocusNode,
+                                lampTypeOptions: _lampTypeOptions,
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _tipeLampuController.text = newValue;
+                                    });
+                                  }
+                                },
+                              ),
+
+                              const SizedBox(height: 20),
+                              const Divider(color: AppColors.border, height: 1),
+                              const SizedBox(height: 20),
+
+                              // 4. CATATAN
+                              Catatan(
+                                controller: _catatanController,
+                                focusNode: _catatanFocusNode,
+                              ),
+
+                              const SizedBox(height: 20),
+                              const Divider(color: AppColors.border, height: 1),
+                              const SizedBox(height: 20),
+
+                              // 5. DOKUMENTASI
+                              Dokumentasi(
+                                photos: _photos,
+                                onPhotoAdded: (path) {
                                   setState(() {
-                                    _tipeLampuController.text = newValue;
+                                    _photos.add(path);
                                   });
-                                }
-                              },
-                            ),
-
-                            const SizedBox(height: 20),
-                            const Divider(color: AppColors.border, height: 1),
-                            const SizedBox(height: 20),
-
-                            // 4. CATATAN
-                            Catatan(
-                              controller: _catatanController,
-                              focusNode: _catatanFocusNode,
-                            ),
-
-                            const SizedBox(height: 20),
-                            const Divider(color: AppColors.border, height: 1),
-                            const SizedBox(height: 20),
-
-                            // 5. DOKUMENTASI
-                            Dokumentasi(
-                              photos: _photos,
-                              onPhotoAdded: (path) {
-                                setState(() {
-                                  _photos.add(path);
-                                });
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Foto ${_photos.length} berhasil ditambahkan',
-                                      ),
-                                      backgroundColor: AppColors.primary,
-                                      duration: const Duration(seconds: 1),
-                                    ),
-                                  );
-                                }
-                              },
-                              onRemovePhoto: _removePhoto,
-                            ),
-                          ],
+                                  if (mounted) {
+                                    CustomFeedback.showSuccess(
+                                      context,
+                                      'Foto ${_photos.length} berhasil ditambahkan',
+                                    );
+                                  }
+                                },
+                                onRemovePhoto: _removePhoto,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // Bottom Buttons Row: [ Batal ] & [ Simpan Perubahan ]
-                      EditLampuActionButtons(
-                        isEdit: widget.isEdit,
-                        isLoading: _isSubmitting,
-                        onCancel: _handleBack,
-                        onSave: _handleSubmit,
-                      ),
+                        // Bottom Buttons Row: [ Batal ] & [ Simpan Perubahan ]
+                        EditLampuActionButtons(
+                          isEdit: widget.isEdit,
+                          isLoading: _isSubmitting,
+                          onCancel: _handleBack,
+                          onSave: _handleSubmit,
+                        ),
 
-                      const SizedBox(height: 28),
-                    ],
+                        const SizedBox(height: 28),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildSectionHeader({
     required IconData icon,

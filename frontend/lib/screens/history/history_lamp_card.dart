@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/history_lamp_model.dart';
+import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 
 class HistoryLampCard extends StatelessWidget {
@@ -220,7 +221,36 @@ class HistoryLampCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge() {
-    if (item.isDitolak) {
+    if (item.isMenungguJaringan ||
+        item.status.trim().toLowerCase().contains('menunggu jaringan')) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7ED),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFDBA74), width: 0.8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(
+              Icons.wifi_off_rounded,
+              size: 13,
+              color: Color(0xFFEA580C),
+            ),
+            SizedBox(width: 4),
+            Text(
+              'Menunggu Jaringan',
+              style: TextStyle(
+                color: Color(0xFFEA580C),
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (item.isDitolak) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
@@ -305,17 +335,21 @@ class HistoryLampCard extends StatelessWidget {
   }
 
   String _getDistrictName() {
-    final name =
-        (item.districtName != null &&
+    final rawName = (item.districtName != null &&
             item.districtName!.trim().isNotEmpty &&
             item.districtName!.trim() != '-')
         ? item.districtName!.trim()
         : (item.installation?.districtName != null &&
-              item.installation!.districtName!.trim().isNotEmpty &&
-              item.installation!.districtName!.trim() != '-')
-        ? item.installation!.districtName!.trim()
-        : '-';
-    return name;
+                item.installation!.districtName!.trim().isNotEmpty &&
+                item.installation!.districtName!.trim() != '-')
+            ? item.installation!.districtName!.trim()
+            : null;
+
+    if (rawName != null) return rawName;
+
+    final areaId = item.areaId;
+    final projectId = item.projectId;
+    return ProjectService.getAreaName(projectId, areaId) ?? '-';
   }
 
   String _getCoordinates() {

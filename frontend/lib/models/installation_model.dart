@@ -179,10 +179,9 @@ class InstallationModel {
 
       wattage: json['wattage']?.toString() ?? '',
 
-      status:
+      status: json['verification_status']?.toString() ??
           json['status']?.toString() ??
-          json['verification_status']?.toString() ??
-          'Terpasang',
+          'Menunggu Verifikasi',
 
       latitude: json['latitude']?.toString(),
 
@@ -228,7 +227,8 @@ class InstallationModel {
           json['rejection_note']?.toString(),
 
       verificationStatus: json['verification_status']?.toString() ??
-          json['status']?.toString(),
+          json['status']?.toString() ??
+          'Menunggu Verifikasi',
 
       installedAt: json['installed_at'] != null
           ? DateTime.tryParse(
@@ -256,6 +256,9 @@ class InstallationModel {
       'id_project': idProject,
       'id_user': idUser,
       'id_area': idArea,
+      'district_name': districtName,
+      'district': districtName,
+      'area_name': districtName,
 
       // ID yang dikirim ke backend
       'lamp_type_id': lampTypeId,

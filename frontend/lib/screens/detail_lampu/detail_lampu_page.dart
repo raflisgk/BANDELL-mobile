@@ -22,6 +22,8 @@ class DetailLampuPage extends StatefulWidget {
   final int? idInstallation;
   final InstallationModel? installation;
   final int? idLamp;
+  final int? idArea;
+  final int? idProject;
   final String? lampCode;
   final String? lampType;
   final String? wattage;
@@ -42,6 +44,8 @@ class DetailLampuPage extends StatefulWidget {
     this.idInstallation,
     this.installation,
     this.idLamp,
+    this.idArea,
+    this.idProject,
     this.lampCode,
     this.lampType,
     this.wattage,
@@ -130,7 +134,35 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           ? widget.lampType!
           : '-');
 
+  bool get _isVerified {
+    if (_currentInstallation != null) {
+      final status = _currentInstallation!.status.toLowerCase().trim();
+      final verificationStatus =
+          (_currentInstallation!.verificationStatus ?? '').toLowerCase().trim();
+      return status == 'terverifikasi' ||
+          status == 'verified' ||
+          verificationStatus == 'terverifikasi' ||
+          verificationStatus == 'verified';
+    }
+    final inst = widget.installation;
+    final status = (inst?.status ?? widget.status ?? '').toLowerCase().trim();
+    final verificationStatus =
+        (inst?.verificationStatus ?? '').toLowerCase().trim();
+    return status == 'terverifikasi' ||
+        status == 'verified' ||
+        verificationStatus == 'terverifikasi' ||
+        verificationStatus == 'verified';
+  }
+
   void _handleEditData() async {
+    if (_isVerified) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Data telah Terverifikasi. Pengeditan dinonaktifkan (Read-Only).',
+      );
+      return;
+    }
+
     final isProjectClosed =
         ProjectService.selectedProject?.status == 'closed' ||
         ProjectService.selectedProject?.status == 'selesai';
@@ -146,15 +178,27 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     final effectivePhotos = inst?.photos.isNotEmpty == true
         ? inst!.photos
         : (widget.photos ?? const <String>[]);
+    final effectiveAreaId = _currentInstallation?.idArea ??
+        widget.installation?.idArea ??
+        widget.idArea;
+    final effectiveProjectId = _currentInstallation?.idProject ??
+        widget.installation?.idProject ??
+        widget.idProject;
+    final effectivePanelCode = _currentInstallation?.panelCode ??
+        widget.installation?.panelCode ??
+        widget.panelCode;
     final effectiveNotes = inst?.notes ?? widget.address ?? '';
 
     debugPrint('Edit Data');
-    await AppNavigator.push(
+    final result = await AppNavigator.push(
       context,
       EditDataLampuPage(
         isEdit: true,
         idInstallation: _effectiveId,
+        idArea: effectiveAreaId,
+        idProject: effectiveProjectId,
         initialKodeLampu: _effectiveCode,
+        initialKodePanel: effectivePanelCode,
         initialLongitude:
             _currentInstallation?.longitude ??
             widget.installation?.longitude ??
@@ -173,11 +217,24 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     );
 
     if (mounted) {
-      _refreshDetail();
+      if (result is InstallationModel) {
+        setState(() {
+          _currentInstallation = result;
+        });
+      }
+      await _refreshDetail();
     }
   }
 
   void _handleHapusData() {
+    if (_isVerified) {
+      CustomFeedbackMessage.showError(
+        context,
+        'Data telah Terverifikasi. Penghapusan dinonaktifkan (Read-Only).',
+      );
+      return;
+    }
+
     final isProjectClosed =
         ProjectService.selectedProject?.status == 'closed' ||
         ProjectService.selectedProject?.status == 'selesai';
@@ -235,7 +292,12 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     final inst = _currentInstallation ?? widget.installation;
     final code = _effectiveCode;
     final type = _effectiveType;
-    final currentStatus = inst?.status ?? widget.status ?? 'Tersimpan';
+    final currentStatus = _currentInstallation?.verificationStatus ??
+        _currentInstallation?.status ??
+        widget.installation?.verificationStatus ??
+        widget.installation?.status ??
+        widget.status ??
+        'Menunggu Verifikasi';
     final isTersimpan = currentStatus == 'Tersimpan';
 
     final effectivePanelCode = inst?.panelCode ?? widget.panelCode;
@@ -259,7 +321,18 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       return value;
     })();
 
-    final effectiveDistrictName = inst?.districtName ?? widget.districtName;
+    final resolvedAreaId = inst?.idArea ?? widget.idArea;
+    final resolvedProjectId = inst?.idProject ??
+        widget.idProject ??
+        ProjectService.selectedProject?.idProject;
+
+    final rawDistrict = inst?.districtName ?? widget.districtName;
+    final effectiveDistrictName = (rawDistrict != null &&
+            rawDistrict.trim().isNotEmpty &&
+            rawDistrict.trim() != '-')
+        ? rawDistrict.trim()
+        : (ProjectService.getAreaName(resolvedProjectId, resolvedAreaId) ?? '-');
+
     final effectiveLatitude = inst?.latitude ?? widget.latitude;
     final effectiveLongitude = inst?.longitude ?? widget.longitude;
 
@@ -465,6 +538,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                               ],
                             ),
                           );
+                        }
+
+                        if (_isVerified) {
+                          return const SizedBox.shrink();
                         }
 
                         return Row(

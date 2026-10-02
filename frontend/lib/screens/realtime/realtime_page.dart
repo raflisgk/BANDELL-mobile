@@ -122,11 +122,11 @@ class _RealtimePageState extends State<RealtimePage> {
     if (result != null && result.trim().isNotEmpty) {
       final scannedValue = result.trim();
 
-      if (scannedValue.length > 11) {
+      if (scannedValue.length > 12) {
         if (mounted) {
           CustomFeedbackMessage.showError(
             context,
-            'Kode panel ditolak. Maksimal 11 karakter.',
+            'ID Barcode (LCU) ditolak. Maksimal 12 karakter.',
           );
         }
         return;
@@ -134,7 +134,6 @@ class _RealtimePageState extends State<RealtimePage> {
 
       setState(() {
         _scannedBarcode = scannedValue;
-        _panelCodeController.text = scannedValue;
       });
     }
   }
@@ -320,6 +319,8 @@ class _RealtimePageState extends State<RealtimePage> {
         idProject: projectId,
         idUser: userId,
         idArea: areaId,
+        districtName: widget.areaName ??
+            ProjectService.getAreaName(projectId, areaId),
         lampTypeId: lampTypeId,
         lampCode: _scannedBarcode!.trim(),
         lampType: widget.lampType ?? '',

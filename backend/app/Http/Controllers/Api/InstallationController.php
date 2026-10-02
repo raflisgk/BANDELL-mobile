@@ -12,17 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class InstallationController extends Controller
 {
-    public function destroy(Installation $installation): JsonResponse
-    {
-        $installation->photos()->delete();
-        $installation->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data pemasangan berhasil dihapus.',
-        ]);
-    }
-
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -114,6 +103,14 @@ class InstallationController extends Controller
         Request $request,
         Installation $installation
     ): JsonResponse {
+        $currentStatus = strtolower((string) $installation->verification_status);
+        if ($currentStatus === 'terverifikasi' || $currentStatus === 'verified') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data pemasangan yang sudah Terverifikasi tidak dapat diubah.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'project_id' => [
                 'sometimes',
@@ -188,9 +185,16 @@ class InstallationController extends Controller
             ->first();
 
         if (!$district) {
+            $district = District::find($districtId);
+            if ($district) {
+                $projectId = $district->project_id;
+            }
+        }
+
+        if (!$district) {
             return response()->json([
                 'success' => false,
-                'message' => 'Area operasional tidak sesuai dengan project.',
+                'message' => 'Area yang dipilih tidak valid.',
             ], 422);
         }
 
@@ -216,6 +220,7 @@ class InstallationController extends Controller
             'installed_at' => (!empty($validated['installed_at']))
                 ? $validated['installed_at']
                 : $installation->installed_at,
+            'verification_status' => 'Menunggu Verifikasi',
         ]);
 
         if ($request->hasFile('photos')) {
@@ -334,6 +339,33 @@ class InstallationController extends Controller
             'success' => true,
             'message' => 'Detail data pemasangan berhasil diambil.',
             'data' => $installation,
+        ]);
+    }
+
+    public function destroy(Installation $installation): JsonResponse
+    {
+        $currentStatus = strtolower((string) $installation->verification_status);
+        if ($currentStatus === 'terverifikasi' || $currentStatus === 'verified') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data pemasangan yang sudah Terverifikasi tidak dapat dihapus.',
+            ], 422);
+        }
+
+        if ($installation->photos) {
+            foreach ($installation->photos as $photo) {
+                if ($photo->photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($photo->photo_path)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($photo->photo_path);
+                }
+                $photo->delete();
+            }
+        }
+
+        $installation->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data pemasangan berhasil dihapus.',
         ]);
     }
 }
