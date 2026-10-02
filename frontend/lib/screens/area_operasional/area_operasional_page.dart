@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../models/area_model.dart';
 import '../../models/project_model.dart';
+import '../../services/local_cache_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -55,45 +56,66 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     );
   }
 
-  void _initFromCacheOrFetch() {
-    if (ProjectService.hasCachedProjects) {
-      final cachedProjects = List<ProjectModel>.from(
-        ProjectService.cachedProjects,
-      );
-      cachedProjects.sort((a, b) => a.id.compareTo(b.id));
+  void _initFromCacheOrFetch() async {
+    try {
+      final projects = await _projectService.getProjects();
+      if (!mounted) return;
 
-      ProjectModel? selected;
-      if (widget.idProject != null) {
-        final matches = cachedProjects.where((p) => p.id == widget.idProject);
-        if (matches.isNotEmpty) selected = matches.first;
+      if (projects.isNotEmpty) {
+        final sortedProjects = List<ProjectModel>.from(projects)
+          ..sort((a, b) => a.id.compareTo(b.id));
+
+        ProjectModel? selected;
+        if (widget.idProject != null) {
+          final matches = sortedProjects.where((p) => p.id == widget.idProject);
+          if (matches.isNotEmpty) selected = matches.first;
+        }
+        if (selected == null) {
+          final savedId = await LocalCacheService.getSelectedProjectId();
+          if (savedId != null) {
+            final matches = sortedProjects.where((p) => p.id == savedId);
+            if (matches.isNotEmpty) selected = matches.first;
+          }
+        }
+        selected ??=
+            ProjectService.selectedProject ??
+            (sortedProjects.isNotEmpty ? sortedProjects.first : null);
+
+        if (selected != null) {
+          ProjectService.selectedProject = selected;
+          await LocalCacheService.saveSelectedProjectId(selected.id);
+        }
+
+        List<AreaModel> initialAreas = [];
+        if (selected != null) {
+          final localAreas =
+              await LocalCacheService.getProjectAreasJson(selected.id);
+          if (localAreas != null && localAreas.isNotEmpty) {
+            initialAreas = localAreas
+                .whereType<Map<String, dynamic>>()
+                .map((area) => AreaModel.fromJson(area))
+                .toList();
+          }
+        }
+
+        if (!mounted) return;
+
+        setState(() {
+          _projects = sortedProjects;
+          _selectedProject = selected;
+          _areas = initialAreas;
+          _isLoadingProjects = false;
+          _isLoadingAreas = initialAreas.isEmpty && selected != null;
+          _errorMessage = null;
+        });
+
+        // Silently revalidate projects & areas in background
+        _refreshSilently();
+        return;
       }
-      selected ??=
-          ProjectService.selectedProject ??
-          (cachedProjects.isNotEmpty ? cachedProjects.first : null);
+    } catch (_) {}
 
-      List<AreaModel> initialAreas = [];
-      bool hasAreas = false;
-      if (selected != null && ProjectService.hasCachedAreas(selected.id)) {
-        initialAreas = ProjectService.getCachedAreas(selected.id)
-            .whereType<Map<String, dynamic>>()
-            .map((area) => AreaModel.fromJson(area))
-            .toList();
-        hasAreas = true;
-      }
-
-      setState(() {
-        _projects = cachedProjects;
-        _selectedProject = selected;
-        _areas = initialAreas;
-        _isLoadingProjects = false;
-        _isLoadingAreas = !hasAreas && selected != null;
-      });
-
-      // Silently revalidate projects & areas in background
-      _refreshSilently();
-    } else {
-      _loadProjects();
-    }
+    _loadProjects();
   }
 
   @override
@@ -126,13 +148,16 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         if (matches.isNotEmpty) {
           currentSelected = matches.first;
           ProjectService.selectedProject = currentSelected;
+          LocalCacheService.saveSelectedProjectId(currentSelected.id);
         } else {
           currentSelected = projects.first;
           ProjectService.selectedProject = currentSelected;
+          LocalCacheService.saveSelectedProjectId(currentSelected.id);
         }
       } else {
         currentSelected = projects.first;
         ProjectService.selectedProject = currentSelected;
+        LocalCacheService.saveSelectedProjectId(currentSelected.id);
       }
 
       final areas = await _projectService.getAreas(
@@ -231,33 +256,39 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     bool forceRefresh = false,
   }) async {
     ProjectService.selectedProject = project;
+    await LocalCacheService.saveSelectedProjectId(project.id);
 
-    if (!forceRefresh && ProjectService.hasCachedAreas(project.id)) {
-      final cached = ProjectService.getCachedAreas(project.id)
-          .whereType<Map<String, dynamic>>()
-          .map((area) => AreaModel.fromJson(area))
-          .toList();
-      setState(() {
-        _selectedProject = project;
-        _areas = cached;
-        _isLoadingAreas = false;
-      });
-
-      // Silently revalidate
-      try {
-        final freshAreas = await _projectService.getAreas(
-          project.id,
-          forceRefresh: true,
-        );
-        if (!mounted) return;
+    if (!forceRefresh) {
+      final localAreas =
+          await LocalCacheService.getProjectAreasJson(project.id);
+      if (localAreas != null) {
+        final cached = localAreas
+            .whereType<Map<String, dynamic>>()
+            .map((area) => AreaModel.fromJson(area))
+            .toList();
         setState(() {
-          _areas = freshAreas
-              .whereType<Map<String, dynamic>>()
-              .map((area) => AreaModel.fromJson(area))
-              .toList();
+          _selectedProject = project;
+          _areas = cached;
+          _isLoadingAreas = false;
+          _errorMessage = null;
         });
-      } catch (_) {}
-      return;
+
+        // Silently revalidate
+        try {
+          final freshAreas = await _projectService.getAreas(
+            project.id,
+            forceRefresh: true,
+          );
+          if (!mounted) return;
+          setState(() {
+            _areas = freshAreas
+                .whereType<Map<String, dynamic>>()
+                .map((area) => AreaModel.fromJson(area))
+                .toList();
+          });
+        } catch (_) {}
+        return;
+      }
     }
 
     setState(() {
@@ -287,10 +318,17 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     } catch (e) {
       if (!mounted) return;
 
+      final fallbackAreas =
+          await LocalCacheService.getProjectAreasJson(project.id);
+      final fallbackList = (fallbackAreas ?? [])
+          .whereType<Map<String, dynamic>>()
+          .map((area) => AreaModel.fromJson(area))
+          .toList();
+
       setState(() {
-        _areas = [];
+        _areas = fallbackList;
         _isLoadingAreas = false;
-        _errorMessage = e.toString();
+        _errorMessage = null;
       });
     }
   }

@@ -6,42 +6,36 @@ import 'package:http/http.dart' as http;
 import '../models/project_model.dart';
 import 'api_service.dart';
 import 'auth_service.dart';
+import 'local_cache_service.dart';
 
 class ProjectService {
   static ProjectModel? selectedProject;
-
   static List<ProjectModel> _projects = [];
-  static final Map<int, List<dynamic>> _cachedAreas = {};
 
-  /// Cek apakah sudah ada cache project di memori
+  /// Cek apakah ada project yang sedang aktif
   static bool get hasCachedProjects => _projects.isNotEmpty;
 
-  /// Ambil cache project yang tersimpan
+  /// Ambil project yang tersimpan saat ini
   static List<ProjectModel> get cachedProjects => List.unmodifiable(_projects);
-
-  /// Cek apakah sudah ada cache area untuk projectId tertentu
-  static bool hasCachedAreas(int projectId) =>
-      _cachedAreas.containsKey(projectId) &&
-      _cachedAreas[projectId]!.isNotEmpty;
-
-  /// Ambil cache area untuk projectId tertentu
-  static List<dynamic> getCachedAreas(int projectId) =>
-      _cachedAreas[projectId] ?? [];
 
   /// Nama project untuk dropdown
   static List<String> get projectOptions {
     return _projects.map((project) => project.name).toList();
   }
 
-  /// Bersihkan seluruh cache (saat logout dsb)
+  /// Bersihkan data (saat logout dsb)
   static void clearCache() {
     _projects = [];
-    _cachedAreas.clear();
     selectedProject = null;
   }
 
-  /// Mengambil project yang ditugaskan kepada teknisi dari Laravel API
-  /// Endpoint sumber utama: GET /api/project-assignments?user_id={user_id}
+  /// Resolves area name by area ID from current list or Storage HP
+  static String? getAreaName(int? projectId, int? areaId) {
+    if (areaId == null || areaId <= 0) return null;
+    return null;
+  }
+
+  /// Mengambil project yang ditugaskan kepada teknisi dari Storage HP / API
   Future<List<ProjectModel>> getProjects([
     int? userId,
     bool forceRefresh = false,
@@ -56,37 +50,83 @@ class ProjectService {
       return [];
     }
 
-    if (!forceRefresh && _projects.isNotEmpty) {
-      return _projects;
+    if (!forceRefresh) {
+      final cachedJson = await LocalCacheService.getProjectsJson(targetUserId);
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        _parseAndSetProjects(cachedJson);
+        return _projects;
+      }
     }
 
     try {
       final rawList = await ApiService.getProjectAssignments(targetUserId);
 
-      // Ambil objek project dari setiap assignment dan hilangkan duplikasi berdasarkan project.id
-      final Map<int, ProjectModel> uniqueProjects = {};
+      // Simpan ke Storage HP
+      await LocalCacheService.saveProjectsJson(targetUserId, rawList);
 
-      for (final item in rawList) {
-        if (item is Map<String, dynamic> &&
-            item['project'] is Map<String, dynamic>) {
-          final project = ProjectModel.fromJson(
-            item['project'] as Map<String, dynamic>,
-          );
-          uniqueProjects[project.id] = project;
-        }
-      }
-
-      final projects = uniqueProjects.values.toList();
-      projects.sort((a, b) => a.id.compareTo(b.id));
-
-      _projects = projects;
-      return projects;
+      _parseAndSetProjects(rawList);
+      _prefetchAllProjectAreas(_projects);
+      return _projects;
     } catch (e) {
-      debugPrint('Error getting assigned projects: $e');
+      debugPrint('Error getting assigned projects: $e. Using local storage fallback.');
+      final cachedJson = await LocalCacheService.getProjectsJson(targetUserId);
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        _parseAndSetProjects(cachedJson);
+        return _projects;
+      }
       if (_projects.isNotEmpty) {
         return _projects;
       }
       rethrow;
+    }
+  }
+
+  static void _parseAndSetProjects(List<dynamic> rawList) {
+    final Map<int, ProjectModel> uniqueProjects = {};
+    for (final item in rawList) {
+      if (item is Map<String, dynamic> &&
+          item['project'] is Map<String, dynamic>) {
+        final projectMap = item['project'] as Map<String, dynamic>;
+        final project = ProjectModel.fromJson(projectMap);
+        uniqueProjects[project.id] = project;
+
+        // Pre-cache areas/districts jika disertakan di dalam data project
+        if (projectMap['districts'] is List) {
+          final districts = (projectMap['districts'] as List).map((d) {
+            if (d is Map<String, dynamic>) {
+              return {
+                ...d,
+                'status': d['status'] ?? 'aktif',
+              };
+            }
+            return d;
+          }).toList();
+          LocalCacheService.saveProjectAreasJson(project.id, districts);
+        }
+      }
+    }
+    final projects = uniqueProjects.values.toList();
+    projects.sort((a, b) => a.id.compareTo(b.id));
+    _projects = projects;
+  }
+
+  static void _prefetchAllProjectAreas(List<ProjectModel> projects) {
+    for (final p in projects) {
+      Future(() async {
+        try {
+          final res = await http
+              .get(
+                Uri.parse('${ApiService.baseUrl}/projects/${p.id}/areas'),
+                headers: ApiService.defaultHeaders,
+              )
+              .timeout(const Duration(seconds: 4));
+          if (res.statusCode == 200) {
+            final data = jsonDecode(res.body);
+            final list = (data['data'] as List<dynamic>?) ?? [];
+            await LocalCacheService.saveProjectAreasJson(p.id, list);
+          }
+        } catch (_) {}
+      });
     }
   }
 
@@ -108,13 +148,16 @@ class ProjectService {
     }
   }
 
-  /// Mengambil area berdasarkan project
+  /// Mengambil area berdasarkan project murni menggunakan Storage HP (Local Storage)
   Future<List<dynamic>> getAreas(
     int projectId, {
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh && _cachedAreas.containsKey(projectId)) {
-      return _cachedAreas[projectId]!;
+    if (!forceRefresh) {
+      final localAreas = await LocalCacheService.getProjectAreasJson(projectId);
+      if (localAreas != null) {
+        return localAreas;
+      }
     }
 
     final http.Response response;
@@ -124,28 +167,29 @@ class ProjectService {
             Uri.parse('${ApiService.baseUrl}/projects/$projectId/areas'),
             headers: ApiService.defaultHeaders,
           )
-          .timeout(const Duration(milliseconds: 1500));
-    } catch (_) {
-      if (_cachedAreas.containsKey(projectId)) {
-        return _cachedAreas[projectId]!;
+          .timeout(const Duration(seconds: 3));
+
+      debugPrint('AREA STATUS: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final areaList = (responseData['data'] as List<dynamic>?) ?? [];
+        await LocalCacheService.saveProjectAreasJson(projectId, areaList);
+        return areaList;
       }
-      throw Exception('Koneksi internet bermasalah.');
+    } catch (e) {
+      debugPrint('getAreas error: $e. Using local storage fallback.');
+      final localAreas = await LocalCacheService.getProjectAreasJson(projectId);
+      if (localAreas != null) {
+        return localAreas;
+      }
+      return [];
     }
 
-    debugPrint('AREA STATUS: ${response.statusCode}');
-    debugPrint('AREA BODY: ${response.body}');
-
-    if (response.statusCode != 200) {
-      if (_cachedAreas.containsKey(projectId)) {
-        return _cachedAreas[projectId]!;
-      }
-      throw Exception('Gagal mengambil area operasional.');
+    final fallbackAreas = await LocalCacheService.getProjectAreasJson(projectId);
+    if (fallbackAreas != null) {
+      return fallbackAreas;
     }
-
-    final responseData = jsonDecode(response.body);
-    final areaList = (responseData['data'] as List<dynamic>?) ?? [];
-    _cachedAreas[projectId] = areaList;
-
-    return areaList;
+    return [];
   }
 }

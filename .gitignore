@@ -3,6 +3,8 @@
 *.log
 *.pyc
 *.swp
+*.mp4
+*.mov
 .DS_Store
 .atom/
 .build/
