@@ -26,9 +26,8 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('BANDELL'), findsOneWidget);
       expect(find.text('Silakan login untuk melanjutkan'), findsOneWidget);
-      expect(find.text('Username'), findsOneWidget);
+      expect(find.text('Email'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
-      expect(find.text('Ingat saya'), findsOneWidget);
       expect(find.text('Login'), findsOneWidget);
     });
   });

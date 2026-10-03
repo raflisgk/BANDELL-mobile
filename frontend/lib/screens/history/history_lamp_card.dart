@@ -161,20 +161,13 @@ class HistoryLampCard extends StatelessWidget {
                     ),
 
                     // Waktu info (HANYA gunakan created_at sesuai aturan)
-                    Builder(
-                      builder: (context) {
-                        final displayDate =
-                            item.createdAt ?? item.installation?.createdAt;
-
-                        return Text(
-                          _formatWaktu(displayDate, null),
-                          style: const TextStyle(
-                            color: AppColors.textSubtle,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        );
-                      },
+                    Text(
+                      _formatWaktu(item.createdAt ?? item.installation?.createdAt),
+                      style: const TextStyle(
+                        color: AppColors.textSubtle,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ],
                 ),
@@ -186,37 +179,13 @@ class HistoryLampCard extends StatelessWidget {
     );
   }
 
-  String _formatWaktu(DateTime? createdAt, String? fallbackWaktu) {
-    if (createdAt == null) {
-      if (fallbackWaktu != null &&
-          fallbackWaktu.trim().isNotEmpty &&
-          fallbackWaktu.trim() != '-') {
-        final parsed = DateTime.tryParse(fallbackWaktu.trim());
-
-        if (parsed != null) {
-          try {
-            return DateFormat(
-              'dd MMM yyyy, HH:mm',
-              'id_ID',
-            ).format(parsed.toLocal());
-          } catch (_) {
-            return DateFormat('dd MMM yyyy, HH:mm').format(parsed.toLocal());
-          }
-        }
-
-        return fallbackWaktu.trim();
-      }
-
-      return '-';
-    }
-
+  String _formatWaktu(DateTime? createdAt) {
+    if (createdAt == null) return '-';
+    final local = createdAt.isUtc ? createdAt.toLocal() : createdAt;
     try {
-      return DateFormat(
-        'dd MMM yyyy, HH:mm',
-        'id_ID',
-      ).format(createdAt.toLocal());
+      return DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(local);
     } catch (_) {
-      return DateFormat('dd MMM yyyy, HH:mm').format(createdAt.toLocal());
+      return DateFormat('dd MMM yyyy, HH:mm').format(local);
     }
   }
 

@@ -109,6 +109,20 @@ class LocalCacheService {
     }
   }
 
+  static List<dynamic>? getLampTypesJsonSync() {
+    if (_prefs == null) return null;
+    try {
+      final raw = _prefs!.getString(_keyLampTypes);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) return decoded;
+      }
+    } catch (e) {
+      debugPrint('LocalCacheService getLampTypesJsonSync error: $e');
+    }
+    return null;
+  }
+
   static Future<List<dynamic>?> getLampTypesJson() async {
     try {
       final prefs = await _getPrefs();

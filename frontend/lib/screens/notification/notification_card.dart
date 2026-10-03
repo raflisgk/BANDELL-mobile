@@ -449,12 +449,12 @@ class NotificationCard extends StatelessWidget {
     final String noteText = (() {
       final rawAdminNote =
           notification.noteByAdmin?.trim() ??
+          notification.notes?.trim() ??
           notification.installation?.note_by_admin?.trim() ??
           notification.installation?.noteByAdmin?.trim() ??
           (notification.notificationType == NotificationType.rejected
               ? notification.message?.trim()
-              : null) ??
-          notification.notes?.trim();
+              : null);
       if (rawAdminNote != null &&
           rawAdminNote.isNotEmpty &&
           rawAdminNote != '-' &&

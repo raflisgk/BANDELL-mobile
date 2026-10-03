@@ -249,7 +249,13 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
     _longitudeErrorTimer?.cancel();
     _shakeController?.dispose();
     _locationShakeController?.dispose();
+
     _barcodeController.removeListener(_onBarcodeChanged);
+    _latitudeController.removeListener(_onCoordinateChanged);
+    _latitudeController.removeListener(_onLatitudeChanged);
+    _longitudeController.removeListener(_onCoordinateChanged);
+    _longitudeController.removeListener(_onLongitudeChanged);
+
     _barcodeController.dispose();
     _panelCodeController.dispose();
     _notesController.dispose();
@@ -261,10 +267,6 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
     _notesFocusNode.removeListener(_onFocusChange);
     _latitudeFocusNode.removeListener(_onFocusChange);
     _longitudeFocusNode.removeListener(_onFocusChange);
-    _latitudeController.removeListener(_onCoordinateChanged);
-    _latitudeController.removeListener(_onLatitudeChanged);
-    _longitudeController.removeListener(_onCoordinateChanged);
-    _longitudeController.removeListener(_onLongitudeChanged);
 
     _barcodeFocusNode.dispose();
     _panelCodeFocusNode.dispose();

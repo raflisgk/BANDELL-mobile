@@ -30,7 +30,6 @@ class AreaOperasionalPage extends StatefulWidget {
 
 class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   final ProjectService _projectService = ProjectService();
-  Timer? _refreshTimer;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -50,10 +49,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   void initState() {
     super.initState();
     _initFromCacheOrFetch();
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => _refreshSilently(),
-    );
   }
 
   void _initFromCacheOrFetch() async {
@@ -120,7 +115,6 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }

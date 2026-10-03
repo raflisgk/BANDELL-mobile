@@ -204,45 +204,20 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       debugPrint('LOGIN ERROR: $e');
       debugPrint('LOGIN STACKTRACE: $stackTrace');
 
-      String displayMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-
+      final String displayMessage;
       if (e is ApiException) {
         displayMessage = e.message;
       } else {
         final errorStr = e.toString().toLowerCase();
         if (errorStr.contains('timeout')) {
           displayMessage = 'Koneksi ke server timeout.';
-        } else if (errorStr.contains('socket') ||
-            errorStr.contains('clientexception') ||
-            errorStr.contains('connection abort') ||
-            errorStr.contains('connection refused') ||
-            errorStr.contains('network is unreachable') ||
-            errorStr.contains('failed host lookup')) {
-          displayMessage = 'Koneksi ke server gagal.';
-        } else if (errorStr.contains('500') ||
-            errorStr.contains('server error') ||
-            errorStr.contains('internal server')) {
-          displayMessage = 'Terjadi kesalahan pada server.';
         } else if (errorStr.contains('401') ||
             errorStr.contains('email atau password salah') ||
             errorStr.contains('unauthorized')) {
           displayMessage = 'Email atau password salah.';
+        } else {
+          displayMessage = 'Koneksi ke server gagal.';
         }
-      }
-
-      // Strict sanitization: ensure NO raw technical details leak to the UI
-      final lower = displayMessage.toLowerCase();
-      if (lower.contains('clientexception') ||
-          lower.contains('socketexception') ||
-          lower.contains('os error') ||
-          lower.contains('errno') ||
-          lower.contains('address') ||
-          lower.contains('port') ||
-          lower.contains('http://') ||
-          lower.contains('https://') ||
-          lower.contains('exception:') ||
-          lower.contains('stack trace')) {
-        displayMessage = 'Koneksi ke server gagal.';
       }
 
       setState(() {
@@ -556,7 +531,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         ),
         decoration: InputDecoration(
           labelText: label,
-          hintText: null,
           floatingLabelBehavior: FloatingLabelBehavior.auto,
           labelStyle: TextStyle(
             color: const Color(0xFF64748B),
@@ -598,14 +572,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   ),
                 )
               : null,
-          filled: false,
-          isDense: false,
           contentPadding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 10.h),
           border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          focusedErrorBorder: InputBorder.none,
         ),
       ),
     );

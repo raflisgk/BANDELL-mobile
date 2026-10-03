@@ -14,10 +14,10 @@ import '../../widgets/catatan.dart';
 import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
+import '../../widgets/lokasi_koordinat.dart';
 import '../../widgets/pop_up_sukses.dart';
 import '../../widgets/tombol_simpan_data.dart';
 import 'realtime_barcode.dart';
-import 'realtime_location.dart';
 import 'scan_barcode_page.dart';
 import '../metode_pendataan/metode_pendataan_page.dart';
 
@@ -87,6 +87,8 @@ class _RealtimePageState extends State<RealtimePage> {
 
   @override
   void dispose() {
+    _latitudeController.removeListener(_onCoordinateChanged);
+    _longitudeController.removeListener(_onCoordinateChanged);
     _latitudeController.dispose();
     _longitudeController.dispose();
     _panelCodeController.dispose();
@@ -96,9 +98,6 @@ class _RealtimePageState extends State<RealtimePage> {
     _longitudeFocusNode.removeListener(_onFocusChange);
     _panelCodeFocusNode.removeListener(_onFocusChange);
     _notesFocusNode.removeListener(_onFocusChange);
-    _latitudeController.removeListener(_onCoordinateChanged);
-    _longitudeController.removeListener(_onCoordinateChanged);
-
     _latitudeFocusNode.dispose();
     _longitudeFocusNode.dispose();
     _panelCodeFocusNode.dispose();
@@ -439,14 +438,16 @@ class _RealtimePageState extends State<RealtimePage> {
                     const SizedBox(height: 20),
 
                     // 2. LOKASI KOORDINAT SECTION (GPS)
-                    RealtimeLocationSection(
+                    LokasiKoordinat(
                       latitudeController: _latitudeController,
                       longitudeController: _longitudeController,
                       latitudeFocusNode: _latitudeFocusNode,
                       longitudeFocusNode: _longitudeFocusNode,
-                      isLoadingLocation: _isLoadingLocation,
-                      onGetLocation: _handleGetLocation,
+                      isGpsMode: true,
+                      isLoadingGps: _isLoadingLocation,
+                      onGetGpsLocation: _handleGetLocation,
                       errorMessage: _coordinateError,
+                      readOnly: true,
                     ),
 
                     const SizedBox(height: 20),

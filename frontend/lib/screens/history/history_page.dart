@@ -41,49 +41,49 @@ class _HistoryPageState extends State<HistoryPage> {
 
   List<HistoryLampModel> _historyItems = [];
   bool _isLoading = true;
-  Timer? _refreshTimer;
+  bool _isSortDescending = true;
+
+  List<HistoryLampModel> _loadCachedItemsSync(ProjectModel? project, String filter) {
+    if (project == null) return const [];
+    final userId = AuthService.currentUser?.idUser ?? 0;
+    final (startDate, endDate) = _getDateRangeForFilter(filter);
+    final sDate = startDate?.toIso8601String().split('T').first ?? '';
+    final eDate = endDate?.toIso8601String().split('T').first ?? '';
+
+    final syncJson = LocalCacheService.getHistoryJsonSync(
+      userId: userId,
+      projectId: project.idProject,
+      filter: filter,
+      start: sDate,
+      end: eDate,
+    );
+    final offlineItems = OfflineSyncService.getQueueSync(
+      userId: userId,
+      projectId: project.idProject,
+    ).map((e) => e.toHistoryLampModel()).toList();
+
+    final cached = (syncJson ?? [])
+        .map((item) =>
+            HistoryLampModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+
+    return [...offlineItems, ...cached];
+  }
 
   @override
   void initState() {
     super.initState();
     final proj = _currentProject;
-    final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
-    final userId = AuthService.currentUser?.idUser ?? 0;
-    if (proj != null) {
-      final sDate = startDate?.toIso8601String().split('T').first ?? '';
-      final eDate = endDate?.toIso8601String().split('T').first ?? '';
-      final syncJson = LocalCacheService.getHistoryJsonSync(
-        userId: userId,
-        projectId: proj.idProject,
-        filter: _selectedFilter,
-        start: sDate,
-        end: eDate,
-      );
-      final offlineItems = OfflineSyncService.getQueueSync(
-        userId: userId,
-        projectId: proj.idProject,
-      ).map((e) => e.toHistoryLampModel()).toList();
-
-      if (syncJson != null || offlineItems.isNotEmpty) {
-        final cached = (syncJson ?? [])
-            .map((item) =>
-                HistoryLampModel.fromJson(item as Map<String, dynamic>))
-            .toList();
-        _historyItems = [...offlineItems, ...cached];
-        _isLoading = false;
-      } else {
-        _isLoading = true;
-      }
+    final cached = _loadCachedItemsSync(proj, _selectedFilter);
+    if (cached.isNotEmpty) {
+      _historyItems = cached;
+      _isLoading = false;
     } else {
-      _isLoading = true;
+      _isLoading = proj == null;
     }
 
     _initProjectAndHistory();
     OfflineSyncService().pendingCountNotifier.addListener(_onPendingCountChanged);
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) => _loadHistorySilently(),
-    );
   }
 
   void _onPendingCountChanged() {
@@ -126,85 +126,17 @@ class _HistoryPageState extends State<HistoryPage> {
       }
     }
 
-    _initFromCacheOrFetch(activeProject);
-  }
-
-  void _initFromCacheOrFetch([ProjectModel? projectOverride]) async {
-    final proj = projectOverride ?? _currentProject;
-    if (proj == null) {
-      if (mounted) {
+    if (activeProject != null) {
+      final cached = _loadCachedItemsSync(activeProject, _selectedFilter);
+      if (cached.isNotEmpty && mounted) {
         setState(() {
-          _historyItems = [];
+          _historyItems = cached;
           _isLoading = false;
         });
       }
-      return;
     }
 
-    final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
-    final userId = AuthService.currentUser?.idUser ?? 0;
-    final sDate = startDate?.toIso8601String().split('T').first ?? '';
-    final eDate = endDate?.toIso8601String().split('T').first ?? '';
-
-    final syncJson = LocalCacheService.getHistoryJsonSync(
-      userId: userId,
-      projectId: proj.idProject,
-      filter: _selectedFilter,
-      start: sDate,
-      end: eDate,
-    );
-    final offlineItems = OfflineSyncService.getQueueSync(
-      userId: userId,
-      projectId: proj.idProject,
-    ).map((e) => e.toHistoryLampModel()).toList();
-
-    if (syncJson != null || offlineItems.isNotEmpty) {
-      final cached = (syncJson ?? [])
-          .map((item) =>
-              HistoryLampModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-      final combined = [...offlineItems, ...cached];
-      if (mounted) {
-        setState(() {
-          _historyItems = combined;
-          _isLoading = false;
-        });
-      }
-      _loadHistorySilently();
-      return;
-    }
-
-    final cachedJson = await LocalCacheService.getHistoryJson(
-      userId: userId,
-      projectId: proj.idProject,
-      filter: _selectedFilter,
-      start: sDate,
-      end: eDate,
-    );
-    final offlineQueue = await OfflineSyncService().getQueue(
-      userId: userId,
-      projectId: proj.idProject,
-    );
-    final asyncOfflineItems =
-        offlineQueue.map((e) => e.toHistoryLampModel()).toList();
-
-    if (cachedJson != null || asyncOfflineItems.isNotEmpty) {
-      final cached = (cachedJson ?? [])
-          .map((item) =>
-              HistoryLampModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-      final combined = [...asyncOfflineItems, ...cached];
-      if (mounted) {
-        setState(() {
-          _historyItems = combined;
-          _isLoading = false;
-        });
-      }
-      _loadHistorySilently();
-      return;
-    }
-
-    _loadHistory(forceRefresh: true);
+    _loadHistorySilently();
   }
 
   Future<void> _loadHistorySilently() async {
@@ -317,42 +249,23 @@ class _HistoryPageState extends State<HistoryPage> {
     debugPrint('START DATE: $startDate');
     debugPrint('END DATE: $endDate');
 
-    final sDate = startDate?.toIso8601String().split('T').first ?? '';
-    final eDate = endDate?.toIso8601String().split('T').first ?? '';
-
-    if (!forceRefresh) {
-      final cachedJson = await LocalCacheService.getHistoryJson(
-        userId: userId,
-        projectId: proj.idProject,
-        filter: _selectedFilter,
-        start: sDate,
-        end: eDate,
-      );
-      if (cachedJson != null && cachedJson.isNotEmpty) {
-        final cached = cachedJson
-            .map((item) =>
-                HistoryLampModel.fromJson(item as Map<String, dynamic>))
-            .toList();
-        final offlineQueue = await OfflineSyncService().getQueue(
-          userId: userId,
-          projectId: proj.idProject,
-        );
-        final offlineItems =
-            offlineQueue.map((e) => e.toHistoryLampModel()).toList();
-        final combined = [...offlineItems, ...cached];
-        if (mounted) {
-          setState(() {
-            _historyItems = combined;
-            _isLoading = false;
-          });
-        }
-        _loadHistorySilently();
-        return;
+    // 1. Muat data lokal sinkron segera agar tidak perlu loading sama sekali
+    final cached = _loadCachedItemsSync(proj, _selectedFilter);
+    if (cached.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _historyItems = cached;
+          _isLoading = false;
+        });
       }
+    } else if (_historyItems.isEmpty) {
+      setState(() => _isLoading = true);
     }
 
-    if (_historyItems.isEmpty) {
-      setState(() => _isLoading = true);
+    // Jika bukan force refresh dan cache lokal sudah ada, cukup sinkronisasi di background
+    if (!forceRefresh && cached.isNotEmpty) {
+      _loadHistorySilently();
+      return;
     }
     try {
       final history = await InstallationService().getHistory(
@@ -403,7 +316,6 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   void dispose() {
     OfflineSyncService().pendingCountNotifier.removeListener(_onPendingCountChanged);
-    _refreshTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     _scrollController.dispose();
@@ -480,7 +392,7 @@ class _HistoryPageState extends State<HistoryPage> {
     }
 
     // Sorting: Kartu berstatus "Ditolak" diletakkan di paling atas (prioritas teratas),
-    // selanjutnya diurutkan berdasarkan created_at (record paling baru di atas).
+    // selanjutnya diurutkan berdasarkan created_at (Terbaru / Terlama sesuai toggle).
     items.sort((a, b) {
       if (a.isDitolak && !b.isDitolak) return -1;
       if (!a.isDitolak && b.isDitolak) return 1;
@@ -489,17 +401,19 @@ class _HistoryPageState extends State<HistoryPage> {
       final dateB = b.createdAt ?? b.installation?.createdAt;
 
       if (dateA != null && dateB != null) {
-        final cmp = dateB.compareTo(dateA);
+        final cmp = _isSortDescending
+            ? dateB.compareTo(dateA)
+            : dateA.compareTo(dateB);
         if (cmp != 0) return cmp;
       } else if (dateA != null) {
-        return -1;
+        return _isSortDescending ? -1 : 1;
       } else if (dateB != null) {
-        return 1;
+        return _isSortDescending ? 1 : -1;
       }
 
       final idA = a.idHistory ?? 0;
       final idB = b.idHistory ?? 0;
-      return idB.compareTo(idA);
+      return _isSortDescending ? idB.compareTo(idA) : idA.compareTo(idB);
     });
 
     return items;
@@ -689,6 +603,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           ),
                           child: TextField(
                             controller: _searchController,
+                            focusNode: _searchFocusNode,
                             onChanged: (val) {
                               setState(() {
                                 _searchQuery = val;
@@ -747,23 +662,55 @@ class _HistoryPageState extends State<HistoryPage> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: const [
-                                    Text(
-                                      'Terbaru',
-                                      style: TextStyle(
-                                        color: AppColors.textMuted,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _isSortDescending = !_isSortDescending;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(6),
+                                  splashColor: AppColors.primary.withValues(alpha: 0.1),
+                                  highlightColor: AppColors.primary.withValues(alpha: 0.05),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 2,
+                                      horizontal: 4,
                                     ),
-                                    SizedBox(width: 4),
-                                    Icon(
-                                      Icons.swap_vert_rounded,
-                                      size: 14,
-                                      color: AppColors.textMuted,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        AnimatedSwitcher(
+                                          duration: const Duration(milliseconds: 250),
+                                          transitionBuilder: (child, anim) =>
+                                              FadeTransition(opacity: anim, child: child),
+                                          child: Text(
+                                            _isSortDescending ? 'Terbaru' : 'Terlama',
+                                            key: ValueKey<bool>(_isSortDescending),
+                                            style: TextStyle(
+                                              color: _isSortDescending
+                                                  ? AppColors.textMuted
+                                                  : AppColors.primary,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        AnimatedRotation(
+                                          turns: _isSortDescending ? 0.0 : 0.5,
+                                          duration: const Duration(milliseconds: 300),
+                                          curve: Curves.easeInOutCubic,
+                                          child: Icon(
+                                            Icons.swap_vert_rounded,
+                                            size: 15,
+                                            color: _isSortDescending
+                                                ? AppColors.textMuted
+                                                : AppColors.primary,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 const Text(

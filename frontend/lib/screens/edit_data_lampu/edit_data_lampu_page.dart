@@ -12,8 +12,7 @@ import '../../widgets/catatan.dart';
 import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
-import 'edit_lampu_action_buttons.dart';
-import 'edit_lampu_location.dart';
+import '../../widgets/lokasi_koordinat.dart';
 import 'edit_lampu_type.dart';
 
 class EditDataLampuPage extends StatefulWidget {
@@ -77,54 +76,32 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   final List<String> _photos = [];
   String? _coordinateError;
 
+  static String _cleanValue(String? val) {
+    if (val == null) return '';
+    final trimmed = val.trim();
+    return (trimmed.isNotEmpty && trimmed != '-') ? trimmed : '';
+  }
+
   @override
   void initState() {
     super.initState();
 
     final defaultKode = widget.isEdit
-        ? ((widget.initialKodeLampu != null &&
-                  widget.initialKodeLampu!.isNotEmpty &&
-                  widget.initialKodeLampu != '-')
-              ? widget.initialKodeLampu!
-              : '')
+        ? _cleanValue(widget.initialKodeLampu)
         : (widget.scannedCode ?? '');
-    final defaultPanel = widget.isEdit
-        ? ((widget.initialKodePanel != null &&
-                  widget.initialKodePanel!.isNotEmpty &&
-                  widget.initialKodePanel != '-')
-              ? widget.initialKodePanel!
-              : '')
-        : '';
-    final defaultLong = widget.isEdit
-        ? ((widget.initialLongitude != null &&
-                  widget.initialLongitude!.isNotEmpty &&
-                  widget.initialLongitude != '-')
-              ? widget.initialLongitude!
-              : '')
-        : '';
-    final defaultLat = widget.isEdit
-        ? ((widget.initialLatitude != null &&
-                  widget.initialLatitude!.isNotEmpty &&
-                  widget.initialLatitude != '-')
-              ? widget.initialLatitude!
-              : '')
-        : '';
+    final defaultPanel =
+        widget.isEdit ? _cleanValue(widget.initialKodePanel) : '';
+    final defaultLong =
+        widget.isEdit ? _cleanValue(widget.initialLongitude) : '';
+    final defaultLat =
+        widget.isEdit ? _cleanValue(widget.initialLatitude) : '';
     final defaultCatatan = widget.isEdit
-        ? ((widget.initialCatatan != null &&
-                  widget.initialCatatan!.isNotEmpty &&
-                  widget.initialCatatan != '-')
-              ? widget.initialCatatan!
-              : ((widget.initialAlamat != null && widget.initialAlamat != '-')
-                    ? widget.initialAlamat!
-                    : ''))
+        ? (_cleanValue(widget.initialCatatan).isNotEmpty
+            ? _cleanValue(widget.initialCatatan)
+            : _cleanValue(widget.initialAlamat))
         : (widget.initialCatatan ?? widget.initialAlamat ?? '');
-    final defaultTipe = widget.isEdit
-        ? ((widget.initialTipeLampu != null &&
-                  widget.initialTipeLampu!.isNotEmpty &&
-                  widget.initialTipeLampu != '-')
-              ? widget.initialTipeLampu!
-              : '')
-        : '';
+    final defaultTipe =
+        widget.isEdit ? _cleanValue(widget.initialTipeLampu) : '';
 
     _kodeLampuController = TextEditingController(text: defaultKode);
     _panelCodeController = TextEditingController(text: defaultPanel);
@@ -166,16 +143,12 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
             _photos.addAll(detail.photos.where((p) => p.trim().isNotEmpty));
           }
           if (_panelCodeController.text.isEmpty &&
-              detail.panelCode != null &&
-              detail.panelCode!.isNotEmpty &&
-              detail.panelCode != '-') {
-            _panelCodeController.text = detail.panelCode!;
+              _cleanValue(detail.panelCode).isNotEmpty) {
+            _panelCodeController.text = _cleanValue(detail.panelCode);
           }
           if (_catatanController.text.isEmpty &&
-              detail.notes != null &&
-              detail.notes!.isNotEmpty &&
-              detail.notes != '-') {
-            _catatanController.text = detail.notes!;
+              _cleanValue(detail.notes).isNotEmpty) {
+            _catatanController.text = _cleanValue(detail.notes);
           }
         });
       }
@@ -219,6 +192,9 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
 
   @override
   void dispose() {
+    _latitudeController.removeListener(_onCoordinateChanged);
+    _longitudeController.removeListener(_onCoordinateChanged);
+
     _kodeLampuController.dispose();
     _panelCodeController.dispose();
     _longitudeController.dispose();
@@ -232,8 +208,6 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _latitudeFocusNode.removeListener(_onFocusChange);
     _catatanFocusNode.removeListener(_onFocusChange);
     _tipeLampuFocusNode.removeListener(_onFocusChange);
-    _latitudeController.removeListener(_onCoordinateChanged);
-    _longitudeController.removeListener(_onCoordinateChanged);
 
     _kodeLampuFocusNode.dispose();
     _panelCodeFocusNode.dispose();
@@ -459,12 +433,14 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
                               const SizedBox(height: 20),
 
                               // 3. LOKASI KOORDINAT
-                              EditLampuLocation(
+                              LokasiKoordinat(
                                 longitudeController: _longitudeController,
                                 latitudeController: _latitudeController,
                                 longitudeFocusNode: _longitudeFocusNode,
                                 latitudeFocusNode: _latitudeFocusNode,
                                 errorMessage: _coordinateError,
+                                latitudeHint: '-6.2088',
+                                longitudeHint: '106.8456',
                               ),
 
                               const SizedBox(height: 20),
@@ -623,3 +599,85 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     );
   }
 }
+
+class EditLampuActionButtons extends StatelessWidget {
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
+  final bool isEdit;
+  final bool isLoading;
+
+  const EditLampuActionButtons({
+    super.key,
+    required this.onCancel,
+    required this.onSave,
+    this.isEdit = true,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: SizedBox(
+            height: 48,
+            child: OutlinedButton(
+              onPressed: isLoading ? null : onCancel,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.textPrimary,
+                side: const BorderSide(color: AppColors.border),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: isLoading ? null : onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
+                    )
+                  : Text(
+                      isEdit ? 'Simpan Perubahan' : 'Simpan Data',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+

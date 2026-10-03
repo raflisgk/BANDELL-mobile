@@ -82,6 +82,7 @@ class _ScanBarcodePageState extends State<ScanBarcodePage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _spinController.dispose();
+    _cameraController.stop();
     _cameraController.dispose();
     super.dispose();
   }

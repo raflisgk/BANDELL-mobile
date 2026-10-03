@@ -24,21 +24,15 @@ class _NotificationPageState extends State<NotificationPage> {
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
-  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadNotifications();
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => _loadNotificationsSilently(),
-    );
   }
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -68,19 +62,6 @@ class _NotificationPageState extends State<NotificationPage> {
           _isLoading = false;
         });
       }
-    }
-  }
-
-  Future<void> _loadNotificationsSilently() async {
-    try {
-      final list = await NotificationService().getNotifications();
-      if (mounted) {
-        setState(() {
-          _notifications = list;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error silently loading notifications: $e');
     }
   }
 
@@ -201,13 +182,10 @@ class _NotificationPageState extends State<NotificationPage> {
 
           // 2. Konten Notifikasi
           Expanded(
-            child: ScrollConfiguration(
-              behavior: const ScrollBehavior().copyWith(
-                overscroll: false,
-                physics: const ClampingScrollPhysics(),
-              ),
+            child: RefreshIndicator(
+              onRefresh: _loadNotifications,
               child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
                   vertical: 20.0,

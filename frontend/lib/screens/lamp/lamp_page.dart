@@ -12,6 +12,7 @@ import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/bottom_navbar.dart';
 import '../../widgets/custom_feedback.dart';
+import '../area_operasional/area_operasional_page.dart';
 import '../history/history_page.dart';
 import '../metode_pendataan/metode_pendataan_page.dart';
 import '../notification/notification_page.dart';
@@ -36,37 +37,29 @@ class LampPage extends StatefulWidget {
 class _LampPageState extends State<LampPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  int _currentNavIndex = 0;
   List<LampTypeModel> _lampTypes = [];
   bool _isLoading = false;
-  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     _initFromCacheOrFetch();
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) => _loadLampTypesSilently(),
-    );
   }
 
-  void _initFromCacheOrFetch() async {
-    // 1. Baca dari Storage HP secara instan
-    final localJson = await LocalCacheService.getLampTypesJson();
-    if (localJson != null && localJson.isNotEmpty && mounted) {
-      final types = localJson
+  void _initFromCacheOrFetch() {
+    // 1. Baca dari Storage HP secara instan (0 ms)
+    final localJson = LocalCacheService.getLampTypesJsonSync();
+    if (localJson != null && localJson.isNotEmpty) {
+      _lampTypes = localJson
           .map((item) => LampTypeModel.fromJson(item as Map<String, dynamic>))
           .toList();
-      setState(() {
-        _lampTypes = types;
-        _isLoading = false;
-      });
+      _isLoading = false;
       _loadLampTypesSilently();
       return;
     }
 
+    _isLoading = true;
     _loadLampTypes();
   }
 
@@ -84,7 +77,7 @@ class _LampPageState extends State<LampPage> {
   }
 
   Future<void> _loadLampTypes({bool forceRefresh = false}) async {
-    if (_lampTypes.isEmpty) {
+    if (_lampTypes.isEmpty && !_isLoading) {
       setState(() => _isLoading = true);
     }
     try {
@@ -113,7 +106,6 @@ class _LampPageState extends State<LampPage> {
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
@@ -322,7 +314,6 @@ class _LampPageState extends State<LampPage> {
                                   padding: const EdgeInsets.only(bottom: 14.0),
                                   child: LampTypeCard(
                                     name: 'PJU Solar Cell All in One',
-                                    description: 'Lampu Penerangan Jalan Umum',
                                     icon: Icons.lightbulb_outline_rounded,
                                     onTap: () {},
                                   ),
@@ -479,7 +470,6 @@ class _LampPageState extends State<LampPage> {
                               padding: const EdgeInsets.only(bottom: 10.0),
                               child: LampTypeCard(
                                 name: item.name,
-                                description: item.description,
                                 icon: Icons.lightbulb_outline_rounded,
                                 onTap: () => _handleLampTypeTap(item),
                               ),
@@ -496,16 +486,17 @@ class _LampPageState extends State<LampPage> {
           ),
         ),
         bottomNavigationBar: BottomNavbar(
-          currentIndex: _currentNavIndex,
+          currentIndex: 0,
           onTap: (index) {
-            if (index == 1) {
+            if (index == 0) {
+              AppNavigator.pushTabReplacement(
+                context,
+                const AreaOperasionalPage(),
+              );
+            } else if (index == 1) {
               AppNavigator.pushTabReplacement(context, const HistoryPage());
             } else if (index == 2) {
               AppNavigator.pushTabReplacement(context, const ProfilePage());
-            } else {
-              setState(() {
-                _currentNavIndex = index;
-              });
             }
           },
         ),

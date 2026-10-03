@@ -95,9 +95,4 @@ class Installation extends Model
     {
         return $this->hasMany(InstallationPhoto::class, 'installation_id');
     }
-
-    public function installationPhotos(): HasMany
-    {
-        return $this->hasMany(InstallationPhoto::class, 'installation_id');
-    }
 }

@@ -198,58 +198,61 @@ class InstallationController extends Controller
             ], 422);
         }
 
-        $installation->update([
-            'project_id' => $projectId,
-            'user_id' => $validated['user_id']
-                ?? $installation->user_id,
-            'lamp_type_id' => $validated['lamp_type_id']
-                ?? $installation->lamp_type_id,
-            'district_id' => $districtId,
-            'id_lcu' => $validated['id_lcu']
-                ?? $installation->id_lcu,
-            'input_method' => $validated['input_method']
-                ?? $installation->input_method,
-            'latitude' => $validated['latitude']
-                ?? $installation->latitude,
-            'longitude' => $validated['longitude']
-                ?? $installation->longitude,
-            'address' => $validated['address']
-                ?? $installation->address,
-            'code_panel' => $validated['code_panel']
-                ?? $installation->code_panel,
-            'installed_at' => (!empty($validated['installed_at']))
-                ? $validated['installed_at']
-                : $installation->installed_at,
-            'verification_status' => 'Menunggu Verifikasi',
-        ]);
+        // Transaksi atomik: memastikan pembaruan data dan berkas foto tersimpan secara konsisten
+        return DB::transaction(function () use ($installation, $projectId, $districtId, $validated, $request) {
+            $installation->update([
+                'project_id' => $projectId,
+                'user_id' => $validated['user_id']
+                    ?? $installation->user_id,
+                'lamp_type_id' => $validated['lamp_type_id']
+                    ?? $installation->lamp_type_id,
+                'district_id' => $districtId,
+                'id_lcu' => $validated['id_lcu']
+                    ?? $installation->id_lcu,
+                'input_method' => $validated['input_method']
+                    ?? $installation->input_method,
+                'latitude' => $validated['latitude']
+                    ?? $installation->latitude,
+                'longitude' => $validated['longitude']
+                    ?? $installation->longitude,
+                'address' => $validated['address']
+                    ?? $installation->address,
+                'code_panel' => $validated['code_panel']
+                    ?? $installation->code_panel,
+                'installed_at' => (!empty($validated['installed_at']))
+                    ? $validated['installed_at']
+                    : $installation->installed_at,
+                'verification_status' => 'Menunggu Verifikasi',
+            ]);
 
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $path = $photo->store(
-                    'installations',
-                    'public'
-                );
+            if ($request->hasFile('photos')) {
+                foreach ($request->file('photos') as $photo) {
+                    $path = $photo->store(
+                        'installations',
+                        'public'
+                    );
 
-                InstallationPhoto::create([
-                    'installation_id' => $installation->id,
-                    'photo_path' => $path,
-                ]);
+                    InstallationPhoto::create([
+                        'installation_id' => $installation->id,
+                        'photo_path' => $path,
+                    ]);
+                }
             }
-        }
 
-        $installation->load([
-            'project',
-            'user',
-            'district',
-            'lampType',
-            'photos',
-        ]);
+            $installation->load([
+                'project',
+                'user',
+                'district',
+                'lampType',
+                'photos',
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Data pemasangan berhasil diperbarui.',
-            'data' => $installation,
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Data pemasangan berhasil diperbarui.',
+                'data' => $installation,
+            ]);
+        });
     }
 
     public function index(Request $request): JsonResponse
@@ -352,20 +355,22 @@ class InstallationController extends Controller
             ], 422);
         }
 
-        if ($installation->photos) {
-            foreach ($installation->photos as $photo) {
-                if ($photo->photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($photo->photo_path)) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($photo->photo_path);
+        return DB::transaction(function () use ($installation) {
+            if ($installation->photos) {
+                foreach ($installation->photos as $photo) {
+                    if ($photo->photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($photo->photo_path)) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($photo->photo_path);
+                    }
+                    $photo->delete();
                 }
-                $photo->delete();
             }
-        }
 
-        $installation->delete();
+            $installation->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Data pemasangan berhasil dihapus.',
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Data pemasangan berhasil dihapus.',
+            ]);
+        });
     }
 }

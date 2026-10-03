@@ -9,13 +9,8 @@ import '../../utils/page_transitions.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/custom_feedback.dart';
 import '../edit_data_lampu/edit_data_lampu_page.dart';
-import 'barcode_card.dart';
-import 'dialog_hapus_lampu.dart';
+import 'detail_lampu_cards.dart';
 import 'foto_dokumentasi_card.dart';
-import 'informasi_lampu_card.dart';
-import 'informasi_record_card.dart';
-import 'lampu_header_card.dart';
-import 'lokasi_card.dart';
 import '../../services/auth_service.dart';
 
 class DetailLampuPage extends StatefulWidget {
@@ -110,15 +105,16 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     );
   }
 
+  InstallationModel? get _effectiveInstallation =>
+      _currentInstallation ?? widget.installation;
+
   int? get _effectiveId =>
       widget.idInstallation ??
-      _currentInstallation?.idInstallation ??
-      widget.installation?.idInstallation ??
+      _effectiveInstallation?.idInstallation ??
       widget.idLamp;
 
   String get _effectiveCode =>
-      _currentInstallation?.lampCode ??
-      widget.installation?.lampCode ??
+      _effectiveInstallation?.lampCode ??
       ((widget.lampCode != null &&
               widget.lampCode!.isNotEmpty &&
               widget.lampCode != '-')
@@ -126,25 +122,23 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           : '-');
 
   String get _effectiveType =>
-      _currentInstallation?.lampType ??
-      widget.installation?.lampType ??
+      _effectiveInstallation?.lampType ??
       ((widget.lampType != null &&
               widget.lampType!.isNotEmpty &&
               widget.lampType != '-')
           ? widget.lampType!
           : '-');
 
+  String get _effectiveStatus =>
+      _effectiveInstallation?.verificationStatus ??
+      _effectiveInstallation?.status ??
+      widget.status ??
+      'Menunggu Verifikasi';
+
+  bool get _isTersimpan => _effectiveStatus == 'Tersimpan';
+
   bool get _isVerified {
-    if (_currentInstallation != null) {
-      final status = _currentInstallation!.status.toLowerCase().trim();
-      final verificationStatus =
-          (_currentInstallation!.verificationStatus ?? '').toLowerCase().trim();
-      return status == 'terverifikasi' ||
-          status == 'verified' ||
-          verificationStatus == 'terverifikasi' ||
-          verificationStatus == 'verified';
-    }
-    final inst = widget.installation;
+    final inst = _effectiveInstallation;
     final status = (inst?.status ?? widget.status ?? '').toLowerCase().trim();
     final verificationStatus =
         (inst?.verificationStatus ?? '').toLowerCase().trim();
@@ -153,6 +147,83 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         verificationStatus == 'terverifikasi' ||
         verificationStatus == 'verified';
   }
+
+  String? get _effectivePanelCode =>
+      _effectiveInstallation?.panelCode ?? widget.panelCode;
+
+  String get _effectiveInputMethod {
+    final value = _effectiveInstallation?.inputMethod ?? widget.inputMethod;
+    if (value == null || value.trim().isEmpty) {
+      return '-';
+    }
+    final method = value.trim().toLowerCase();
+    if (method == 'realtime' || method == 'real-time') {
+      return 'Realtime';
+    }
+    if (method == 'manual') {
+      return 'Manual';
+    }
+    return value;
+  }
+
+  int? get _resolvedAreaId =>
+      _effectiveInstallation?.idArea ?? widget.idArea;
+
+  int? get _resolvedProjectId =>
+      _effectiveInstallation?.idProject ??
+      widget.idProject ??
+      ProjectService.selectedProject?.idProject;
+
+  String get _effectiveDistrictName {
+    final rawDistrict =
+        _effectiveInstallation?.districtName ?? widget.districtName;
+    if (rawDistrict != null &&
+        rawDistrict.trim().isNotEmpty &&
+        rawDistrict.trim() != '-') {
+      return rawDistrict.trim();
+    }
+    return ProjectService.getAreaName(_resolvedProjectId, _resolvedAreaId) ??
+        '-';
+  }
+
+  String? get _effectiveLatitude =>
+      _effectiveInstallation?.latitude ?? widget.latitude;
+
+  String? get _effectiveLongitude =>
+      _effectiveInstallation?.longitude ?? widget.longitude;
+
+  String? get _effectiveCoordinates {
+    final lat = _effectiveLatitude;
+    final lng = _effectiveLongitude;
+    if (lat != null && lng != null) {
+      return '$lat, $lng';
+    }
+    if (widget.latitude != null && widget.longitude != null) {
+      return '${widget.latitude}, ${widget.longitude}';
+    }
+    return null;
+  }
+
+  List<String> get _effectivePhotos =>
+      _effectiveInstallation?.photos.isNotEmpty == true
+          ? _effectiveInstallation!.photos
+          : (widget.photos ?? const <String>[]);
+
+  String? get _effectiveCreatedAt =>
+      _effectiveInstallation?.createdAt != null
+          ? _effectiveInstallation!.createdAt.toString()
+          : widget.createdAt;
+
+  String? get _effectiveUpdatedAt =>
+      _effectiveInstallation?.updatedAt != null
+          ? _effectiveInstallation!.updatedAt.toString()
+          : widget.updatedAt;
+
+  DateTime? get _effectiveUpdatedAtDateTime =>
+      _effectiveInstallation?.updatedAt ??
+      (_effectiveUpdatedAt != null
+          ? DateTime.tryParse(_effectiveUpdatedAt!)
+          : null);
 
   void _handleEditData() async {
     if (_isVerified) {
@@ -174,20 +245,8 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       return;
     }
 
-    final inst = _currentInstallation ?? widget.installation;
-    final effectivePhotos = inst?.photos.isNotEmpty == true
-        ? inst!.photos
-        : (widget.photos ?? const <String>[]);
-    final effectiveAreaId = _currentInstallation?.idArea ??
-        widget.installation?.idArea ??
-        widget.idArea;
-    final effectiveProjectId = _currentInstallation?.idProject ??
-        widget.installation?.idProject ??
-        widget.idProject;
-    final effectivePanelCode = _currentInstallation?.panelCode ??
-        widget.installation?.panelCode ??
-        widget.panelCode;
-    final effectiveNotes = inst?.notes ?? widget.address ?? '';
+    final effectiveNotes =
+        _effectiveInstallation?.notes ?? widget.address ?? '';
 
     debugPrint('Edit Data');
     final result = await AppNavigator.push(
@@ -195,24 +254,16 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       EditDataLampuPage(
         isEdit: true,
         idInstallation: _effectiveId,
-        idArea: effectiveAreaId,
-        idProject: effectiveProjectId,
+        idArea: _resolvedAreaId,
+        idProject: _resolvedProjectId,
         initialKodeLampu: _effectiveCode,
-        initialKodePanel: effectivePanelCode,
-        initialLongitude:
-            _currentInstallation?.longitude ??
-            widget.installation?.longitude ??
-            widget.longitude ??
-            '',
-        initialLatitude:
-            _currentInstallation?.latitude ??
-            widget.installation?.latitude ??
-            widget.latitude ??
-            '',
+        initialKodePanel: _effectivePanelCode,
+        initialLongitude: _effectiveLongitude ?? '',
+        initialLatitude: _effectiveLatitude ?? '',
         initialAlamat: effectiveNotes,
         initialCatatan: effectiveNotes,
         initialTipeLampu: _effectiveType,
-        initialPhotos: effectivePhotos,
+        initialPhotos: _effectivePhotos,
       ),
     );
 
@@ -289,71 +340,6 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
 
   @override
   Widget build(BuildContext context) {
-    final inst = _currentInstallation ?? widget.installation;
-    final code = _effectiveCode;
-    final type = _effectiveType;
-    final currentStatus = _currentInstallation?.verificationStatus ??
-        _currentInstallation?.status ??
-        widget.installation?.verificationStatus ??
-        widget.installation?.status ??
-        widget.status ??
-        'Menunggu Verifikasi';
-    final isTersimpan = currentStatus == 'Tersimpan';
-
-    final effectivePanelCode = inst?.panelCode ?? widget.panelCode;
-    final effectiveInputMethod = (() {
-      final value = inst?.inputMethod ?? widget.inputMethod;
-
-      if (value == null || value.trim().isEmpty) {
-        return '-';
-      }
-
-      final method = value.trim().toLowerCase();
-
-      if (method == 'realtime' || method == 'real-time') {
-        return 'Realtime';
-      }
-
-      if (method == 'manual') {
-        return 'Manual';
-      }
-
-      return value;
-    })();
-
-    final resolvedAreaId = inst?.idArea ?? widget.idArea;
-    final resolvedProjectId = inst?.idProject ??
-        widget.idProject ??
-        ProjectService.selectedProject?.idProject;
-
-    final rawDistrict = inst?.districtName ?? widget.districtName;
-    final effectiveDistrictName = (rawDistrict != null &&
-            rawDistrict.trim().isNotEmpty &&
-            rawDistrict.trim() != '-')
-        ? rawDistrict.trim()
-        : (ProjectService.getAreaName(resolvedProjectId, resolvedAreaId) ?? '-');
-
-    final effectiveLatitude = inst?.latitude ?? widget.latitude;
-    final effectiveLongitude = inst?.longitude ?? widget.longitude;
-
-    final coords = (effectiveLatitude != null && effectiveLongitude != null)
-        ? '$effectiveLatitude, $effectiveLongitude'
-        : (widget.latitude != null && widget.longitude != null
-              ? '${widget.latitude}, ${widget.longitude}'
-              : null);
-
-    final effectivePhotos = inst?.photos.isNotEmpty == true
-        ? inst!.photos
-        : widget.photos;
-
-    final effectiveCreatedAt = inst?.createdAt != null
-        ? inst!.createdAt.toString()
-        : widget.createdAt;
-
-    final effectiveUpdatedAt = inst?.updatedAt != null
-        ? inst!.updatedAt.toString()
-        : widget.updatedAt;
-
     final projectName = ProjectService.selectedProject?.projectName ?? '-';
     final projectLocation = ProjectService.selectedProject?.location ?? '-';
 
@@ -366,135 +352,131 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       child: Scaffold(
         backgroundColor: AppColors.backgroundWhite,
         body: SafeArea(
-        child: Column(
-          children: [
-            AppTopBar(
-              showBackButton: true,
-              showNotification: false,
-              showDropdown: false,
-              onBackPressed: _handleBack,
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
+          child: Column(
+            children: [
+              AppTopBar(
+                showBackButton: true,
+                showNotification: false,
+                showDropdown: false,
+                onBackPressed: _handleBack,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
 
-                    // Breadcrumb Row
-                    Row(
-                      children: [
-                        Text(
-                          projectName,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+                      // Breadcrumb Row
+                      Row(
+                        children: [
+                          Text(
+                            projectName,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 6.0),
-                          child: Icon(
-                            Icons.chevron_right_rounded,
-                            color: AppColors.hintColor,
-                            size: 14,
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6.0),
+                            child: Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.hintColor,
+                              size: 14,
+                            ),
                           ),
-                        ),
-                        Text(
-                          projectLocation,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                          Text(
+                            projectLocation,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // Card Informasional Utama (Lamp Header Card)
+                      LampuHeaderCard(
+                        code: _effectiveCode,
+                        isTersimpan: _isTersimpan,
+                        updatedAt: _effectiveUpdatedAtDateTime,
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Section Lokasi
+                      const Text(
+                        'Lokasi',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // Card Informasional Utama (Lamp Header Card)
-                    LampuHeaderCard(
-                      code: code,
-                      isTersimpan: isTersimpan,
-                      updatedAt:
-                          inst?.updatedAt ??
-                          (effectiveUpdatedAt != null
-                              ? DateTime.tryParse(effectiveUpdatedAt)
-                              : null),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Section Lokasi
-                    const Text(
-                      'Lokasi',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    LokasiCard(
-                      districtName: effectiveDistrictName,
-                      latitude: effectiveLatitude,
-                      longitude: effectiveLongitude,
-                      coordinates: coords,
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Section Informasi Lampu
-                    const Text(
-                      'Informasi Lampu',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 10),
+                      LokasiCard(
+                        districtName: _effectiveDistrictName,
+                        latitude: _effectiveLatitude,
+                        longitude: _effectiveLongitude,
+                        coordinates: _effectiveCoordinates,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    InformasiLampuCard(
-                      code: code,
-                      type: type,
-                      panelCode: effectivePanelCode,
-                      status: currentStatus,
-                      inputMethod: effectiveInputMethod,
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                    // Section Barcode Card
-                    BarcodeCard(barcode: code),
-
-                    const SizedBox(height: 16),
-
-                    // Section Foto Dokumentasi Card
-                    FotoDokumentasiCard(
-                      photos: effectivePhotos,
-                      onLihatSemua: _handleLihatSemua,
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Section Informasi Record
-                    const Text(
-                      'Informasi Record',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      // Section Informasi Lampu
+                      const Text(
+                        'Informasi Lampu',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    InformasiRecordCard(
-                      createdAt: effectiveCreatedAt,
-                      updatedAt: effectiveUpdatedAt,
-                      createdBy: AuthService.currentUser?.name ?? '-',
-                    ),
+                      const SizedBox(height: 10),
+                      InformasiLampuCard(
+                        code: _effectiveCode,
+                        type: _effectiveType,
+                        panelCode: _effectivePanelCode,
+                        status: _effectiveStatus,
+                        inputMethod: _effectiveInputMethod,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Section Barcode Card
+                      BarcodeCard(barcode: _effectiveCode),
+
+                      const SizedBox(height: 16),
+
+                      // Section Foto Dokumentasi Card
+                      FotoDokumentasiCard(
+                        photos: _effectivePhotos,
+                        onLihatSemua: _handleLihatSemua,
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Section Informasi Record
+                      const Text(
+                        'Informasi Record',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      InformasiRecordCard(
+                        createdAt: _effectiveCreatedAt,
+                        updatedAt: _effectiveUpdatedAt,
+                        createdBy: AuthService.currentUser?.name ?? '-',
+                      ),
 
                     const SizedBox(height: 24),
 
@@ -576,5 +558,173 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       ),
     ),
   );
+  }
 }
+
+class DialogHapusLampu extends StatelessWidget {
+  final String lampCode;
+  final VoidCallback onConfirmHapus;
+
+  const DialogHapusLampu({
+    super.key,
+    required this.lampCode,
+    required this.onConfirmHapus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Upper White Section (Icon, Title, Subtitle)
+            Container(
+              color: AppColors.cardBackground,
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              child: Column(
+                children: [
+                  // Soft Red Circular Icon
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: const BoxDecoration(
+                      color: AppColors.popupRedLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppColors.deleteRed,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Title
+                  const Text(
+                    'Hapus Data Lampu?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Subtitle with bold lamp code
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12.5,
+                        height: 1.45,
+                      ),
+                      children: [
+                        const TextSpan(
+                          text:
+                              'Tindakan ini tidak dapat dibatalkan. Apakah Anda\nyakin ingin menghapus data ',
+                        ),
+                        TextSpan(
+                          text: lampCode,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const TextSpan(text: '?'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Lower Soft Ice/Gray Panel with Buttons
+            Container(
+              color: AppColors.popupPanelBackground,
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // Button 1: Hapus (Red)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: onConfirmHapus,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.deleteRed,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Hapus',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Button 2: Batal (White)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(
+                          color: AppColors.border,
+                          width: 1.2,
+                        ),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Batal',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+

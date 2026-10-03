@@ -4,14 +4,12 @@ import '../../utils/app_colors.dart';
 
 class LampTypeCard extends StatelessWidget {
   final String name;
-  final String description;
   final IconData icon;
   final VoidCallback onTap;
 
   const LampTypeCard({
     super.key,
     required this.name,
-    required this.description,
     required this.icon,
     required this.onTap,
   });

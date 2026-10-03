@@ -6,25 +6,16 @@ import 'package:flutter/services.dart';
 import '../../utils/app_colors.dart';
 import '../login/login_page.dart';
 
-class SplashPage extends StatelessWidget {
-  const SplashPage({super.key});
+class SplashPage extends StatefulWidget {
+  final Widget? nextPage;
+
+  const SplashPage({super.key, this.nextPage});
 
   @override
-  Widget build(BuildContext context) {
-    return const SplashScreen(nextPage: LoginPage());
-  }
+  State<SplashPage> createState() => _SplashPageState();
 }
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, required this.nextPage});
-
-  final Widget nextPage;
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen>
+class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -71,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            widget.nextPage,
+            widget.nextPage ?? const LoginPage(),
         transitionDuration: const Duration(milliseconds: 350),
         reverseTransitionDuration: const Duration(milliseconds: 250),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {

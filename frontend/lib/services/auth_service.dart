@@ -10,28 +10,6 @@ import 'project_service.dart';
 class AuthService {
   static UserModel? currentUser;
 
-  Future<UserModel> login({
-    required String username,
-    required String password,
-  }) async {
-    final response = await ApiService.login(
-      email: username,
-      password: password,
-    );
-
-    final userData = response['user'];
-
-    if (userData == null) {
-      throw Exception('Data user tidak ditemukan.');
-    }
-
-    final user = UserModel.fromJson(userData);
-
-    currentUser = user;
-
-    return user;
-  }
-
   Future<void> logout() async {
     await ApiService.logout();
     currentUser = null;

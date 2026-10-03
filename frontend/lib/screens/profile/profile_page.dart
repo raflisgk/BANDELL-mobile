@@ -32,8 +32,6 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isEditingPhone = false;
 
   late final TextEditingController _editController;
-  Timer? _refreshTimer;
-
   @override
   void initState() {
     super.initState();
@@ -44,11 +42,8 @@ class _ProfilePageState extends State<ProfilePage> {
       _applyUserData(user);
     }
 
+    // Memuat data profil saat inisialisasi awal tanpa polling berulang yang boros daya
     _loadProfile();
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => _loadProfile(),
-    );
   }
 
   void _applyUserData(dynamic user) {
@@ -94,7 +89,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
     _editController.dispose();
     super.dispose();
   }

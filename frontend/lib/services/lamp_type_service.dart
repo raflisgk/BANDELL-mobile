@@ -10,14 +10,18 @@ import 'local_cache_service.dart';
 class LampTypeService {
   static void clearCache() {}
 
+  static List<LampTypeModel> _parseList(List<dynamic> list) {
+    return list
+        .map((item) => LampTypeModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Mengambil semua jenis lampu murni menggunakan Storage HP (Local Storage)
   Future<List<LampTypeModel>> getLampTypes({bool forceRefresh = false}) async {
     if (!forceRefresh) {
       final localJson = await LocalCacheService.getLampTypesJson();
       if (localJson != null && localJson.isNotEmpty) {
-        return localJson
-            .map((item) => LampTypeModel.fromJson(item as Map<String, dynamic>))
-            .toList();
+        return _parseList(localJson);
       }
     }
 
@@ -37,26 +41,15 @@ class LampTypeService {
 
         await LocalCacheService.saveLampTypesJson(data);
 
-        return data
-            .map((item) => LampTypeModel.fromJson(item as Map<String, dynamic>))
-            .toList();
+        return _parseList(data);
       }
     } catch (e) {
       debugPrint('getLampTypes error: $e. Using local storage HP fallback.');
-      final localJson = await LocalCacheService.getLampTypesJson();
-      if (localJson != null && localJson.isNotEmpty) {
-        return localJson
-            .map((item) => LampTypeModel.fromJson(item as Map<String, dynamic>))
-            .toList();
-      }
-      rethrow;
     }
 
     final fallbackJson = await LocalCacheService.getLampTypesJson();
     if (fallbackJson != null && fallbackJson.isNotEmpty) {
-      return fallbackJson
-          .map((item) => LampTypeModel.fromJson(item as Map<String, dynamic>))
-          .toList();
+      return _parseList(fallbackJson);
     }
     throw Exception('Gagal mengambil data jenis lampu.');
   }

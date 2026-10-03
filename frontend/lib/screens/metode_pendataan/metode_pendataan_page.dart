@@ -162,17 +162,45 @@ class MetodePendataanPage extends StatelessWidget {
                       SizedBox(height: 28.h),
 
                       // Card 1: Realtime
-                      _buildRealtimeCard(
-                        context,
+                      _buildMethodCard(
+                        context: context,
                         isProjectClosed: isProjectClosed,
+                        title: 'Realtime',
+                        description:
+                            'Gunakan kamera dan GPS untuk mendapatkan data lampu secara langsung dari lokasi.',
+                        headerIcon: Icons.qr_code_scanner_rounded,
+                        primaryColor: AppColors.realtimeGreen,
+                        backgroundColor: AppColors.realtimeBackground,
+                        borderColor: AppColors.realtimeBorder,
+                        features: const [
+                          'Scan Barcode',
+                          'GPS Otomatis',
+                          'Lokasi Terkini',
+                        ],
+                        featureIcon: Icons.check_circle_outline_rounded,
+                        onTap: () => _handleSelectRealtime(context),
                       ),
 
                       SizedBox(height: 20.h),
 
                       // Card 2: Manual
-                      _buildManualCard(
-                        context,
+                      _buildMethodCard(
+                        context: context,
                         isProjectClosed: isProjectClosed,
+                        title: 'Manual',
+                        description:
+                            'Masukkan koordinat, alamat, dan informasi lampu secara manual.',
+                        headerIcon: Icons.keyboard_outlined,
+                        primaryColor: AppColors.manualOrange,
+                        backgroundColor: AppColors.manualBackground,
+                        borderColor: AppColors.manualBorder,
+                        features: const [
+                          'Input Long / Lat',
+                          'Input Address',
+                          'Dokumentasi Manual',
+                        ],
+                        featureIcon: Icons.bolt_rounded,
+                        onTap: () => _handleSelectManual(context),
                       ),
 
                       SizedBox(height: 24.h),
@@ -187,17 +215,26 @@ class MetodePendataanPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRealtimeCard(
-    BuildContext context, {
+  Widget _buildMethodCard({
+    required BuildContext context,
     required bool isProjectClosed,
+    required String title,
+    required String description,
+    required IconData headerIcon,
+    required Color primaryColor,
+    required Color backgroundColor,
+    required Color borderColor,
+    required List<String> features,
+    required IconData featureIcon,
+    required VoidCallback onTap,
   }) {
     return Opacity(
       opacity: isProjectClosed ? 0.55 : 1.0,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.realtimeBackground,
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: AppColors.realtimeBorder, width: 1.5.w),
+          border: Border.all(color: borderColor, width: 1.5.w),
           boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor,
@@ -209,7 +246,7 @@ class MetodePendataanPage extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => _handleSelectRealtime(context),
+            onTap: onTap,
             borderRadius: BorderRadius.circular(16.r),
             child: Padding(
               padding: EdgeInsets.all(20.w),
@@ -225,19 +262,19 @@ class MetodePendataanPage extends StatelessWidget {
                           color: AppColors.backgroundWhite,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppColors.realtimeBorder,
+                            color: borderColor,
                             width: 1.w,
                           ),
                         ),
                         child: Icon(
-                          Icons.qr_code_scanner_rounded,
-                          color: AppColors.realtimeGreen,
+                          headerIcon,
+                          color: primaryColor,
                           size: 24.sp,
                         ),
                       ),
                       SizedBox(width: 12.w),
                       Text(
-                        'Realtime',
+                        title,
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 18.sp,
@@ -250,7 +287,7 @@ class MetodePendataanPage extends StatelessWidget {
 
                   // Description
                   Text(
-                    'Gunakan kamera dan GPS untuk mendapatkan data lampu secara langsung dari lokasi.',
+                    description,
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13.sp,
@@ -260,149 +297,19 @@ class MetodePendataanPage extends StatelessWidget {
                   SizedBox(height: 14.h),
 
                   // Features Checklist
-                  _buildCheckFeature(
-                    icon: Icons.check_circle_outline_rounded,
-                    label: 'Scan Barcode',
-                    color: AppColors.realtimeGreen,
-                  ),
-                  SizedBox(height: 6.h),
-                  _buildCheckFeature(
-                    icon: Icons.check_circle_outline_rounded,
-                    label: 'GPS Otomatis',
-                    color: AppColors.realtimeGreen,
-                  ),
-                  SizedBox(height: 6.h),
-                  _buildCheckFeature(
-                    icon: Icons.check_circle_outline_rounded,
-                    label: 'Lokasi Terkini',
-                    color: AppColors.realtimeGreen,
-                  ),
-
-                  SizedBox(height: 16.h),
-                  Divider(color: AppColors.realtimeBorder, height: 1.h),
-                  SizedBox(height: 14.h),
-
-                  // Card Action Footer
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Gunakan Realtime',
-                        style: TextStyle(
-                          color: AppColors.realtimeGreen,
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  ...features.map(
+                    (feature) => Padding(
+                      padding: EdgeInsets.only(bottom: 6.h),
+                      child: _buildCheckFeature(
+                        icon: featureIcon,
+                        label: feature,
+                        color: primaryColor,
                       ),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        color: AppColors.realtimeGreen,
-                        size: 20.sp,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildManualCard(
-    BuildContext context, {
-    required bool isProjectClosed,
-  }) {
-    return Opacity(
-      opacity: isProjectClosed ? 0.55 : 1.0,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.manualBackground,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: AppColors.manualBorder, width: 1.5.w),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowColor,
-              blurRadius: 6.r,
-              offset: Offset(0, 3.h),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => _handleSelectManual(context),
-            borderRadius: BorderRadius.circular(16.r),
-            child: Padding(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top Icon & Title
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(10.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundWhite,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.manualBorder,
-                            width: 1.w,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.keyboard_outlined,
-                          color: AppColors.manualOrange,
-                          size: 24.sp,
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Text(
-                        'Manual',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 14.h),
-
-                  // Description
-                  Text(
-                    'Masukkan koordinat, alamat, dan informasi lampu secara manual.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13.sp,
-                      height: 1.4,
                     ),
                   ),
-                  SizedBox(height: 14.h),
 
-                  // Features Checklist
-                  _buildCheckFeature(
-                    icon: Icons.bolt_rounded,
-                    label: 'Input Long / Lat',
-                    color: AppColors.manualOrange,
-                  ),
-                  SizedBox(height: 6.h),
-                  _buildCheckFeature(
-                    icon: Icons.bolt_rounded,
-                    label: 'Input Address',
-                    color: AppColors.manualOrange,
-                  ),
-                  SizedBox(height: 6.h),
-                  _buildCheckFeature(
-                    icon: Icons.bolt_rounded,
-                    label: 'Dokumentasi Manual',
-                    color: AppColors.manualOrange,
-                  ),
-
-                  SizedBox(height: 16.h),
-                  Divider(color: AppColors.manualBorder, height: 1.h),
+                  SizedBox(height: 10.h),
+                  Divider(color: borderColor, height: 1.h),
                   SizedBox(height: 14.h),
 
                   // Card Action Footer
@@ -410,16 +317,16 @@ class MetodePendataanPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Gunakan Manual',
+                        'Gunakan $title',
                         style: TextStyle(
-                          color: AppColors.manualOrange,
+                          color: primaryColor,
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Icon(
                         Icons.arrow_forward_rounded,
-                        color: AppColors.manualOrange,
+                        color: primaryColor,
                         size: 20.sp,
                       ),
                     ],

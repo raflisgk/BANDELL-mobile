@@ -219,8 +219,8 @@ class ApiService {
     }
 
     if (response.statusCode == 200) {
-      final token = data?['token']?.toString() ??
-          data?['access_token']?.toString();
+      final token =
+          data?['token']?.toString() ?? data?['access_token']?.toString();
       if (token != null && token.isNotEmpty) {
         setAuthToken(token);
         await SecureCredentialService.saveAuthToken(token);
@@ -317,10 +317,7 @@ class ApiService {
     try {
       if (_authToken != null) {
         await http
-            .post(
-              Uri.parse('$baseUrl/logout'),
-              headers: defaultHeaders,
-            )
+            .post(Uri.parse('$baseUrl/logout'), headers: defaultHeaders)
             .timeout(const Duration(seconds: 5));
       }
     } catch (e) {
