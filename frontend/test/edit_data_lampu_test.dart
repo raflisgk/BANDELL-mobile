@@ -75,5 +75,69 @@ void main() {
       // Two close/remove icons for the two photos
       expect(find.byIcon(Icons.close_rounded), findsNWidgets(2));
     });
+
+    testWidgets('Tapping remove button shows confirmation dialog',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EditDataLampuPage(
+            isEdit: true,
+            initialKodeLampu: 'LP-TEST-004',
+            initialPhotos: ['https://example.com/lamp1.jpg'],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Scroll Dokumentasi into view because standard test viewport is 800x600
+      await tester.ensureVisible(find.byType(Dokumentasi));
+      await tester.pumpAndSettle();
+
+      // Tap remove button
+      await tester.tap(find.byIcon(Icons.close_rounded).first);
+      await tester.pumpAndSettle();
+
+      // Verify confirmation dialog appears
+      expect(find.text('Hapus Foto?'), findsOneWidget);
+      expect(find.text('Apakah Anda yakin ingin menghapus foto dokumentasi ini?'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Batal'), findsOneWidget);
+      expect(find.text('Hapus'), findsOneWidget);
+
+      // Tap Batal on dialog closes dialog without removing
+      await tester.tap(find.widgetWithText(TextButton, 'Batal'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hapus Foto?'), findsNothing);
+    });
+
+    testWidgets('Tapping photo thumbnail opens preview dialog',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EditDataLampuPage(
+            isEdit: true,
+            initialKodeLampu: 'LP-TEST-005',
+            initialPhotos: ['https://example.com/lamp1.jpg'],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Scroll Dokumentasi into view
+      await tester.ensureVisible(find.byType(Dokumentasi));
+      await tester.pumpAndSettle();
+
+      // Tap the photo item (not delete icon)
+      await tester.tap(find.byType(ClipRRect).first);
+      await tester.pumpAndSettle();
+
+      // Verify preview dialog is visible
+      expect(find.text('Preview Foto'), findsOneWidget);
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+
+      // Close preview dialog
+      await tester.tap(find.byIcon(Icons.close_rounded).last);
+      await tester.pumpAndSettle();
+      expect(find.text('Preview Foto'), findsNothing);
+    });
   });
 }

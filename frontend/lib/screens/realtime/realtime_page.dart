@@ -58,6 +58,11 @@ class _RealtimePageState extends State<RealtimePage> {
   final List<String> _photos = [];
   String? _coordinateError;
 
+  final GlobalKey _barcodeSectionKey = GlobalKey();
+  final GlobalKey _coordinateSectionKey = GlobalKey();
+  final GlobalKey _panelCodeSectionKey = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -102,7 +107,22 @@ class _RealtimePageState extends State<RealtimePage> {
     _longitudeFocusNode.dispose();
     _panelCodeFocusNode.dispose();
     _notesFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToKey(GlobalKey key) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final keyContext = key.currentContext;
+      if (keyContext != null) {
+        Scrollable.ensureVisible(
+          keyContext,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          alignment: 0.1,
+        );
+      }
+    });
   }
 
   void _handleBack() {
@@ -265,6 +285,7 @@ class _RealtimePageState extends State<RealtimePage> {
         context,
         'Silakan scan barcode terlebih dahulu.',
       );
+      _scrollToKey(_barcodeSectionKey);
       return;
     }
 
@@ -273,6 +294,7 @@ class _RealtimePageState extends State<RealtimePage> {
         context,
         'ID Barcode maksimal 12 karakter.',
       );
+      _scrollToKey(_barcodeSectionKey);
       return;
     }
 
@@ -283,6 +305,7 @@ class _RealtimePageState extends State<RealtimePage> {
       setState(() {
         _coordinateError = '⚠️ Koordinat tidak valid';
       });
+      _scrollToKey(_coordinateSectionKey);
       return;
     } else {
       if (_coordinateError != null) {
@@ -298,6 +321,7 @@ class _RealtimePageState extends State<RealtimePage> {
         'Kode panel maksimal 11 karakter.',
       );
       _panelCodeFocusNode.requestFocus();
+      _scrollToKey(_panelCodeSectionKey);
       return;
     }
 
@@ -384,136 +408,144 @@ class _RealtimePageState extends State<RealtimePage> {
       child: Scaffold(
         backgroundColor: AppColors.backgroundWhite,
         body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AppTopBar(showDropdown: false, onBackPressed: _handleBack),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 12),
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.translucent,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppTopBar(showDropdown: false, onBackPressed: _handleBack),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 12),
 
-                    // Header Title & Subtitle
-                    const Center(
-                      child: Text(
-                        'Metode Input Real-time',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.2,
+                        // Header Title & Subtitle
+                        const Center(
+                          child: Text(
+                            'Metode Input Real-time',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Center(
-                      child: Text(
-                        'Ambil data lampu secara langsung di lokasi',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
+                        const SizedBox(height: 4),
+                        const Center(
+                          child: Text(
+                            'Ambil data lampu secara langsung di lokasi',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
                         ),
-                      ),
+
+                        const SizedBox(height: 24),
+
+                        // 1. BARCODE SECTION
+                        RealtimeBarcodeSection(
+                          key: _barcodeSectionKey,
+                          scannedBarcode: _scannedBarcode,
+                          onScanBarcode: _handleScanBarcode,
+                        ),
+
+                        const SizedBox(height: 20),
+                        const Divider(
+                          color: AppColors.borderLight,
+                          height: 1,
+                          thickness: 1,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // 2. LOKASI KOORDINAT SECTION (GPS)
+                        LokasiKoordinat(
+                          key: _coordinateSectionKey,
+                          latitudeController: _latitudeController,
+                          longitudeController: _longitudeController,
+                          latitudeFocusNode: _latitudeFocusNode,
+                          longitudeFocusNode: _longitudeFocusNode,
+                          isGpsMode: true,
+                          isLoadingGps: _isLoadingLocation,
+                          onGetGpsLocation: _handleGetLocation,
+                          errorMessage: _coordinateError,
+                          readOnly: true,
+                        ),
+
+                        const SizedBox(height: 20),
+                        const Divider(
+                          color: AppColors.borderLight,
+                          height: 1,
+                          thickness: 1,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // 3. KODE PANEL SECTION
+                        KodePanel(
+                          key: _panelCodeSectionKey,
+                          controller: _panelCodeController,
+                          focusNode: _panelCodeFocusNode,
+                        ),
+
+                        const SizedBox(height: 20),
+                        const Divider(
+                          color: AppColors.borderLight,
+                          height: 1,
+                          thickness: 1,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // CATATAN SECTION
+                        Catatan(
+                          controller: _notesController,
+                          focusNode: _notesFocusNode,
+                        ),
+
+                        const SizedBox(height: 20),
+                        const Divider(
+                          color: AppColors.borderLight,
+                          height: 1,
+                          thickness: 1,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // 4. DOKUMENTASI SECTION
+                        Dokumentasi(
+                          photos: _photos,
+                          onPhotoAdded: (path) {
+                            setState(() {
+                              _photos.add(path);
+                            });
+                          },
+                          onRemovePhoto: _removePhoto,
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        // 5. SIMPAN DATA BUTTON SECTION
+                        TombolSimpanData(
+                          isLoading: _isSubmitting,
+                          onPressed: _handleSimpanData,
+                        ),
+
+                        const SizedBox(height: 24),
+                      ],
                     ),
-
-                    const SizedBox(height: 24),
-
-                    // 1. BARCODE SECTION
-                    RealtimeBarcodeSection(
-                      scannedBarcode: _scannedBarcode,
-                      onScanBarcode: _handleScanBarcode,
-                    ),
-
-                    const SizedBox(height: 20),
-                    const Divider(
-                      color: AppColors.borderLight,
-                      height: 1,
-                      thickness: 1,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // 2. LOKASI KOORDINAT SECTION (GPS)
-                    LokasiKoordinat(
-                      latitudeController: _latitudeController,
-                      longitudeController: _longitudeController,
-                      latitudeFocusNode: _latitudeFocusNode,
-                      longitudeFocusNode: _longitudeFocusNode,
-                      isGpsMode: true,
-                      isLoadingGps: _isLoadingLocation,
-                      onGetGpsLocation: _handleGetLocation,
-                      errorMessage: _coordinateError,
-                      readOnly: true,
-                    ),
-
-                    const SizedBox(height: 20),
-                    const Divider(
-                      color: AppColors.borderLight,
-                      height: 1,
-                      thickness: 1,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // 3. KODE PANEL SECTION
-                    KodePanel(
-                      controller: _panelCodeController,
-                      focusNode: _panelCodeFocusNode,
-                    ),
-
-                    const SizedBox(height: 20),
-                    const Divider(
-                      color: AppColors.borderLight,
-                      height: 1,
-                      thickness: 1,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // CATATAN SECTION
-                    Catatan(
-                      controller: _notesController,
-                      focusNode: _notesFocusNode,
-                    ),
-
-                    const SizedBox(height: 20),
-                    const Divider(
-                      color: AppColors.borderLight,
-                      height: 1,
-                      thickness: 1,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // 4. DOKUMENTASI SECTION
-                    Dokumentasi(
-                      photos: _photos,
-                      onPhotoAdded: (path) {
-                        setState(() {
-                          _photos.add(path);
-                        });
-                      },
-                      onRemovePhoto: _removePhoto,
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // 5. SIMPAN DATA BUTTON SECTION
-                    TombolSimpanData(
-                      isLoading: _isSubmitting,
-                      onPressed: _handleSimpanData,
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
 }
 }

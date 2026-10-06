@@ -411,8 +411,8 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
         idProject: projectId,
         idUser: userId,
         idArea: areaId,
-        districtName: widget.areaName ??
-            ProjectService.getAreaName(projectId, areaId),
+        districtName:
+            widget.areaName ?? ProjectService.getAreaName(projectId, areaId),
         lampTypeId: widget.lampTypeId,
         lampCode: barcode,
         lampType: widget.lampType ?? '',
@@ -495,182 +495,183 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
       child: Scaffold(
         backgroundColor: AppColors.backgroundWhite,
         body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AppTopBar(showDropdown: false, onBackPressed: _handleBack),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 12),
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppTopBar(showDropdown: false, onBackPressed: _handleBack),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 12),
 
-                    // Centered Header Title & Subtitle
-                    const Center(
-                      child: Text(
-                        'Metode Input Manual',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.2,
+                      // Centered Header Title & Subtitle
+                      const Center(
+                        child: Text(
+                          'Metode Input Manual',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.2,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Center(
-                      child: Text(
-                        'Ambil data lampu secara manual',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
+                      const SizedBox(height: 4),
+                      const Center(
+                        child: Text(
+                          'Ambil data lampu secara manual',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                    // Single Large White Form Container Matching Figma
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.borderLight,
-                          width: 1.0,
+                      // Single Large White Form Container Matching Figma
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.borderLight,
+                            width: 1.0,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: AppColors.shadowSubtle,
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.shadowSubtle,
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 1. ID BARCODE
+                            _buildBarcodeInput(),
+
+                            const SizedBox(height: 18),
+                            const Divider(
+                              color: AppColors.divider,
+                              height: 1,
+                              thickness: 1,
+                            ),
+                            const SizedBox(height: 18),
+
+                            // 2. KODE PANEL (SHARED WIDGET)
+                            KodePanel(
+                              controller: _panelCodeController,
+                              focusNode: _panelCodeFocusNode,
+                            ),
+
+                            const SizedBox(height: 18),
+                            const Divider(
+                              color: AppColors.divider,
+                              height: 1,
+                              thickness: 1,
+                            ),
+                            const SizedBox(height: 18),
+
+                            // 3. LOKASI KOORDINAT (SHARED WIDGET)
+                            LokasiKoordinat(
+                              latitudeController: _latitudeController,
+                              longitudeController: _longitudeController,
+                              latitudeFocusNode: _latitudeFocusNode,
+                              longitudeFocusNode: _longitudeFocusNode,
+                              shakeAnimation: _effectiveLocationShakeAnimation,
+                              isLatitudeExceeded: _isLatitudeExceeded,
+                              isLongitudeExceeded: _isLongitudeExceeded,
+                              onLatitudeLimitExceeded: _onLatitudeLimitExceeded,
+                              onLongitudeLimitExceeded:
+                                  _onLongitudeLimitExceeded,
+                              errorMessage: _coordinateError,
+                            ),
+
+                            const SizedBox(height: 18),
+                            const Divider(
+                              color: AppColors.divider,
+                              height: 1,
+                              thickness: 1,
+                            ),
+                            const SizedBox(height: 18),
+
+                            // 4. TANGGAL PENUGASAN (SHARED WIDGET)
+                            TanggalPemasangan(
+                              title: 'Tanggal Pemasangan',
+                              subtitle: 'Masukkan tanggal pemasangan',
+                              selectedDate: _installationDate,
+                              onDateSelected: (date) {
+                                setState(() {
+                                  _installationDate = date;
+                                  _dateError = null;
+                                });
+                              },
+                              errorMessage: _dateError,
+                            ),
+
+                            const SizedBox(height: 18),
+                            const Divider(
+                              color: AppColors.divider,
+                              height: 1,
+                              thickness: 1,
+                            ),
+                            const SizedBox(height: 18),
+
+                            // 5. CATATAN (SHARED WIDGET)
+                            Catatan(
+                              controller: _notesController,
+                              focusNode: _notesFocusNode,
+                            ),
+
+                            const SizedBox(height: 18),
+                            const Divider(
+                              color: AppColors.divider,
+                              height: 1,
+                              thickness: 1,
+                            ),
+                            const SizedBox(height: 18),
+
+                            // 6. DOKUMENTASI (SHARED WIDGET)
+                            Dokumentasi(
+                              photos: _photos,
+                              onPhotoAdded: (path) {
+                                setState(() {
+                                  _photos.add(path);
+                                });
+                              },
+                              onRemovePhoto: _removePhoto,
+                            ),
+                          ],
+                        ),
                       ),
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 1. ID BARCODE
-                          _buildBarcodeInput(),
 
-                          const SizedBox(height: 18),
-                          const Divider(
-                            color: AppColors.divider,
-                            height: 1,
-                            thickness: 1,
-                          ),
-                          const SizedBox(height: 18),
+                      const SizedBox(height: 20),
 
-                          // 2. KODE PANEL (SHARED WIDGET)
-                          KodePanel(
-                            controller: _panelCodeController,
-                            focusNode: _panelCodeFocusNode,
-                          ),
-
-                          const SizedBox(height: 18),
-                          const Divider(
-                            color: AppColors.divider,
-                            height: 1,
-                            thickness: 1,
-                          ),
-                          const SizedBox(height: 18),
-
-                          // 3. LOKASI KOORDINAT (SHARED WIDGET)
-                          LokasiKoordinat(
-                            latitudeController: _latitudeController,
-                            longitudeController: _longitudeController,
-                            latitudeFocusNode: _latitudeFocusNode,
-                            longitudeFocusNode: _longitudeFocusNode,
-                            shakeAnimation: _effectiveLocationShakeAnimation,
-                            isLatitudeExceeded: _isLatitudeExceeded,
-                            isLongitudeExceeded: _isLongitudeExceeded,
-                            onLatitudeLimitExceeded: _onLatitudeLimitExceeded,
-                            onLongitudeLimitExceeded: _onLongitudeLimitExceeded,
-                            errorMessage: _coordinateError,
-                          ),
-
-                          const SizedBox(height: 18),
-                          const Divider(
-                            color: AppColors.divider,
-                            height: 1,
-                            thickness: 1,
-                          ),
-                          const SizedBox(height: 18),
-
-                          // 4. TANGGAL PENUGASAN (SHARED WIDGET)
-                          TanggalPemasangan(
-                            title: 'Tanggal Pemasangan',
-                            subtitle: 'Masukkan tanggal pemasangan',
-                            selectedDate: _installationDate,
-                            onDateSelected: (date) {
-                              setState(() {
-                                _installationDate = date;
-                                _dateError = null;
-                              });
-                            },
-                            errorMessage: _dateError,
-                          ),
-
-                          const SizedBox(height: 18),
-                          const Divider(
-                            color: AppColors.divider,
-                            height: 1,
-                            thickness: 1,
-                          ),
-                          const SizedBox(height: 18),
-
-                          // 5. CATATAN (SHARED WIDGET)
-                          Catatan(
-                            controller: _notesController,
-                            focusNode: _notesFocusNode,
-                          ),
-
-                          const SizedBox(height: 18),
-                          const Divider(
-                            color: AppColors.divider,
-                            height: 1,
-                            thickness: 1,
-                          ),
-                          const SizedBox(height: 18),
-
-                          // 6. DOKUMENTASI (SHARED WIDGET)
-                          Dokumentasi(
-                            photos: _photos,
-                            onPhotoAdded: (path) {
-                              setState(() {
-                                _photos.add(path);
-                              });
-                            },
-                            onRemovePhoto: _removePhoto,
-                          ),
-                        ],
+                      // 5. TOMBOL SIMPAN DATA (SHARED WIDGET)
+                      TombolSimpanData(
+                        isLoading: _isSubmitting,
+                        onPressed: _handleSimpanData,
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
-
-                    // 5. TOMBOL SIMPAN DATA (SHARED WIDGET)
-                    TombolSimpanData(
-                      isLoading: _isSubmitting,
-                      onPressed: _handleSimpanData,
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // 1. ID Barcode Section
   Widget _buildBarcodeInput() {

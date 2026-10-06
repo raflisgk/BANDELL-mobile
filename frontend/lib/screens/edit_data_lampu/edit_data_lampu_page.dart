@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,6 +15,7 @@ import '../../widgets/custom_feedback.dart';
 import '../../widgets/dokumentasi.dart';
 import '../../widgets/kode_panel.dart';
 import '../../widgets/lokasi_koordinat.dart';
+import '../../widgets/shake_widget.dart';
 import 'edit_lampu_type.dart';
 
 class EditDataLampuPage extends StatefulWidget {
@@ -51,7 +54,8 @@ class EditDataLampuPage extends StatefulWidget {
   State<EditDataLampuPage> createState() => _EditDataLampuPageState();
 }
 
-class _EditDataLampuPageState extends State<EditDataLampuPage> {
+class _EditDataLampuPageState extends State<EditDataLampuPage>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
   int? _existingAreaId;
@@ -76,6 +80,110 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   final List<String> _photos = [];
   String? _coordinateError;
 
+  final GlobalKey _coordinateSectionKey = GlobalKey();
+  final GlobalKey _panelCodeSectionKey = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
+
+  AnimationController? _locationShakeController;
+  Animation<double>? _locationShakeAnimation;
+  bool _isLatitudeExceeded = false;
+  Timer? _latitudeErrorTimer;
+  bool _isLongitudeExceeded = false;
+  Timer? _longitudeErrorTimer;
+
+  AnimationController? _panelCodeShakeController;
+  Animation<double>? _panelCodeShakeAnimation;
+
+  void _initShakeAnimation() {
+    _locationShakeController ??= AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+    _locationShakeAnimation ??= ShakeAnimationHelper.createShakeAnimation(
+      _locationShakeController!,
+    );
+
+    _panelCodeShakeController ??= AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+    _panelCodeShakeAnimation ??= ShakeAnimationHelper.createShakeAnimation(
+      _panelCodeShakeController!,
+    );
+  }
+
+  AnimationController get _effectiveLocationShakeController {
+    if (_locationShakeController == null) _initShakeAnimation();
+    return _locationShakeController!;
+  }
+
+  Animation<double> get _effectiveLocationShakeAnimation {
+    if (_locationShakeAnimation == null) _initShakeAnimation();
+    return _locationShakeAnimation!;
+  }
+
+  AnimationController get _effectivePanelCodeShakeController {
+    if (_panelCodeShakeController == null) _initShakeAnimation();
+    return _panelCodeShakeController!;
+  }
+
+  Animation<double> get _effectivePanelCodeShakeAnimation {
+    if (_panelCodeShakeAnimation == null) _initShakeAnimation();
+    return _panelCodeShakeAnimation!;
+  }
+
+  void _onLatitudeChanged() {
+    if (_isLatitudeExceeded && _latitudeController.text.length < 10) {
+      _latitudeErrorTimer?.cancel();
+      setState(() {
+        _isLatitudeExceeded = false;
+      });
+    }
+  }
+
+  void _onLatitudeLimitExceeded() {
+    _latitudeErrorTimer?.cancel();
+    if (!_isLatitudeExceeded) {
+      setState(() {
+        _isLatitudeExceeded = true;
+      });
+    }
+    _effectiveLocationShakeController.forward(from: 0.0);
+    _latitudeErrorTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && _isLatitudeExceeded) {
+        setState(() {
+          _isLatitudeExceeded = false;
+        });
+      }
+    });
+  }
+
+  void _onLongitudeChanged() {
+    if (_isLongitudeExceeded && _longitudeController.text.length < 11) {
+      _longitudeErrorTimer?.cancel();
+      setState(() {
+        _isLongitudeExceeded = false;
+      });
+    }
+  }
+
+  void _onLongitudeLimitExceeded() {
+    _longitudeErrorTimer?.cancel();
+    if (!_isLongitudeExceeded) {
+      setState(() {
+        _isLongitudeExceeded = true;
+      });
+    }
+    _effectiveLocationShakeController.forward(from: 0.0);
+    _longitudeErrorTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && _isLongitudeExceeded) {
+        setState(() {
+          _isLongitudeExceeded = false;
+        });
+      }
+    });
+  }
+
   static String _cleanValue(String? val) {
     if (val == null) return '';
     final trimmed = val.trim();
@@ -89,19 +197,21 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     final defaultKode = widget.isEdit
         ? _cleanValue(widget.initialKodeLampu)
         : (widget.scannedCode ?? '');
-    final defaultPanel =
-        widget.isEdit ? _cleanValue(widget.initialKodePanel) : '';
-    final defaultLong =
-        widget.isEdit ? _cleanValue(widget.initialLongitude) : '';
-    final defaultLat =
-        widget.isEdit ? _cleanValue(widget.initialLatitude) : '';
+    final defaultPanel = widget.isEdit
+        ? _cleanValue(widget.initialKodePanel)
+        : '';
+    final defaultLong = widget.isEdit
+        ? _cleanValue(widget.initialLongitude)
+        : '';
+    final defaultLat = widget.isEdit ? _cleanValue(widget.initialLatitude) : '';
     final defaultCatatan = widget.isEdit
         ? (_cleanValue(widget.initialCatatan).isNotEmpty
-            ? _cleanValue(widget.initialCatatan)
-            : _cleanValue(widget.initialAlamat))
+              ? _cleanValue(widget.initialCatatan)
+              : _cleanValue(widget.initialAlamat))
         : (widget.initialCatatan ?? widget.initialAlamat ?? '');
-    final defaultTipe =
-        widget.isEdit ? _cleanValue(widget.initialTipeLampu) : '';
+    final defaultTipe = widget.isEdit
+        ? _cleanValue(widget.initialTipeLampu)
+        : '';
 
     _kodeLampuController = TextEditingController(text: defaultKode);
     _panelCodeController = TextEditingController(text: defaultPanel);
@@ -118,6 +228,8 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _tipeLampuFocusNode.addListener(_onFocusChange);
     _latitudeController.addListener(_onCoordinateChanged);
     _longitudeController.addListener(_onCoordinateChanged);
+    _latitudeController.addListener(_onLatitudeChanged);
+    _longitudeController.addListener(_onLongitudeChanged);
 
     if (widget.initialPhotos != null && widget.initialPhotos!.isNotEmpty) {
       _photos.addAll(widget.initialPhotos!.where((p) => p.trim().isNotEmpty));
@@ -187,13 +299,28 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
   }
 
   void _onFocusChange() {
+    if (!_latitudeFocusNode.hasFocus && _isLatitudeExceeded) {
+      _latitudeErrorTimer?.cancel();
+      _isLatitudeExceeded = false;
+    }
+    if (!_longitudeFocusNode.hasFocus && _isLongitudeExceeded) {
+      _longitudeErrorTimer?.cancel();
+      _isLongitudeExceeded = false;
+    }
     setState(() {});
   }
 
   @override
   void dispose() {
+    _latitudeErrorTimer?.cancel();
+    _longitudeErrorTimer?.cancel();
+    _locationShakeController?.dispose();
+    _panelCodeShakeController?.dispose();
+
     _latitudeController.removeListener(_onCoordinateChanged);
     _longitudeController.removeListener(_onCoordinateChanged);
+    _latitudeController.removeListener(_onLatitudeChanged);
+    _longitudeController.removeListener(_onLongitudeChanged);
 
     _kodeLampuController.dispose();
     _panelCodeController.dispose();
@@ -215,7 +342,23 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     _latitudeFocusNode.dispose();
     _catatanFocusNode.dispose();
     _tipeLampuFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToKey(GlobalKey key) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final keyContext = key.currentContext;
+      if (keyContext != null) {
+        Scrollable.ensureVisible(
+          keyContext,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          alignment: 0.1,
+        );
+      }
+    });
   }
 
   void _handleBack() {
@@ -249,11 +392,13 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       setState(() {
         _coordinateError = '⚠️ Koordinat tidak valid';
       });
+      _effectiveLocationShakeController.forward(from: 0.0);
       if (!Validators.isLatitudeValid(latitude)) {
         _latitudeFocusNode.requestFocus();
       } else {
         _longitudeFocusNode.requestFocus();
       }
+      _scrollToKey(_coordinateSectionKey);
       return;
     } else {
       if (_coordinateError != null) {
@@ -264,11 +409,10 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     }
 
     if (_panelCodeController.text.trim().length > 12) {
-      CustomFeedback.showError(
-        context,
-        'Kode panel maksimal 12 karakter.',
-      );
+      _effectivePanelCodeShakeController.forward(from: 0.0);
+      CustomFeedback.showError(context, 'Kode panel maksimal 12 karakter.');
       _panelCodeFocusNode.requestFocus();
+      _scrollToKey(_panelCodeSectionKey);
       return;
     }
 
@@ -277,7 +421,8 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
     });
 
     try {
-      final resolvedProjectId = widget.idProject ??
+      final resolvedProjectId =
+          widget.idProject ??
           _existingProjectId ??
           ProjectService.selectedProject?.idProject;
       final resolvedAreaId = widget.idArea ?? _existingAreaId ?? 0;
@@ -318,8 +463,9 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
         }
       } else {
         debugPrint('Simpan Data Pendataan Baru');
-        final created =
-            await InstallationService().createInstallation(updatedData);
+        final created = await InstallationService().createInstallation(
+          updatedData,
+        );
 
         if (mounted) {
           setState(() {
@@ -367,151 +513,184 @@ class _EditDataLampuPageState extends State<EditDataLampuPage> {
       child: Scaffold(
         backgroundColor: AppColors.backgroundWhite,
         body: SafeArea(
-          child: Column(
-            children: [
-              AppTopBar(
-                title: widget.isEdit ? 'Edit Data' : 'Tambah Data',
-                showBackButton: true,
-                showNotification: false,
-                showDropdown: false,
-                onBackPressed: _handleBack,
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 8),
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.translucent,
+            child: Column(
+              children: [
+                AppTopBar(
+                  title: widget.isEdit ? 'Edit Data' : 'Tambah Data',
+                  showBackButton: true,
+                  showNotification: false,
+                  showDropdown: false,
+                  onBackPressed: _handleBack,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 8),
 
-                        // Large White Card Form Container
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.cardBackground,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 6,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // 1. KODE LAMPU
-                              _buildSectionHeader(
-                                icon: Icons.lightbulb_outline_rounded,
-                                title: 'Kode Lampu',
-                                subtitle: 'Masukkan kode lampu',
-                              ),
-                              const SizedBox(height: 12),
-                              _buildCustomTextField(
-                                controller: _kodeLampuController,
-                                focusNode: _kodeLampuFocusNode,
-                                hint: 'Masukkan kode lampu',
-                              ),
+                          // Large White Card Form Container
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.cardBackground,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: AppColors.shadowColor,
+                                  blurRadius: 6,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(20.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // 1. KODE LAMPU
+                                _buildSectionHeader(
+                                  icon: Icons.lightbulb_outline_rounded,
+                                  title: 'Kode Lampu',
+                                  subtitle: 'Masukkan kode lampu',
+                                ),
+                                const SizedBox(height: 12),
+                                _buildCustomTextField(
+                                  controller: _kodeLampuController,
+                                  focusNode: _kodeLampuFocusNode,
+                                  hint: 'Masukkan kode lampu',
+                                ),
 
-                              const SizedBox(height: 20),
-                              const Divider(color: AppColors.border, height: 1),
-                              const SizedBox(height: 20),
+                                const SizedBox(height: 20),
+                                const Divider(
+                                  color: AppColors.border,
+                                  height: 1,
+                                ),
+                                const SizedBox(height: 20),
 
-                              // 2. KODE PANEL
-                              KodePanel(
-                                controller: _panelCodeController,
-                                focusNode: _panelCodeFocusNode,
-                              ),
+                                // 2. KODE PANEL
+                                ShakeWidget(
+                                  animation: _effectivePanelCodeShakeAnimation,
+                                  child: KodePanel(
+                                    key: _panelCodeSectionKey,
+                                    controller: _panelCodeController,
+                                    focusNode: _panelCodeFocusNode,
+                                  ),
+                                ),
 
-                              const SizedBox(height: 20),
-                              const Divider(color: AppColors.border, height: 1),
-                              const SizedBox(height: 20),
+                                const SizedBox(height: 20),
+                                const Divider(
+                                  color: AppColors.border,
+                                  height: 1,
+                                ),
+                                const SizedBox(height: 20),
 
-                              // 3. LOKASI KOORDINAT
-                              LokasiKoordinat(
-                                longitudeController: _longitudeController,
-                                latitudeController: _latitudeController,
-                                longitudeFocusNode: _longitudeFocusNode,
-                                latitudeFocusNode: _latitudeFocusNode,
-                                errorMessage: _coordinateError,
-                                latitudeHint: '-6.2088',
-                                longitudeHint: '106.8456',
-                              ),
+                                // 3. LOKASI KOORDINAT
+                                LokasiKoordinat(
+                                  key: _coordinateSectionKey,
+                                  longitudeController: _longitudeController,
+                                  latitudeController: _latitudeController,
+                                  longitudeFocusNode: _longitudeFocusNode,
+                                  latitudeFocusNode: _latitudeFocusNode,
+                                  shakeAnimation:
+                                      _effectiveLocationShakeAnimation,
+                                  isLatitudeExceeded: _isLatitudeExceeded,
+                                  isLongitudeExceeded: _isLongitudeExceeded,
+                                  onLatitudeLimitExceeded:
+                                      _onLatitudeLimitExceeded,
+                                  onLongitudeLimitExceeded:
+                                      _onLongitudeLimitExceeded,
+                                  errorMessage: _coordinateError,
+                                  latitudeHint: '-6.2088',
+                                  longitudeHint: '106.8456',
+                                ),
 
-                              const SizedBox(height: 20),
-                              const Divider(color: AppColors.border, height: 1),
-                              const SizedBox(height: 20),
+                                const SizedBox(height: 20),
+                                const Divider(
+                                  color: AppColors.border,
+                                  height: 1,
+                                ),
+                                const SizedBox(height: 20),
 
-                              // 3. TIPE LAMPU
-                              EditLampuType(
-                                tipeLampuController: _tipeLampuController,
-                                tipeLampuFocusNode: _tipeLampuFocusNode,
-                                lampTypeOptions: _lampTypeOptions,
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) {
+                                // 3. TIPE LAMPU
+                                EditLampuType(
+                                  tipeLampuController: _tipeLampuController,
+                                  tipeLampuFocusNode: _tipeLampuFocusNode,
+                                  lampTypeOptions: _lampTypeOptions,
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        _tipeLampuController.text = newValue;
+                                      });
+                                    }
+                                  },
+                                ),
+
+                                const SizedBox(height: 20),
+                                const Divider(
+                                  color: AppColors.border,
+                                  height: 1,
+                                ),
+                                const SizedBox(height: 20),
+
+                                // 4. CATATAN
+                                Catatan(
+                                  controller: _catatanController,
+                                  focusNode: _catatanFocusNode,
+                                ),
+
+                                const SizedBox(height: 20),
+                                const Divider(
+                                  color: AppColors.border,
+                                  height: 1,
+                                ),
+                                const SizedBox(height: 20),
+
+                                // 5. DOKUMENTASI
+                                Dokumentasi(
+                                  photos: _photos,
+                                  onPhotoAdded: (path) {
                                     setState(() {
-                                      _tipeLampuController.text = newValue;
+                                      _photos.add(path);
                                     });
-                                  }
-                                },
-                              ),
-
-                              const SizedBox(height: 20),
-                              const Divider(color: AppColors.border, height: 1),
-                              const SizedBox(height: 20),
-
-                              // 4. CATATAN
-                              Catatan(
-                                controller: _catatanController,
-                                focusNode: _catatanFocusNode,
-                              ),
-
-                              const SizedBox(height: 20),
-                              const Divider(color: AppColors.border, height: 1),
-                              const SizedBox(height: 20),
-
-                              // 5. DOKUMENTASI
-                              Dokumentasi(
-                                photos: _photos,
-                                onPhotoAdded: (path) {
-                                  setState(() {
-                                    _photos.add(path);
-                                  });
-                                  if (mounted) {
-                                    CustomFeedback.showSuccess(
-                                      context,
-                                      'Foto ${_photos.length} berhasil ditambahkan',
-                                    );
-                                  }
-                                },
-                                onRemovePhoto: _removePhoto,
-                              ),
-                            ],
+                                    if (mounted) {
+                                      CustomFeedback.showSuccess(
+                                        context,
+                                        'Foto ${_photos.length} berhasil ditambahkan',
+                                      );
+                                    }
+                                  },
+                                  onRemovePhoto: _removePhoto,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
 
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                        // Bottom Buttons Row: [ Batal ] & [ Simpan Perubahan ]
-                        EditLampuActionButtons(
-                          isEdit: widget.isEdit,
-                          isLoading: _isSubmitting,
-                          onCancel: _handleBack,
-                          onSave: _handleSubmit,
-                        ),
+                          // Bottom Buttons Row: [ Batal ] & [ Simpan Perubahan ]
+                          EditLampuActionButtons(
+                            isEdit: widget.isEdit,
+                            isLoading: _isSubmitting,
+                            onCancel: _handleBack,
+                            onSave: _handleSubmit,
+                          ),
 
-                        const SizedBox(height: 28),
-                      ],
+                          const SizedBox(height: 28),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -634,10 +813,7 @@ class EditLampuActionButtons extends StatelessWidget {
               ),
               child: const Text(
                 'Batal',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -680,4 +856,3 @@ class EditLampuActionButtons extends StatelessWidget {
     );
   }
 }
-
