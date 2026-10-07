@@ -68,6 +68,9 @@ class ProjectService {
       _prefetchAllProjectAreas(_projects);
       return _projects;
     } catch (e) {
+      if (e is ApiException && e.statusCode == 401) {
+        rethrow;
+      }
       debugPrint('Error getting assigned projects: $e. Using local storage fallback.');
       final cachedJson = await LocalCacheService.getProjectsJson(targetUserId);
       if (cachedJson != null && cachedJson.isNotEmpty) {
@@ -120,6 +123,10 @@ class ProjectService {
                 headers: ApiService.defaultHeaders,
               )
               .timeout(const Duration(seconds: 4));
+          if (res.statusCode == 401) {
+            await ApiService.handleUnauthorized();
+            return;
+          }
           if (res.statusCode == 200) {
             final data = jsonDecode(res.body);
             final list = (data['data'] as List<dynamic>?) ?? [];
@@ -171,6 +178,11 @@ class ProjectService {
 
       debugPrint('AREA STATUS: ${response.statusCode}');
 
+      if (response.statusCode == 401) {
+        await ApiService.handleUnauthorized();
+        throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+      }
+
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         final areaList = (responseData['data'] as List<dynamic>?) ?? [];
@@ -178,6 +190,9 @@ class ProjectService {
         return areaList;
       }
     } catch (e) {
+      if (e is ApiException && e.statusCode == 401) {
+        rethrow;
+      }
       debugPrint('getAreas error: $e. Using local storage fallback.');
       final localAreas = await LocalCacheService.getProjectAreasJson(projectId);
       if (localAreas != null) {

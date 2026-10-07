@@ -95,6 +95,7 @@ class MyApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp(
+          navigatorKey: AppNavigator.navigatorKey,
           title: 'BANDELL Mobile',
           debugShowCheckedModeBanner: false,
           scrollBehavior: const AppScrollBehavior(),

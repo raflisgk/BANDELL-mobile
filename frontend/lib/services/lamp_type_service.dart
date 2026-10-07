@@ -35,6 +35,11 @@ class LampTypeService {
 
       debugPrint('LAMP TYPE STATUS: ${response.statusCode}');
 
+      if (response.statusCode == 401) {
+        await ApiService.handleUnauthorized();
+        throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+      }
+
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         final List data = responseData['data'] ?? [];
@@ -44,6 +49,9 @@ class LampTypeService {
         return _parseList(data);
       }
     } catch (e) {
+      if (e is ApiException && e.statusCode == 401) {
+        rethrow;
+      }
       debugPrint('getLampTypes error: $e. Using local storage HP fallback.');
     }
 

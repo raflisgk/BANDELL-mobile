@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 
 import '../models/user_model.dart';
+import '../screens/login/login_page.dart';
+import '../utils/page_transitions.dart';
 import 'auth_service.dart';
 import 'secure_credential_service.dart';
 
@@ -108,6 +110,38 @@ class ApiService {
     _authToken = token;
   }
 
+  static bool _isHandling401 = false;
+
+  /// Dipanggil otomatis ketika backend Laravel mengembalikan status 401 (Unauthenticated / Token Expired/Deleted).
+  /// Menghapus kredensial lokal dan mengarahkan pengguna kembali ke halaman Login dengan notifikasi yang jelas.
+  static Future<void> handleUnauthorized() async {
+    if (_isHandling401) return;
+    _isHandling401 = true;
+
+    try {
+      debugPrint('Sesi login telah berakhir atau token tidak valid (401). Auto-logout...');
+      setAuthToken(null);
+      await SecureCredentialService.setSession(isLoggedIn: false);
+      AuthService.currentUser = null;
+
+      final nav = AppNavigator.navigatorKey.currentState;
+      if (nav != null) {
+        nav.pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const LoginPage(sessionExpired: true),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saat handleUnauthorized: $e');
+    } finally {
+      Future.delayed(const Duration(seconds: 2), () {
+        _isHandling401 = false;
+      });
+    }
+  }
+
   static Future<Map<String, dynamic>> updateProfilePhone({
     required int userId,
     required String phoneNumber,
@@ -120,6 +154,11 @@ class ApiService {
 
     debugPrint('UPDATE PROFILE STATUS: ${response.statusCode}');
     debugPrint('UPDATE PROFILE BODY: ${response.body}');
+
+    if (response.statusCode == 401) {
+      await handleUnauthorized();
+      throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+    }
 
     Map<String, dynamic> responseData;
 
@@ -146,6 +185,11 @@ class ApiService {
 
     debugPrint('GET PROFILE STATUS: ${response.statusCode}');
     debugPrint('GET PROFILE BODY: ${response.body}');
+
+    if (response.statusCode == 401) {
+      await handleUnauthorized();
+      throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+    }
 
     if (response.statusCode != 200) {
       throw Exception('Gagal mengambil data profile.');
@@ -324,7 +368,7 @@ class ApiService {
       debugPrint('Logout API error: $e');
     }
     setAuthToken(null);
-    await SecureCredentialService.clearAuthToken();
+    await SecureCredentialService.setSession(isLoggedIn: false);
   }
 
   /// Endpoint untuk mengambil notifikasi berdasarkan user_id
@@ -339,6 +383,11 @@ class ApiService {
     debugPrint('DEBUG NOTIFICATION STATUS: ${response.statusCode}');
 
     debugPrint('DEBUG NOTIFICATION BODY: ${response.body}');
+
+    if (response.statusCode == 401) {
+      await handleUnauthorized();
+      return [];
+    }
 
     if (response.statusCode == 200) {
       final dynamic decoded = jsonDecode(response.body);
@@ -375,6 +424,11 @@ class ApiService {
     debugPrint('DEBUG PROJECT ASSIGNMENTS STATUS: ${response.statusCode}');
     debugPrint('DEBUG PROJECT ASSIGNMENTS BODY: ${response.body}');
 
+    if (response.statusCode == 401) {
+      await handleUnauthorized();
+      throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+    }
+
     if (response.statusCode == 200) {
       final dynamic decoded = jsonDecode(response.body);
 
@@ -400,6 +454,11 @@ class ApiService {
       debugPrint('MARK NOTIFICATION READ STATUS: ${response.statusCode}');
 
       debugPrint('MARK NOTIFICATION READ BODY: ${response.body}');
+
+      if (response.statusCode == 401) {
+        await handleUnauthorized();
+        return;
+      }
 
       if (response.statusCode != 200) {
         throw Exception('Gagal menandai notifikasi sebagai sudah dibaca.');

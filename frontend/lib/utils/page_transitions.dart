@@ -31,6 +31,10 @@ class FastPageTransitionsBuilder extends PageTransitionsBuilder {
 
 /// Navigation helpers for ultra-fast, responsive routing (sat-set like Instagram)
 class AppNavigator {
+  /// Global navigator key untuk navigasi tanpa BuildContext (misalnya dari ApiService saat 401)
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   /// Tab switching (Bottom Navigation Bar): Instant transition (0ms)
   static Future<T?> pushTabReplacement<T>(BuildContext context, Widget page) {
     return Navigator.pushReplacement<T, dynamic>(

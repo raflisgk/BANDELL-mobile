@@ -12,7 +12,9 @@ import '../../services/api_service.dart';
 import '../../services/secure_credential_service.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final bool sessionExpired;
+
+  const LoginPage({super.key, this.sessionExpired = false});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -45,6 +47,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    if (widget.sessionExpired) {
+      _errorMessage = 'Sesi Anda telah berakhir. Silakan login kembali.';
+    }
     _usernameFocusNode.addListener(_onFocusChange);
     _passwordFocusNode.addListener(_onFocusChange);
     _usernameController.addListener(_clearErrorOnTyping);

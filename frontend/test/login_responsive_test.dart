@@ -30,5 +30,30 @@ void main() {
       expect(find.text('Password'), findsOneWidget);
       expect(find.text('Login'), findsOneWidget);
     });
+
+    testWidgets('Renders session expired error message when sessionExpired is true', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(390, 844),
+          minTextAdapt: true,
+          splitScreenMode: true,
+          builder: (context, child) => const MaterialApp(
+            home: LoginPage(sessionExpired: true),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text('Sesi Anda telah berakhir. Silakan login kembali.'),
+        findsOneWidget,
+      );
+    });
   });
 }

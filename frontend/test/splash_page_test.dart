@@ -19,6 +19,22 @@ void main() {
       expect(scaffold.backgroundColor, Colors.white);
       expect(find.byType(Lottie), findsOneWidget);
     });
+
+    testWidgets('navigates to custom nextPage after splash duration',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SplashPage(
+            nextPage: Scaffold(body: Text('Custom Next Page')),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 2800));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Custom Next Page'), findsOneWidget);
+    });
   });
 }
 

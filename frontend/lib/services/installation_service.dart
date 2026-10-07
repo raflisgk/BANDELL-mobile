@@ -120,6 +120,11 @@ class InstallationService {
       debugPrint('INSTALLATION STATUS: ${response.statusCode}');
       debugPrint('INSTALLATION RESPONSE: ${response.body}');
 
+      if (response.statusCode == 401) {
+        await ApiService.handleUnauthorized();
+        throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+      }
+
       Map<String, dynamic> responseData;
       try {
         responseData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -142,6 +147,9 @@ class InstallationService {
       );
     } catch (e) {
       debugPrint('createInstallation error caught: $e');
+      if (e is ApiException && e.statusCode == 401) {
+        rethrow;
+      }
       if (!bypassOfflineQueue &&
           (e is SocketException ||
               e is TimeoutException ||
@@ -170,6 +178,11 @@ class InstallationService {
         .timeout(const Duration(seconds: 10));
 
     debugPrint('DETAIL STATUS: ${response.statusCode}');
+
+    if (response.statusCode == 401) {
+      await ApiService.handleUnauthorized();
+      throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+    }
 
     if (response.statusCode == 404) {
       return null;
@@ -291,6 +304,11 @@ class InstallationService {
         await request.send().timeout(const Duration(seconds: 15));
     final response = await http.Response.fromStream(streamedResponse);
 
+    if (response.statusCode == 401) {
+      await ApiService.handleUnauthorized();
+      throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+    }
+
     Map<String, dynamic> responseData = {};
     try {
       responseData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -321,6 +339,11 @@ class InstallationService {
           headers: ApiService.defaultHeaders,
         )
         .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 401) {
+      await ApiService.handleUnauthorized();
+      throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+    }
 
     Map<String, dynamic> responseData = {};
     try {
@@ -401,6 +424,11 @@ class InstallationService {
 
       debugPrint('HISTORY STATUS: ${response.statusCode}');
 
+      if (response.statusCode == 401) {
+        await ApiService.handleUnauthorized();
+        throw const ApiException('Sesi login telah berakhir.', statusCode: 401);
+      }
+
       Map<String, dynamic> responseData = {};
       try {
         responseData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -435,6 +463,9 @@ class InstallationService {
         ),
       );
     } catch (e) {
+      if (e is ApiException && e.statusCode == 401) {
+        rethrow;
+      }
       debugPrint('getHistory network error: $e. Using Storage HP fallback.');
       final fallbackJson = await LocalCacheService.getHistoryJson(
         userId: userId,

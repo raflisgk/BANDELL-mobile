@@ -1,9 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../models/user_model.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/secure_credential_service.dart';
+import '../area_operasional/area_operasional_page.dart';
 import '../login/login_page.dart';
 
 class SplashPage extends StatefulWidget {
@@ -24,13 +30,45 @@ class _SplashPageState extends State<SplashPage> {
     _navigationTimer = Timer(const Duration(milliseconds: 2800), _goToNextPage);
   }
 
-  void _goToNextPage() {
+  Future<void> _goToNextPage() async {
+    if (!mounted) return;
+
+    Widget targetPage = widget.nextPage ?? const LoginPage();
+
+    if (widget.nextPage == null) {
+      try {
+        final token =
+            ApiService.authToken ?? await SecureCredentialService.getAuthToken();
+        final isSessionActive =
+            await SecureCredentialService.isSessionActive();
+
+        if (token != null && token.isNotEmpty && isSessionActive) {
+          ApiService.setAuthToken(token);
+
+          if (AuthService.currentUser == null) {
+            final userData = await SecureCredentialService.getUserData();
+            if (userData != null && userData.isNotEmpty) {
+              final decoded = jsonDecode(userData);
+              if (decoded is Map<String, dynamic>) {
+                AuthService.currentUser = UserModel.fromJson(decoded);
+              }
+            }
+          }
+
+          if (AuthService.currentUser != null) {
+            targetPage = const AreaOperasionalPage();
+          }
+        }
+      } catch (e) {
+        debugPrint('Error restoring session in splash: $e');
+      }
+    }
+
     if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            widget.nextPage ?? const LoginPage(),
+        pageBuilder: (context, animation, secondaryAnimation) => targetPage,
         transitionDuration: const Duration(milliseconds: 350),
         reverseTransitionDuration: const Duration(milliseconds: 250),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
