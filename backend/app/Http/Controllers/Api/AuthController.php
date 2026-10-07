@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -24,21 +25,24 @@ class AuthController extends Controller
         $isPasswordValid = false;
 
         if ($user && !empty($user->password)) {
-            // 1. Cek Bcrypt dari hash SHA-256 (format standar sistem)
+            // 1. Cek Bcrypt standar Laravel / Filament / Seeder (plaintext input)
             if (Hash::check($inputPassword, $user->password)) {
                 $isPasswordValid = true;
             }
-            // 2. Cek apakah di DB tersimpan string raw SHA-256
-            elseif ($user->password === $inputPassword) {
-                $isPasswordValid = true;
-            }
-            // 3. Cek jika request dikirim via plaintext biasa (di-hash SHA-256 lalu dicocokkan)
+            // 2. Cek Bcrypt dari hash SHA-256 (format akun lama seperti Rafli)
             elseif (Hash::check(hash('sha256', $inputPassword), $user->password)) {
                 $isPasswordValid = true;
+                // Otomatis sinkronkan password ke format Bcrypt standar
+                DB::table('users')->where('id', $user->id)->update([
+                    'password' => Hash::make($inputPassword),
+                ]);
             }
-            // 4. Cek langsung plaintext lama jika belum di-hash SHA-256
-            elseif (Hash::check($inputPassword, $user->password)) {
+            // 3. Cek jika di DB tersimpan string raw SHA-256
+            elseif ($user->password === hash('sha256', $inputPassword) || $user->password === $inputPassword) {
                 $isPasswordValid = true;
+                DB::table('users')->where('id', $user->id)->update([
+                    'password' => Hash::make($inputPassword),
+                ]);
             }
         }
 

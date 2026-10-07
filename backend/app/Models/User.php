@@ -51,9 +51,7 @@ class User extends Authenticatable
         if (str_starts_with($value, '$2y$') || str_starts_with($value, '$2a$') || str_starts_with($value, '$argon2')) {
             $this->attributes['password'] = $value;
         } else {
-            // Jika string belum berupa SHA-256 (bukan 64 hex characters), hash SHA-256 dulu
-            $sha256 = (strlen($value) === 64 && ctype_xdigit($value)) ? $value : hash('sha256', $value);
-            $this->attributes['password'] = Hash::make($sha256);
+            $this->attributes['password'] = Hash::make($value);
         }
     }
 

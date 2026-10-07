@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -222,15 +221,12 @@ class ApiService {
   }) async {
     final http.Response response;
 
-    // Hash password menggunakan SHA-256 sebelum dikirim melalui API
-    final hashedPassword = sha256.convert(utf8.encode(password)).toString();
-
     try {
       response = await http
           .post(
             Uri.parse('$baseUrl/login'),
             headers: defaultHeaders,
-            body: jsonEncode({'email': email, 'password': hashedPassword}),
+            body: jsonEncode({'email': email, 'password': password}),
           )
           .timeout(const Duration(seconds: 15));
     } on TimeoutException catch (e) {
