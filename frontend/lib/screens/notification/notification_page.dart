@@ -9,6 +9,7 @@ import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import 'notification_card.dart';
 
+import 'package:lottie/lottie.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class NotificationPage extends StatefulWidget {
@@ -278,18 +279,23 @@ class _NotificationPageState extends State<NotificationPage> {
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                          vertical: 80,
-                          horizontal: 20,
+                          vertical: 60,
+                          horizontal: 24,
                         ),
                         child: Column(
-                          children: const [
-                            Icon(
-                              Icons.notifications_none_rounded,
-                              size: 54,
-                              color: AppColors.textSubtle,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 180,
+                              height: 180,
+                              child: Lottie.asset(
+                                'assets/animations/empty_notification.json',
+                                fit: BoxFit.contain,
+                                repeat: true,
+                              ),
                             ),
-                            SizedBox(height: 14),
-                            Text(
+                            const SizedBox(height: 16),
+                            const Text(
                               'Belum Ada Notifikasi',
                               style: TextStyle(
                                 fontSize: 16,
@@ -297,8 +303,8 @@ class _NotificationPageState extends State<NotificationPage> {
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            SizedBox(height: 6),
-                            Text(
+                            const SizedBox(height: 6),
+                            const Text(
                               'Notifikasi penugasan dari admin akan muncul di sini.',
                               textAlign: TextAlign.center,
                               style: TextStyle(

@@ -241,11 +241,14 @@ class NotificationCard extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                timeText,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textMuted,
+                              Expanded(
+                                child: Text(
+                                  timeText,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textMuted,
+                                  ),
                                 ),
                               ),
                             ],
