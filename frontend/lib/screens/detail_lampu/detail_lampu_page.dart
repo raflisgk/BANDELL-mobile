@@ -12,6 +12,7 @@ import '../edit_data_lampu/edit_data_lampu_page.dart';
 import 'detail_lampu_cards.dart';
 import 'foto_dokumentasi_card.dart';
 import '../../services/auth_service.dart';
+import '../../services/notification_service.dart';
 
 class DetailLampuPage extends StatefulWidget {
   final int? idInstallation;
@@ -33,6 +34,7 @@ class DetailLampuPage extends StatefulWidget {
   final String? createdAt;
   final String? updatedAt;
   final String? createdBy;
+  final String? noteByAdmin;
 
   const DetailLampuPage({
     super.key,
@@ -55,6 +57,7 @@ class DetailLampuPage extends StatefulWidget {
     this.createdAt,
     this.updatedAt,
     this.createdBy,
+    this.noteByAdmin,
   });
 
   @override
@@ -85,6 +88,55 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
       }
     } catch (e) {
       debugPrint('Error refreshing installation detail: $e');
+    }
+
+    // Fallback: Jika berstatus Ditolak dan note_by_admin masih kosong,
+    // ambil catatan penolakan dari notifikasi lokal/API
+    if (mounted && _isDitolak && _effectiveNoteByAdmin == null) {
+      try {
+        final notifs = await NotificationService().getNotifications();
+        for (final n in notifs) {
+          final isMatch = (n.installationId == id ||
+                  n.installation?.idInstallation == id) &&
+              (n.noteByAdmin != null || n.notes != null || n.message != null);
+          if (isMatch) {
+            final foundNote = n.noteByAdmin ?? n.notes ?? n.message;
+            if (foundNote != null && foundNote.trim().isNotEmpty && mounted) {
+              setState(() {
+                final base = _currentInstallation;
+                if (base != null) {
+                  _currentInstallation = InstallationModel(
+                    idInstallation: base.idInstallation,
+                    idProject: base.idProject,
+                    idUser: base.idUser,
+                    idArea: base.idArea,
+                    districtName: base.districtName,
+                    lampTypeId: base.lampTypeId,
+                    idLcu: base.idLcu,
+                    lampCode: base.lampCode,
+                    lampType: base.lampType,
+                    wattage: base.wattage,
+                    status: base.status,
+                    latitude: base.latitude,
+                    longitude: base.longitude,
+                    panelCode: base.panelCode,
+                    photos: base.photos,
+                    inputMethod: base.inputMethod,
+                    photoUrl: base.photoUrl,
+                    notes: base.notes,
+                    noteByAdmin: foundNote,
+                    verificationStatus: base.verificationStatus,
+                    installedAt: base.installedAt,
+                    createdAt: base.createdAt,
+                    updatedAt: base.updatedAt,
+                  );
+                }
+              });
+              break;
+            }
+          }
+        }
+      } catch (_) {}
     }
   }
 
@@ -146,6 +198,33 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         status == 'verified' ||
         verificationStatus == 'terverifikasi' ||
         verificationStatus == 'verified';
+  }
+
+  bool get _isDitolak {
+    final inst = _effectiveInstallation;
+    final status = (inst?.status ?? widget.status ?? '').toLowerCase().trim();
+    final verificationStatus =
+        (inst?.verificationStatus ?? '').toLowerCase().trim();
+    return status == 'ditolak' ||
+        status == 'rejected' ||
+        verificationStatus == 'ditolak' ||
+        verificationStatus == 'rejected';
+  }
+
+  String? get _effectiveNoteByAdmin {
+    final raw = _effectiveInstallation?.noteByAdmin ?? widget.noteByAdmin;
+    if (raw != null &&
+        raw.trim().isNotEmpty &&
+        raw.trim() != '-' &&
+        raw.trim().toLowerCase() != 'null') {
+      return raw
+          .replaceFirst(
+            RegExp(r'^(catatan:\s*|Catatan:\s*)', caseSensitive: false),
+            '',
+          )
+          .trim();
+    }
+    return null;
   }
 
   String? get _effectivePanelCode =>
@@ -368,6 +447,14 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 12),
+
+                      // Card Alasan Penolakan dari Admin (Paling Atas jika status Ditolak)
+                      if (_isDitolak) ...[
+                        CatatanPenolakanCard(
+                          note: _effectiveNoteByAdmin,
+                        ),
+                        const SizedBox(height: 14),
+                      ],
 
                       // Breadcrumb Row
                       Row(

@@ -321,6 +321,21 @@ class InstallationController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        if ($installations->isNotEmpty()) {
+            $notes = DB::table('notifications')
+                ->whereIn('installation_id', $installations->pluck('id'))
+                ->whereIn(DB::raw('LOWER(type)'), ['rejected', 'rejection', 'ditolak'])
+                ->orderByDesc('id')
+                ->get()
+                ->unique('installation_id')
+                ->keyBy('installation_id');
+
+            $installations->each(function ($inst) use ($notes) {
+                $notif = $notes->get($inst->id);
+                $inst->setAttribute('note_by_admin', $notif ? ($notif->note_by_admin ?? $notif->message) : null);
+            });
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Data pemasangan berhasil diambil.',
@@ -337,6 +352,14 @@ class InstallationController extends Controller
             'lampType',
             'photos',
         ]);
+
+        $notif = DB::table('notifications')
+            ->where('installation_id', $installation->id)
+            ->whereIn(DB::raw('LOWER(type)'), ['rejected', 'rejection', 'ditolak'])
+            ->orderByDesc('id')
+            ->first();
+
+        $installation->setAttribute('note_by_admin', $notif ? ($notif->note_by_admin ?? $notif->message) : null);
 
         return response()->json([
             'success' => true,

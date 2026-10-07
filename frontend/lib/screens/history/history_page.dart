@@ -479,6 +479,7 @@ class _HistoryPageState extends State<HistoryPage> {
         photos: item.installation?.photos,
         inputMethod: item.inputMethod,
         panelCode: item.panelCode,
+        noteByAdmin: item.installation?.noteByAdmin ?? item.noteByAdmin,
       ),
     );
 

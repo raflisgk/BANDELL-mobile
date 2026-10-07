@@ -720,3 +720,128 @@ class InformasiRecordCard extends StatelessWidget {
     );
   }
 }
+
+// ==========================================
+// 6. CATATAN PENOLAKAN CARD (ALASAN PENOLAKAN)
+// ==========================================
+class CatatanPenolakanCard extends StatelessWidget {
+  final String? note;
+
+  const CatatanPenolakanCard({
+    super.key,
+    this.note,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveNote = (note != null && note!.trim().isNotEmpty && note != '-')
+        ? note!.trim()
+        : 'Tidak ada catatan penolakan spesifik dari admin.';
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.statusDitolakBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.statusDitolakBorder,
+          width: 1.2,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12DC2626),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: AppColors.statusDitolakCircleBg,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.cancel_rounded,
+                  color: AppColors.statusDitolakText,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'STATUS: DITOLAK',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.statusDitolakText,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      'Catatan dari Admin',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textHeading,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.statusDitolakBorder,
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 3.5,
+                  height: 20,
+                  margin: const EdgeInsets.only(right: 10, top: 1),
+                  decoration: BoxDecoration(
+                    color: AppColors.statusDitolakText,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    effectiveNote,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

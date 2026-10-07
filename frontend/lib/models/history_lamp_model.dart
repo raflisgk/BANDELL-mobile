@@ -73,6 +73,8 @@ class HistoryLampModel {
         instStatus == 'rejected';
   }
 
+  String? get noteByAdmin => installation?.noteByAdmin;
+
   factory HistoryLampModel.fromJson(Map<String, dynamic> json) {
     String lampTypeName = '';
     if (json['lamp_type'] is Map) {

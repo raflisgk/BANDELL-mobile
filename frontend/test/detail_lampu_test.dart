@@ -78,5 +78,59 @@ void main() {
       expect(find.text('Edit Data'), findsWidgets);
       expect(find.text('Catatan tiang'), findsOneWidget);
     });
+
+    testWidgets('Renders CatatanPenolakanCard when status is Ditolak',
+        (WidgetTester tester) async {
+      final model = InstallationModel(
+        idInstallation: 11,
+        idArea: 1,
+        lampCode: 'LP-REJECT-001',
+        lampType: 'LED 100W',
+        status: 'Ditolak',
+        verificationStatus: 'Ditolak',
+        noteByAdmin: 'Foto tiang miring dan buram, tolong perbaiki.',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DetailLampuPage(
+            idInstallation: 11,
+            installation: model,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('STATUS: DITOLAK'), findsOneWidget);
+      expect(find.text('Catatan dari Admin'), findsOneWidget);
+      expect(find.text('Foto tiang miring dan buram, tolong perbaiki.'),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'Does NOT render CatatanPenolakanCard when status is Terverifikasi',
+        (WidgetTester tester) async {
+      final model = InstallationModel(
+        idInstallation: 12,
+        idArea: 1,
+        lampCode: 'LP-OK-001',
+        lampType: 'LED 100W',
+        status: 'Terverifikasi',
+        verificationStatus: 'Terverifikasi',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DetailLampuPage(
+            idInstallation: 12,
+            installation: model,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Catatan dari Admin'), findsNothing);
+      expect(find.text('STATUS: DITOLAK'), findsNothing);
+    });
   });
 }

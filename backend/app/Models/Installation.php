@@ -14,6 +14,10 @@ class Installation extends Model
 
     protected $table = 'installations';
 
+    protected $appends = [
+        'note_by_admin',
+    ];
+
     protected $fillable = [
         'project_id',
         'user_id',
@@ -30,6 +34,25 @@ class Installation extends Model
         'code_panel',
         'installed_at',
     ];
+
+    public function getNoteByAdminAttribute(): ?string
+    {
+        if (array_key_exists('note_by_admin', $this->attributes)) {
+            return $this->attributes['note_by_admin'];
+        }
+
+        if (!$this->id) {
+            return null;
+        }
+
+        $notif = DB::table('notifications')
+            ->where('installation_id', $this->id)
+            ->whereIn(DB::raw('LOWER(type)'), ['rejected', 'rejection', 'ditolak'])
+            ->orderByDesc('id')
+            ->first();
+
+        return $notif ? ($notif->note_by_admin ?? $notif->message) : null;
+    }
 
     protected function casts(): array
     {

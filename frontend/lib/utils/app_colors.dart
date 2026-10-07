@@ -152,9 +152,9 @@ class AppColors {
   // --- STATUS BADGE (Riwayat / Notifikasi / Kartu Lampu) ---
   // Status: Ditolak
   static const Color statusDitolakText = Color(0xFFDC2626);
-  static const Color statusDitolakBg = Color(0xFFFEE2E2);
-  static const Color statusDitolakBorder = Color(0xFFFECACA);
-  static const Color statusDitolakCircleBg = Color(0xFFFDE2E2);
+  static const Color statusDitolakBg = Color(0xFFFEF2F2);
+  static const Color statusDitolakBorder = Color(0xFFFCA5A5);
+  static const Color statusDitolakCircleBg = Color(0xFFFEE2E2);
 
   // Status: Terverifikasi / Selesai
   static const Color statusTerverifikasiText = Color(0xFF15803D);
