@@ -7,8 +7,9 @@ import 'package:mobile_teknisi/widgets/dokumentasi.dart';
 
 void main() {
   group('EditDataLampuPage UI Tests', () {
-    testWidgets('Renders Catatan between EditLampuType and Dokumentasi',
-        (WidgetTester tester) async {
+    testWidgets('Renders Catatan between EditLampuType and Dokumentasi', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: EditDataLampuPage(
@@ -39,8 +40,9 @@ void main() {
       expect(dokumentasiRect.top, greaterThanOrEqualTo(catatanRect.bottom));
     });
 
-    testWidgets('When no photos are uploaded, no photo items are shown',
-        (WidgetTester tester) async {
+    testWidgets('When no photos are uploaded, no photo items are shown', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: EditDataLampuPage(
@@ -58,26 +60,32 @@ void main() {
       expect(find.byIcon(Icons.close_rounded), findsNothing);
     });
 
-    testWidgets('When photos are uploaded, photo items are shown with remove buttons',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: EditDataLampuPage(
-            isEdit: true,
-            initialKodeLampu: 'LP-TEST-003',
-            initialPhotos: ['https://example.com/lamp1.jpg', 'https://example.com/lamp2.jpg'],
+    testWidgets(
+      'When photos are uploaded, photo items are shown with remove buttons',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: EditDataLampuPage(
+              isEdit: true,
+              initialKodeLampu: 'LP-TEST-003',
+              initialPhotos: [
+                'https://example.com/lamp1.jpg',
+                'https://example.com/lamp2.jpg',
+              ],
+            ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      expect(find.byType(Dokumentasi), findsOneWidget);
-      // Two close/remove icons for the two photos
-      expect(find.byIcon(Icons.close_rounded), findsNWidgets(2));
-    });
+        expect(find.byType(Dokumentasi), findsOneWidget);
+        // Two close/remove icons for the two photos
+        expect(find.byIcon(Icons.close_rounded), findsNWidgets(2));
+      },
+    );
 
-    testWidgets('Tapping remove button shows confirmation dialog',
-        (WidgetTester tester) async {
+    testWidgets('Tapping remove button shows confirmation dialog', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: EditDataLampuPage(
@@ -99,7 +107,10 @@ void main() {
 
       // Verify confirmation dialog appears
       expect(find.text('Hapus Foto?'), findsOneWidget);
-      expect(find.text('Apakah Anda yakin ingin menghapus foto dokumentasi ini?'), findsOneWidget);
+      expect(
+        find.text('Apakah Anda yakin ingin menghapus foto dokumentasi ini?'),
+        findsOneWidget,
+      );
       expect(find.widgetWithText(TextButton, 'Batal'), findsOneWidget);
       expect(find.text('Hapus'), findsOneWidget);
 
@@ -109,8 +120,9 @@ void main() {
       expect(find.text('Hapus Foto?'), findsNothing);
     });
 
-    testWidgets('Tapping photo thumbnail opens preview dialog',
-        (WidgetTester tester) async {
+    testWidgets('Tapping photo thumbnail opens preview dialog', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: EditDataLampuPage(
@@ -138,6 +150,70 @@ void main() {
       await tester.tap(find.byIcon(Icons.close_rounded).last);
       await tester.pumpAndSettle();
       expect(find.text('Preview Foto'), findsNothing);
+    });
+
+    testWidgets('Empty Kode Lampu triggers validation error and prevents saving',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EditDataLampuPage(
+            isEdit: true,
+            idInstallation: 1,
+            initialKodeLampu: '',
+            initialLatitude: '-6.2088',
+            initialLongitude: '106.8456',
+            initialPhotos: [],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final saveBtn = find.text('Simpan Perubahan');
+      await tester.ensureVisible(saveBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(saveBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kode lampu wajib diisi.'), findsOneWidget);
+    });
+
+    testWidgets('Kode Lampu is limited to maximum 12 characters when typing',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EditDataLampuPage(
+            isEdit: true,
+            idInstallation: 1,
+            initialKodeLampu: '',
+            initialLatitude: '-6.2088',
+            initialLongitude: '106.8456',
+            initialPhotos: [],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, '123456789012345');
+      await tester.pump();
+
+      expect(find.text('123456789012'), findsOneWidget);
+    });
+
+    testWidgets('Required asterisk (*) is displayed next to Kode Lampu',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: EditDataLampuPage(
+            isEdit: true,
+            initialKodeLampu: 'LP-TEST-006',
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Kode Lampu'), findsOneWidget);
+      expect(find.text('*'), findsWidgets);
     });
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../utils/app_colors.dart';
 
@@ -8,6 +9,7 @@ class KodePanel extends StatelessWidget {
   final String? title;
   final String? subtitle;
   final bool isOptional;
+  final List<TextInputFormatter>? inputFormatters;
 
   const KodePanel({
     super.key,
@@ -16,6 +18,7 @@ class KodePanel extends StatelessWidget {
     this.title,
     this.subtitle,
     this.isOptional = true,
+    this.inputFormatters,
   });
 
   @override
@@ -94,6 +97,9 @@ class KodePanel extends StatelessWidget {
           child: TextField(
             controller: controller,
             focusNode: focusNode,
+            inputFormatters: inputFormatters ?? [
+              LengthLimitingTextInputFormatter(12),
+            ],
             style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 14,

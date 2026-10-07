@@ -80,9 +80,14 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
   final List<String> _photos = [];
   String? _coordinateError;
 
+  final GlobalKey _kodeLampuSectionKey = GlobalKey();
   final GlobalKey _coordinateSectionKey = GlobalKey();
   final GlobalKey _panelCodeSectionKey = GlobalKey();
   final ScrollController _scrollController = ScrollController();
+
+  AnimationController? _lampCodeShakeController;
+  Animation<double>? _lampCodeShakeAnimation;
+  bool _isLampCodeError = false;
 
   AnimationController? _locationShakeController;
   Animation<double>? _locationShakeAnimation;
@@ -91,10 +96,15 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
   bool _isLongitudeExceeded = false;
   Timer? _longitudeErrorTimer;
 
-  AnimationController? _panelCodeShakeController;
-  Animation<double>? _panelCodeShakeAnimation;
-
   void _initShakeAnimation() {
+    _lampCodeShakeController ??= AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+    _lampCodeShakeAnimation ??= ShakeAnimationHelper.createShakeAnimation(
+      _lampCodeShakeController!,
+    );
+
     _locationShakeController ??= AnimationController(
       duration: const Duration(milliseconds: 350),
       vsync: this,
@@ -102,14 +112,16 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
     _locationShakeAnimation ??= ShakeAnimationHelper.createShakeAnimation(
       _locationShakeController!,
     );
+  }
 
-    _panelCodeShakeController ??= AnimationController(
-      duration: const Duration(milliseconds: 350),
-      vsync: this,
-    );
-    _panelCodeShakeAnimation ??= ShakeAnimationHelper.createShakeAnimation(
-      _panelCodeShakeController!,
-    );
+  AnimationController get _effectiveLampCodeShakeController {
+    if (_lampCodeShakeController == null) _initShakeAnimation();
+    return _lampCodeShakeController!;
+  }
+
+  Animation<double> get _effectiveLampCodeShakeAnimation {
+    if (_lampCodeShakeAnimation == null) _initShakeAnimation();
+    return _lampCodeShakeAnimation!;
   }
 
   AnimationController get _effectiveLocationShakeController {
@@ -122,14 +134,12 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
     return _locationShakeAnimation!;
   }
 
-  AnimationController get _effectivePanelCodeShakeController {
-    if (_panelCodeShakeController == null) _initShakeAnimation();
-    return _panelCodeShakeController!;
-  }
-
-  Animation<double> get _effectivePanelCodeShakeAnimation {
-    if (_panelCodeShakeAnimation == null) _initShakeAnimation();
-    return _panelCodeShakeAnimation!;
+  void _onKodeLampuChanged() {
+    if (_isLampCodeError && _kodeLampuController.text.trim().isNotEmpty) {
+      setState(() {
+        _isLampCodeError = false;
+      });
+    }
   }
 
   void _onLatitudeChanged() {
@@ -230,6 +240,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
     _longitudeController.addListener(_onCoordinateChanged);
     _latitudeController.addListener(_onLatitudeChanged);
     _longitudeController.addListener(_onLongitudeChanged);
+    _kodeLampuController.addListener(_onKodeLampuChanged);
 
     if (widget.initialPhotos != null && widget.initialPhotos!.isNotEmpty) {
       _photos.addAll(widget.initialPhotos!.where((p) => p.trim().isNotEmpty));
@@ -314,13 +325,14 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
   void dispose() {
     _latitudeErrorTimer?.cancel();
     _longitudeErrorTimer?.cancel();
+    _lampCodeShakeController?.dispose();
     _locationShakeController?.dispose();
-    _panelCodeShakeController?.dispose();
 
     _latitudeController.removeListener(_onCoordinateChanged);
     _longitudeController.removeListener(_onCoordinateChanged);
     _latitudeController.removeListener(_onLatitudeChanged);
     _longitudeController.removeListener(_onLongitudeChanged);
+    _kodeLampuController.removeListener(_onKodeLampuChanged);
 
     _kodeLampuController.dispose();
     _panelCodeController.dispose();
@@ -385,6 +397,29 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
       return;
     }
 
+    final lampCode = _kodeLampuController.text.trim();
+    if (lampCode.isEmpty) {
+      setState(() {
+        _isLampCodeError = true;
+      });
+      _effectiveLampCodeShakeController.forward(from: 0.0);
+      CustomFeedback.showError(context, 'Kode lampu wajib diisi.');
+      _kodeLampuFocusNode.requestFocus();
+      _scrollToKey(_kodeLampuSectionKey);
+      Future.delayed(const Duration(milliseconds: 380), () {
+        if (mounted) {
+          _effectiveLampCodeShakeController.forward(from: 0.0);
+        }
+      });
+      return;
+    } else {
+      if (_isLampCodeError) {
+        setState(() {
+          _isLampCodeError = false;
+        });
+      }
+    }
+
     final latitude = _latitudeController.text.trim();
     final longitude = _longitudeController.text.trim();
 
@@ -406,14 +441,6 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
           _coordinateError = null;
         });
       }
-    }
-
-    if (_panelCodeController.text.trim().length > 12) {
-      _effectivePanelCodeShakeController.forward(from: 0.0);
-      CustomFeedback.showError(context, 'Kode panel maksimal 12 karakter.');
-      _panelCodeFocusNode.requestFocus();
-      _scrollToKey(_panelCodeSectionKey);
-      return;
     }
 
     setState(() {
@@ -556,16 +583,42 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // 1. KODE LAMPU
-                                _buildSectionHeader(
-                                  icon: Icons.lightbulb_outline_rounded,
-                                  title: 'Kode Lampu',
-                                  subtitle: 'Masukkan kode lampu',
-                                ),
-                                const SizedBox(height: 12),
-                                _buildCustomTextField(
-                                  controller: _kodeLampuController,
-                                  focusNode: _kodeLampuFocusNode,
-                                  hint: 'Masukkan kode lampu',
+                                Column(
+                                  key: _kodeLampuSectionKey,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildSectionHeader(
+                                      icon: Icons.lightbulb_outline_rounded,
+                                      title: 'Kode Lampu',
+                                      subtitle: 'Masukkan kode lampu',
+                                      isRequired: true,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ShakeWidget(
+                                      animation:
+                                          _effectiveLampCodeShakeAnimation,
+                                      child: _buildCustomTextField(
+                                        controller: _kodeLampuController,
+                                        focusNode: _kodeLampuFocusNode,
+                                        hint: 'Masukkan kode lampu',
+                                        inputFormatters: [
+                                          LengthLimitingTextInputFormatter(12),
+                                        ],
+                                        hasError: _isLampCodeError,
+                                      ),
+                                    ),
+                                    if (_isLampCodeError) ...[
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Kode lampu wajib diisi',
+                                        style: TextStyle(
+                                          color: AppColors.error,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
 
                                 const SizedBox(height: 20),
@@ -576,13 +629,10 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
                                 const SizedBox(height: 20),
 
                                 // 2. KODE PANEL
-                                ShakeWidget(
-                                  animation: _effectivePanelCodeShakeAnimation,
-                                  child: KodePanel(
-                                    key: _panelCodeSectionKey,
-                                    controller: _panelCodeController,
-                                    focusNode: _panelCodeFocusNode,
-                                  ),
+                                KodePanel(
+                                  key: _panelCodeSectionKey,
+                                  controller: _panelCodeController,
+                                  focusNode: _panelCodeFocusNode,
                                 ),
 
                                 const SizedBox(height: 20),
@@ -701,6 +751,7 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
     required IconData icon,
     required String title,
     required String subtitle,
+    bool isRequired = false,
   }) {
     return Row(
       children: [
@@ -717,13 +768,31 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isRequired) ...[
+                    const SizedBox(width: 4),
+                    const Text(
+                      '*',
+                      style: TextStyle(
+                        color: AppColors.error,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 2),
               Text(
@@ -745,6 +814,8 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
     required FocusNode focusNode,
     required String hint,
     IconData? prefixIcon,
+    List<TextInputFormatter>? inputFormatters,
+    bool hasError = false,
   }) {
     final isFocused = focusNode.hasFocus;
 
@@ -753,19 +824,26 @@ class _EditDataLampuPageState extends State<EditDataLampuPage>
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isFocused ? AppColors.borderFocused : AppColors.border,
-          width: isFocused ? 1.5 : 1.0,
+          color: hasError
+              ? AppColors.error
+              : (isFocused ? AppColors.borderFocused : AppColors.border),
+          width: (hasError || isFocused) ? 1.5 : 1.0,
         ),
       ),
       child: TextField(
         controller: controller,
         focusNode: focusNode,
+        inputFormatters: inputFormatters,
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(color: AppColors.hintColor, fontSize: 14),
           prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon, color: AppColors.iconColor, size: 20)
+              ? Icon(
+                  prefixIcon,
+                  color: hasError ? AppColors.error : AppColors.iconColor,
+                  size: 20,
+                )
               : null,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
