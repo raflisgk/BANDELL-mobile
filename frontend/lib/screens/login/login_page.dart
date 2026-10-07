@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -287,12 +288,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
-                                            // Shield Crest BANDELL Logo
+                                            // PILAR Logo
                                             SizedBox(
-                                              width: 90.r,
-                                              height: 90.r,
+                                              width: 125.r,
+                                              height: 125.r,
                                               child: Image.asset(
-                                                'assets/images/logo bandell 1.png',
+                                                'assets/images/logo_pilar.png',
                                                 fit: BoxFit.contain,
                                                 errorBuilder:
                                                     (
@@ -309,36 +310,25 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                                                   .circle,
                                                             ),
                                                         child: Icon(
-                                                          Icons.shield_outlined,
+                                                          Icons
+                                                              .lightbulb_outline,
                                                           color: Colors.white,
-                                                          size: 46.r,
+                                                          size: 58.r,
                                                         ),
                                                       );
                                                     },
                                               ),
                                             ),
-                                            SizedBox(height: 12.h),
+                                            SizedBox(height: 10.h),
 
-                                            // BANDELL Title Text
+                                            // PILAR Title Text (Google Fonts Poppins)
                                             Text(
-                                              'BANDELL',
-                                              style: TextStyle(
+                                              'PILAR',
+                                              style: GoogleFonts.poppins(
                                                 color: AppColors.primary,
-                                                fontSize: 26.sp,
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 1.0,
-                                              ),
-                                            ),
-                                            SizedBox(height: 4.h),
-
-                                            // Subtitle Text
-                                            Text(
-                                              'Silakan login untuk melanjutkan',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color: AppColors.primary,
-                                                fontSize: 13.5.sp,
-                                                fontWeight: FontWeight.w500,
+                                                fontSize: 34.sp,
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 4.0,
                                               ),
                                             ),
                                           ],
@@ -385,6 +375,17 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _buildErrorMessage(),
+
+                                    // Silakan Login Prompt Text (di atas textbox Email)
+                                    Text(
+                                      'Silakan login untuk melanjutkan',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white.withValues(alpha: 0.92),
+                                        fontSize: 12.5.sp,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    SizedBox(height: 12.h),
 
                                     // Email Field Container
                                     _buildInputFieldContainer(

@@ -24,7 +24,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('BANDELL'), findsOneWidget);
+      expect(find.text('PILAR'), findsOneWidget);
       expect(find.text('Silakan login untuk melanjutkan'), findsOneWidget);
       expect(find.text('Email'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);

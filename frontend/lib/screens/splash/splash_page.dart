@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lottie/lottie.dart';
 
-import '../../utils/app_colors.dart';
 import '../login/login_page.dart';
 
 class SplashPage extends StatefulWidget {
@@ -15,45 +15,13 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  late final Animation<double> _scaleAnimation;
-  late final Animation<double> _opacityAnimation;
-  late final Animation<double> _glowAnimation;
-
+class _SplashPageState extends State<SplashPage> {
   Timer? _navigationTimer;
 
   @override
   void initState() {
     super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.72,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
-      ),
-    );
-
-    _glowAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    _controller.forward();
-
-    _navigationTimer = Timer(const Duration(milliseconds: 2200), _goToNextPage);
+    _navigationTimer = Timer(const Duration(milliseconds: 2800), _goToNextPage);
   }
 
   void _goToNextPage() {
@@ -78,7 +46,6 @@ class _SplashPageState extends State<SplashPage>
   @override
   void dispose() {
     _navigationTimer?.cancel();
-    _controller.dispose();
     super.dispose();
   }
 
@@ -87,48 +54,25 @@ class _SplashPageState extends State<SplashPage>
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.splashButtonBg,
+        backgroundColor: Colors.white,
         body: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Opacity(
-                opacity: _opacityAnimation.value,
-                child: Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: Container(
-                    width: 82,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.white.withValues(
-                            alpha: 0.18 * _glowAnimation.value,
-                          ),
-                          blurRadius: 28 * _glowAnimation.value,
-                          spreadRadius: 4 * _glowAnimation.value,
-                        ),
-                      ],
-                    ),
-                    child: child,
-                  ),
-                ),
-              );
-            },
-
-            // Logo Bandell
-            child: Image.asset(
-              'assets/images/logo bandell 1.png',
-              width: 58,
-              height: 58,
+          child: Lottie.asset(
+            'assets/animations/splash_animation.json',
+            width: 220,
+            height: 250,
+            fit: BoxFit.contain,
+            repeat: false,
+            errorBuilder: (context, error, stackTrace) => Image.asset(
+              'assets/images/logo_pilar.png',
+              width: 90,
+              height: 90,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.shield_rounded, color: Colors.white, size: 48),
+                  const Icon(Icons.shield_rounded, color: Color(0xFF2878D7), size: 64),
             ),
           ),
         ),
@@ -136,3 +80,4 @@ class _SplashPageState extends State<SplashPage>
     );
   }
 }
+
