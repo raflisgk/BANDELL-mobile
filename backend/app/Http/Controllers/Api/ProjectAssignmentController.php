@@ -12,13 +12,26 @@ class ProjectAssignmentController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
+
+        // Cegah IDOR: Gunakan user yang sedang login, kecuali jika pemanggil adalah admin
+        $authUser = $request->user();
+        $targetUserId = ($authUser && !in_array($authUser->role, ['admin', 'superadmin']))
+            ? $authUser->id
+            : ($request->user_id ?? $authUser?->id);
+
+        if (!$targetUserId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Parameter user_id diperlukan.',
+            ], 422);
+        }
 
         $assignments = ProjectAssignment::with([
             'project.districts',
         ])
-            ->where('user_id', $request->user_id)
+            ->where('user_id', $targetUserId)
             ->orderBy('project_id')
             ->get();
 

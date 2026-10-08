@@ -14,10 +14,21 @@ class NotificationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
-        $userId = $validated['user_id'];
+        // Cegah IDOR: Gunakan user yang sedang login
+        $authUser = $request->user();
+        $userId = ($authUser && !in_array($authUser->role, ['admin', 'superadmin']))
+            ? $authUser->id
+            : ($request->user_id ?? $authUser?->id);
+
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Parameter user_id diperlukan.',
+            ], 422);
+        }
 
         if (!Schema::hasTable('notifications')) {
             return response()->json([
@@ -120,7 +131,7 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function markAsRead(int $id): JsonResponse
+    public function markAsRead(Request $request, int $id): JsonResponse
     {
         $notification = Notification::find($id);
 
@@ -129,6 +140,15 @@ class NotificationController extends Controller
                 'success' => false,
                 'message' => 'Notifikasi tidak ditemukan.',
             ], 404);
+        }
+
+        // Cegah IDOR: Pastikan notifikasi adalah milik user yang sedang login
+        $authUser = $request->user();
+        if ($authUser && (int) $notification->user_id !== (int) $authUser->id && !in_array($authUser->role, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak akses untuk notifikasi ini.',
+            ], 403);
         }
 
         $notification->update([

@@ -50,19 +50,21 @@ class InstallationController extends Controller
             ], 422);
         }
 
-        $installation = DB::transaction(function () use ($request, $validated) {
+        $authUserId = $request->user()?->id ?? $validated['user_id'];
+
+        $installation = DB::transaction(function () use ($request, $validated, $authUserId) {
             $installation = Installation::create([
                 'project_id' => $validated['project_id'],
-                'user_id' => $validated['user_id'],
+                'user_id' => $authUserId,
                 'lamp_type_id' => $validated['lamp_type_id'],
                 'district_id' => $validated['district_id'],
-                'id_lcu' => $validated['id_lcu'] ?? null,
+                'id_lcu' => isset($validated['id_lcu']) ? strip_tags(trim($validated['id_lcu'])) : null,
                 'input_method' => strtoupper($validated['input_method']),
                 'verification_status' => 'Menunggu Verifikasi',
                 'latitude' => $validated['latitude'],
                 'longitude' => $validated['longitude'],
-                'address' => $validated['address'] ?? null,
-                'code_panel' => $validated['code_panel'] ?? null,
+                'address' => isset($validated['address']) ? strip_tags(trim($validated['address'])) : null,
+                'code_panel' => isset($validated['code_panel']) ? strip_tags(trim($validated['code_panel'])) : null,
                 'installed_at' => $validated['installed_at']
                     ?? now()->toDateString(),
             ]);
@@ -109,6 +111,15 @@ class InstallationController extends Controller
                 'success' => false,
                 'message' => 'Data pemasangan yang sudah Terverifikasi tidak dapat diubah.',
             ], 422);
+        }
+
+        // Cegah IDOR: Pastikan hanya pemilik data (atau admin) yang dapat mengubah data ini
+        $authUserId = $request->user()?->id;
+        if ($authUserId && (int) $installation->user_id !== (int) $authUserId && !in_array($request->user()?->role, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak akses untuk mengubah data pemasangan ini.',
+            ], 403);
         }
 
         $validated = $request->validate([
@@ -207,18 +218,21 @@ class InstallationController extends Controller
                 'lamp_type_id' => $validated['lamp_type_id']
                     ?? $installation->lamp_type_id,
                 'district_id' => $districtId,
-                'id_lcu' => $validated['id_lcu']
-                    ?? $installation->id_lcu,
+                'id_lcu' => isset($validated['id_lcu'])
+                    ? strip_tags(trim($validated['id_lcu']))
+                    : $installation->id_lcu,
                 'input_method' => $validated['input_method']
                     ?? $installation->input_method,
                 'latitude' => $validated['latitude']
                     ?? $installation->latitude,
                 'longitude' => $validated['longitude']
                     ?? $installation->longitude,
-                'address' => $validated['address']
-                    ?? $installation->address,
-                'code_panel' => $validated['code_panel']
-                    ?? $installation->code_panel,
+                'address' => isset($validated['address'])
+                    ? strip_tags(trim($validated['address']))
+                    : $installation->address,
+                'code_panel' => isset($validated['code_panel'])
+                    ? strip_tags(trim($validated['code_panel']))
+                    : $installation->code_panel,
                 'installed_at' => (!empty($validated['installed_at']))
                     ? $validated['installed_at']
                     : $installation->installed_at,
@@ -368,7 +382,7 @@ class InstallationController extends Controller
         ]);
     }
 
-    public function destroy(Installation $installation): JsonResponse
+    public function destroy(Request $request, Installation $installation): JsonResponse
     {
         $currentStatus = strtolower((string) $installation->verification_status);
         if ($currentStatus === 'terverifikasi' || $currentStatus === 'verified') {
@@ -376,6 +390,15 @@ class InstallationController extends Controller
                 'success' => false,
                 'message' => 'Data pemasangan yang sudah Terverifikasi tidak dapat dihapus.',
             ], 422);
+        }
+
+        // Cegah IDOR: Pastikan hanya pemilik data (atau admin) yang dapat menghapus data ini
+        $authUserId = $request->user()?->id;
+        if ($authUserId && (int) $installation->user_id !== (int) $authUserId && !in_array($request->user()?->role, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak akses untuk menghapus data pemasangan ini.',
+            ], 403);
         }
 
         return DB::transaction(function () use ($installation) {

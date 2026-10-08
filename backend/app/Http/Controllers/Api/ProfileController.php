@@ -11,11 +11,15 @@ class ProfileController extends Controller
 {
     public function show(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
-        ]);
+        // Cegah IDOR: Prioritaskan user yang sedang login via token Sanctum
+        $user = $request->user();
 
-        $user = User::findOrFail($validated['user_id']);
+        if (!$user) {
+            $validated = $request->validate([
+                'user_id' => ['required', 'integer', 'exists:users,id'],
+            ]);
+            $user = User::findOrFail($validated['user_id']);
+        }
 
         return response()->json([
             'success' => true,
@@ -33,14 +37,26 @@ class ProfileController extends Controller
 
     public function updatePhone(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
-            'phone_number' => ['nullable', 'string', 'max:20'],
-        ]);
+        // Cegah IDOR: Hanya izinkan update pada akun yang sedang terautentikasi
+        $user = $request->user();
 
-        $user = User::findOrFail($validated['user_id']);
+        if ($user) {
+            $validated = $request->validate([
+                'user_id' => ['nullable', 'integer'],
+                'phone_number' => ['nullable', 'string', 'max:20'],
+            ]);
+            $phoneNumber = $validated['phone_number'] ?? null;
+        } else {
+            $validated = $request->validate([
+                'user_id' => ['required', 'integer', 'exists:users,id'],
+                'phone_number' => ['nullable', 'string', 'max:20'],
+            ]);
+            $user = User::findOrFail($validated['user_id']);
+            $phoneNumber = $validated['phone_number'] ?? null;
+        }
 
-        $user->phone = $validated['phone_number'] ?? null;
+        // Sanitasi input nomor telepon
+        $user->phone = $phoneNumber ? strip_tags(trim($phoneNumber)) : null;
         $user->save();
 
         return response()->json([

@@ -78,7 +78,8 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // 5. Jika semua kondisi terpenuhi: login berhasil
+        // 5. Jika semua kondisi terpenuhi: cabut token lama aplikasi agar tidak menumpuk, lalu buat token baru
+        $user->tokens()->where('name', 'mobile_app')->delete();
         $token = $user->createToken('mobile_app')->plainTextToken;
 
         return response()->json([
