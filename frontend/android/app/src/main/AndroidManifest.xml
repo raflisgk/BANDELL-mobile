@@ -13,7 +13,7 @@
         android:required="false" />
 
     <application
-        android:label="mobile_teknisi"
+        android:label="PILAR"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
