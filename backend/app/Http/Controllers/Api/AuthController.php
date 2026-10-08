@@ -97,6 +97,9 @@ class AuthController extends Controller
                 'phone' => $user->phone,
                 'phone_number' => $user->phone,
                 'placement_area' => $user->placement_area,
+                'total_installations' => \App\Models\Installation::where('user_id', $user->id)->count(),
+                'total_lamps' => \App\Models\Installation::where('user_id', $user->id)->count(),
+                'total_projects' => \App\Models\ProjectAssignment::where('user_id', $user->id)->distinct('project_id')->count(),
             ],
         ]);
     }

@@ -38,6 +38,12 @@ class AuthService {
           phone: data['phone_number']?.toString() ?? user.phone,
           placementArea:
               data['placement_area']?.toString() ?? user.placementArea,
+          totalInstallations: data['total_installations'] is int
+              ? data['total_installations']
+              : int.tryParse(data['total_installations']?.toString() ?? data['total_lamps']?.toString() ?? '') ?? user.totalInstallations,
+          totalProjects: data['total_projects'] is int
+              ? data['total_projects']
+              : int.tryParse(data['total_projects']?.toString() ?? '') ?? user.totalProjects,
         );
         currentUser = updated;
         return updated;

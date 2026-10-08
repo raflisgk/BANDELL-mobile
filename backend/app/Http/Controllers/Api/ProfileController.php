@@ -21,6 +21,9 @@ class ProfileController extends Controller
             $user = User::findOrFail($validated['user_id']);
         }
 
+        $totalInstallations = \App\Models\Installation::where('user_id', $user->id)->count();
+        $totalProjects = \App\Models\ProjectAssignment::where('user_id', $user->id)->distinct('project_id')->count();
+
         return response()->json([
             'success' => true,
             'message' => 'Data profile berhasil diambil.',
@@ -31,6 +34,9 @@ class ProfileController extends Controller
                 'phone' => $user->phone,
                 'phone_number' => $user->phone,
                 'placement_area' => $user->placement_area,
+                'total_installations' => $totalInstallations,
+                'total_lamps' => $totalInstallations,
+                'total_projects' => $totalProjects,
             ],
         ]);
     }

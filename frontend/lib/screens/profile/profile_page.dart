@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
@@ -29,6 +30,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String _email = '-';
   String _phone = '-';
   String _location = '-';
+  int _totalLamps = 0;
+  int _totalProjects = 0;
   bool _isEditingPhone = false;
 
   late final TextEditingController _editController;
@@ -54,6 +57,10 @@ class _ProfilePageState extends State<ProfilePage> {
       _phone = user.phone ?? '-';
     }
     _location = user.placementArea ?? '-';
+    if (user is UserModel) {
+      _totalLamps = user.totalInstallations;
+      _totalProjects = user.totalProjects;
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -78,13 +85,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String get _avatarInitials {
     if (_name == '-' || _name.trim().isEmpty) return 'T';
-    final parts = _name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((p) => p.isNotEmpty)
-        .toList();
-    return (parts.length >= 2 ? '${parts[0][0]}${parts[1][0]}' : parts[0][0])
-        .toUpperCase();
+    final trimmed = _name.trim();
+    // Ambil huruf pertama dari nama depan user yang sedang login
+    return trimmed.isNotEmpty ? trimmed[0].toUpperCase() : 'T';
   }
 
   @override
@@ -493,9 +496,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final String projectCount = ProjectService.hasCachedProjects
-        ? ProjectService.cachedProjects.length.toString()
-        : '4';
+    final String projectCount = _totalProjects > 0
+        ? _totalProjects.toString()
+        : (ProjectService.hasCachedProjects
+            ? ProjectService.cachedProjects.length.toString()
+            : '0');
+    final String lampCount = _totalLamps.toString();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -702,7 +708,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     _buildMetricCard(
                                       icon: Icons.lightbulb_outline_rounded,
                                       title: 'Lampu',
-                                      value: '128',
+                                      value: lampCount,
                                     ),
                                   ],
                                 ),
