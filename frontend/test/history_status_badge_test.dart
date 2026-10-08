@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_teknisi/models/history_lamp_model.dart';
 import 'package:mobile_teknisi/screens/history/history_lamp_card.dart';
 
+import 'package:mobile_teknisi/models/installation_model.dart';
+
 void main() {
   group('HistoryLampCard Status Badge Tests', () {
     test('HistoryLampModel parses Ditolak status correctly', () {
@@ -44,6 +46,43 @@ void main() {
       expect(model.isDitolak, isFalse);
       expect(model.isVerified, isTrue);
       expect(model.status, equals('Terverifikasi'));
+    });
+
+    test('HistoryLampModel parses Terinput database status as Terverifikasi', () {
+      final jsonTerinput = {
+        'id': 4,
+        'user_id': 1,
+        'project_id': 1,
+        'kode': 'LP-004',
+        'jenis': 'LED 120W',
+        'verification_status': 'Terinput',
+        'lokasi': 'Jl. Gatot Subroto',
+        'koordinat': '-6.2, 106.8',
+        'foto_count': '2 Foto Lampu',
+        'waktu': '2026-09-25',
+      };
+
+      final model = HistoryLampModel.fromJson(jsonTerinput);
+      expect(model.isDitolak, isFalse);
+      expect(model.isVerified, isTrue);
+      expect(model.status, equals('Terverifikasi'));
+    });
+
+    test('InstallationModel normalizes Terinput to Terverifikasi', () {
+      final jsonTerinput = {
+        'id': 5,
+        'project_id': 1,
+        'user_id': 1,
+        'district_id': 1,
+        'lamp_code': 'LP-005',
+        'lamp_type': 'LED 60W',
+        'verification_status': 'Terinput',
+      };
+
+      final model = InstallationModel.fromJson(jsonTerinput);
+      expect(model.status, equals('Terverifikasi'));
+      expect(model.verificationStatus, equals('Terverifikasi'));
+      expect(model.verification_status, equals('Terverifikasi'));
     });
 
     test('HistoryLampModel parses Menunggu Verifikasi status correctly', () {

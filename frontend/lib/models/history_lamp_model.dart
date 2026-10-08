@@ -129,7 +129,11 @@ class HistoryLampModel {
             json['is_verified'] == 1 ||
             json['is_verified'] == '1' ||
             normStatus == 'terverifikasi' ||
-            normStatus == 'verified');
+            normStatus == 'verified' ||
+            normStatus == 'terinput' ||
+            instModel?.verificationStatus?.trim().toLowerCase() == 'terverifikasi' ||
+            instModel?.verificationStatus?.trim().toLowerCase() == 'verified' ||
+            instModel?.verificationStatus?.trim().toLowerCase() == 'terinput');
 
     final String vStatus = isOffline
         ? 'Menunggu Jaringan'

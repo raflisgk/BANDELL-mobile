@@ -181,11 +181,16 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           ? widget.lampType!
           : '-');
 
-  String get _effectiveStatus =>
-      _effectiveInstallation?.verificationStatus ??
-      _effectiveInstallation?.status ??
-      widget.status ??
-      'Menunggu Verifikasi';
+  String get _effectiveStatus {
+    final s = _effectiveInstallation?.verificationStatus ??
+        _effectiveInstallation?.status ??
+        widget.status ??
+        'Menunggu Verifikasi';
+    if (s.trim().toLowerCase() == 'terinput') {
+      return 'Terverifikasi';
+    }
+    return s;
+  }
 
   bool get _isTersimpan => _effectiveStatus == 'Tersimpan';
 
@@ -196,8 +201,10 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         (inst?.verificationStatus ?? '').toLowerCase().trim();
     return status == 'terverifikasi' ||
         status == 'verified' ||
+        status == 'terinput' ||
         verificationStatus == 'terverifikasi' ||
-        verificationStatus == 'verified';
+        verificationStatus == 'verified' ||
+        verificationStatus == 'terinput';
   }
 
   bool get _isDitolak {

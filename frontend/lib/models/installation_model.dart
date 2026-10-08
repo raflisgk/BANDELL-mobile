@@ -41,7 +41,7 @@ class InstallationModel {
     required this.lampCode,
     required this.lampType,
     this.wattage = '',
-    this.status = 'Terpasang',
+    String status = 'Terpasang',
     this.latitude,
     this.longitude,
     this.panelCode,
@@ -50,11 +50,14 @@ class InstallationModel {
     this.photoUrl,
     this.notes,
     this.noteByAdmin,
-    this.verificationStatus,
+    String? verificationStatus,
     this.installedAt,
     this.createdAt,
     this.updatedAt,
-  });
+  })  : status = status.trim().toLowerCase() == 'terinput' ? 'Terverifikasi' : status,
+        verificationStatus = verificationStatus?.trim().toLowerCase() == 'terinput'
+            ? 'Terverifikasi'
+            : verificationStatus;
 
   String? get id => idInstallation.toString();
 

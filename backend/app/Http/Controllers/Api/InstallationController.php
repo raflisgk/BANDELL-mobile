@@ -106,7 +106,7 @@ class InstallationController extends Controller
         Installation $installation
     ): JsonResponse {
         $currentStatus = strtolower((string) $installation->verification_status);
-        if ($currentStatus === 'terverifikasi' || $currentStatus === 'verified') {
+        if ($currentStatus === 'terverifikasi' || $currentStatus === 'verified' || $currentStatus === 'terinput') {
             return response()->json([
                 'success' => false,
                 'message' => 'Data pemasangan yang sudah Terverifikasi tidak dapat diubah.',
@@ -385,7 +385,7 @@ class InstallationController extends Controller
     public function destroy(Request $request, Installation $installation): JsonResponse
     {
         $currentStatus = strtolower((string) $installation->verification_status);
-        if ($currentStatus === 'terverifikasi' || $currentStatus === 'verified') {
+        if ($currentStatus === 'terverifikasi' || $currentStatus === 'verified' || $currentStatus === 'terinput') {
             return response()->json([
                 'success' => false,
                 'message' => 'Data pemasangan yang sudah Terverifikasi tidak dapat dihapus.',

@@ -375,7 +375,7 @@ class _StatusItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = status.trim().toLowerCase();
     final bool isDitolak = s == 'ditolak' || s == 'rejected';
-    final bool isVerified = s == 'terverifikasi';
+    final bool isVerified = s == 'terverifikasi' || s == 'verified' || s == 'terinput';
 
     final Color dotColor = isDitolak
         ? AppColors.statusDitolakText
