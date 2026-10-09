@@ -40,6 +40,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🚀 [NAVIGASI LAZY] Tab 2: ProfilePage baru pertama kali diinisialisasi!');
     _editController = TextEditingController();
 
     final user = AuthService.currentUser;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lazy_indexed_stack/flutter_lazy_indexed_stack.dart';
 
 import '../../services/main_navigation_service.dart';
 import '../../widgets/bottom_navbar.dart';
@@ -54,7 +55,7 @@ class _MainLayoutPageState extends State<MainLayoutPage> {
           },
           child: Scaffold(
             extendBody: true,
-            body: IndexedStack(
+            body: LazyIndexedStack(
               index: safeIndex,
               children: _pages,
             ),

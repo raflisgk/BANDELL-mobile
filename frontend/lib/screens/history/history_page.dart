@@ -80,6 +80,7 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🚀 [NAVIGASI LAZY] Tab 1: HistoryPage baru pertama kali diinisialisasi!');
     final proj = _currentProject;
     final cached = _loadCachedItemsSync(proj, _selectedFilter);
     if (cached.isNotEmpty) {

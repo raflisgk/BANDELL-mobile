@@ -54,6 +54,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🚀 [NAVIGASI LAZY] Tab 0: AreaOperasionalPage diinisialisasi');
     _initFromCacheOrFetch();
   }
 
