@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../screens/area_operasional/area_operasional_page.dart';
+import '../screens/history/history_page.dart';
+import '../screens/profile/profile_page.dart';
+import '../services/main_navigation_service.dart';
+
 /// Instant / zero-duration route for instant tab switching
 class InstantPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
@@ -37,6 +42,22 @@ class AppNavigator {
 
   /// Tab switching (Bottom Navigation Bar): Instant transition (0ms)
   static Future<T?> pushTabReplacement<T>(BuildContext context, Widget page) {
+    if (MainNavigationService.hasMainLayout) {
+      if (page is AreaOperasionalPage) {
+        MainNavigationService.switchToProject();
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        return Future.value(null);
+      } else if (page is HistoryPage) {
+        MainNavigationService.switchToHistory();
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        return Future.value(null);
+      } else if (page is ProfilePage) {
+        MainNavigationService.switchToProfile();
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        return Future.value(null);
+      }
+    }
+
     return Navigator.pushReplacement<T, dynamic>(
       context,
       InstantPageRoute<T>(page: page),

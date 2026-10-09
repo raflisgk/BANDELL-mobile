@@ -57,10 +57,15 @@ class Installation extends Model
     protected function casts(): array
     {
         return [
-            'installed_at' => 'date',
+            'installed_at' => 'date:Y-m-d',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
         ];
+    }
+
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d H:i:s');
     }
 
     protected static function booted(): void

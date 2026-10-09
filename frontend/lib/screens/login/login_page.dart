@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
-import '../area_operasional/area_operasional_page.dart';
+import '../main_layout/main_layout_page.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_credential_service.dart';
 
@@ -203,7 +203,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         _isLoading = false;
       });
 
-      AppNavigator.pushAndRemoveUntil(context, const AreaOperasionalPage());
+      AppNavigator.pushAndRemoveUntil(context, const MainLayoutPage());
     } catch (e, stackTrace) {
       if (!mounted) return;
 

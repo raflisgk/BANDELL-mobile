@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../../services/main_navigation_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -18,7 +19,8 @@ import '../login/login_page.dart';
 import '../notification/notification_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final bool isEmbedded;
+  const ProfilePage({super.key, this.isEmbedded = false});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -47,6 +49,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // Memuat data profil saat inisialisasi awal tanpa polling berulang yang boros daya
     _loadProfile();
+    MainNavigationService.currentTabNotifier.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (MainNavigationService.currentIndex == 2 && mounted) {
+      _loadProfile();
+    }
   }
 
   void _applyUserData(dynamic user) {
@@ -92,6 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void dispose() {
+    MainNavigationService.currentTabNotifier.removeListener(_onTabChanged);
     _editController.dispose();
     super.dispose();
   }
@@ -329,10 +339,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _handleNavTap(int index) {
-    if (index == 0) {
-      AppNavigator.pushTabReplacement(context, const AreaOperasionalPage());
-    } else if (index == 1) {
-      AppNavigator.pushTabReplacement(context, const HistoryPage());
+    if (MainNavigationService.hasMainLayout) {
+      MainNavigationService.setIndex(index);
+    } else {
+      if (index == 0) {
+        AppNavigator.pushTabReplacement(context, const AreaOperasionalPage());
+      } else if (index == 1) {
+        AppNavigator.pushTabReplacement(context, const HistoryPage());
+      }
     }
   }
 
@@ -799,10 +813,12 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ],
         ),
-        bottomNavigationBar: BottomNavbar(
-          currentIndex: 2,
-          onTap: _handleNavTap,
-        ),
+        bottomNavigationBar: widget.isEmbedded
+            ? null
+            : BottomNavbar(
+                currentIndex: 2,
+                onTap: _handleNavTap,
+              ),
       ),
     );
   }

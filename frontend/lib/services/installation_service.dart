@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -26,6 +27,18 @@ class InstallationService {
     InstallationModel installation, {
     bool bypassOfflineQueue = false,
   }) async {
+    if (!bypassOfflineQueue) {
+      try {
+        final connectivityResults = await Connectivity().checkConnectivity();
+        if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
+          debugPrint('Device offline. Langsung menyimpan data ke ANTRIAN STORAGE HP...');
+          final item =
+              await OfflineSyncService().enqueueInstallation(installation);
+          return item.toInstallationModel();
+        }
+      } catch (_) {}
+    }
+
     try {
       final uri = Uri.parse('${ApiService.baseUrl}/installations');
       final request = http.MultipartRequest('POST', uri);
@@ -147,22 +160,18 @@ class InstallationService {
       );
     } catch (e) {
       debugPrint('createInstallation error caught: $e');
-      if (e is ApiException && e.statusCode == 401) {
+      if (e is ApiException && (e.statusCode == 401 || e.statusCode == 422)) {
         rethrow;
       }
-      if (!bypassOfflineQueue &&
-          (e is SocketException ||
-              e is TimeoutException ||
-              e is http.ClientException ||
-              e.toString().contains('Failed host lookup') ||
-              e.toString().contains('Connection refused') ||
-              e.toString().contains('timed out') ||
-              e.toString().contains('Network is unreachable') ||
-              e.toString().contains('Software caused connection abort'))) {
-        debugPrint('Koneksi bermasalah. Menyimpan data ke ANTRIAN STORAGE HP...');
-        final item =
-            await OfflineSyncService().enqueueInstallation(installation);
-        return item.toInstallationModel();
+      if (!bypassOfflineQueue) {
+        debugPrint('Koneksi atau server bermasalah ($e). Menyimpan ke ANTRIAN STORAGE HP...');
+        try {
+          final item =
+              await OfflineSyncService().enqueueInstallation(installation);
+          return item.toInstallationModel();
+        } catch (enqueueErr) {
+          debugPrint('Gagal menyimpan ke antrean offline: $enqueueErr');
+        }
       }
       rethrow;
     }

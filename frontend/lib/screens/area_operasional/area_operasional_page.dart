@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../models/area_model.dart';
 import '../../models/project_model.dart';
 import '../../services/local_cache_service.dart';
+import '../../services/main_navigation_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -21,8 +22,13 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 class AreaOperasionalPage extends StatefulWidget {
   final int? idProject;
+  final bool isEmbedded;
 
-  const AreaOperasionalPage({super.key, this.idProject});
+  const AreaOperasionalPage({
+    super.key,
+    this.idProject,
+    this.isEmbedded = false,
+  });
 
   @override
   State<AreaOperasionalPage> createState() => _AreaOperasionalPageState();
@@ -860,7 +866,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                           ),
                     ],
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
@@ -869,20 +875,32 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         ),
       ),
 
-      bottomNavigationBar: BottomNavbar(
-        currentIndex: _currentNavIndex,
-        onTap: (index) {
-          if (index == 1) {
-            AppNavigator.pushTabReplacement(context, const HistoryPage());
-          } else if (index == 2) {
-            AppNavigator.pushTabReplacement(context, const ProfilePage());
-          } else {
-            setState(() {
-              _currentNavIndex = index;
-            });
-          }
-        },
-      ),
+      bottomNavigationBar: widget.isEmbedded
+          ? null
+          : BottomNavbar(
+              currentIndex: _currentNavIndex,
+              onTap: (index) {
+                if (MainNavigationService.hasMainLayout) {
+                  MainNavigationService.setIndex(index);
+                } else {
+                  if (index == 1) {
+                    AppNavigator.pushTabReplacement(
+                      context,
+                      const HistoryPage(),
+                    );
+                  } else if (index == 2) {
+                    AppNavigator.pushTabReplacement(
+                      context,
+                      const ProfilePage(),
+                    );
+                  } else {
+                    setState(() {
+                      _currentNavIndex = index;
+                    });
+                  }
+                }
+              },
+            ),
     ),
   );
 }

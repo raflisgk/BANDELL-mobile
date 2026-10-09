@@ -9,8 +9,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/history_lamp_model.dart';
 import '../models/installation_model.dart';
+import 'auth_service.dart';
 import 'installation_service.dart';
 import 'local_cache_service.dart';
+import 'project_service.dart';
 
 class OfflineInstallationItem {
   final String localId;
@@ -223,10 +225,13 @@ class OfflineSyncService {
           .toList();
 
       if (userId != null && userId > 0) {
-        items = items.where((i) => i.userId == userId).toList();
+        items =
+            items.where((i) => i.userId == userId || i.userId == 0).toList();
       }
       if (projectId != null && projectId > 0) {
-        items = items.where((i) => i.projectId == projectId).toList();
+        items = items
+            .where((i) => i.projectId == projectId || i.projectId == 0)
+            .toList();
       }
 
       return items;
@@ -251,11 +256,14 @@ class OfflineSyncService {
               OfflineInstallationItem.fromJson(e as Map<String, dynamic>))
           .toList();
 
-      if (userId != null) {
-        items = items.where((i) => i.userId == userId).toList();
+      if (userId != null && userId > 0) {
+        items =
+            items.where((i) => i.userId == userId || i.userId == 0).toList();
       }
-      if (projectId != null) {
-        items = items.where((i) => i.projectId == projectId).toList();
+      if (projectId != null && projectId > 0) {
+        items = items
+            .where((i) => i.projectId == projectId || i.projectId == 0)
+            .toList();
       }
 
       return items;
@@ -303,8 +311,12 @@ class OfflineSyncService {
 
     final item = OfflineInstallationItem(
       localId: localId,
-      userId: installation.idUser ?? 0,
-      projectId: installation.idProject ?? 0,
+      userId: (installation.idUser != null && installation.idUser! > 0)
+          ? installation.idUser!
+          : (AuthService.currentUser?.idUser ?? 0),
+      projectId: (installation.idProject != null && installation.idProject! > 0)
+          ? installation.idProject!
+          : (ProjectService.selectedProject?.idProject ?? 0),
       idArea: installation.idArea,
       districtName: installation.districtName ?? '',
       lampTypeId: installation.lampTypeId,
@@ -315,7 +327,7 @@ class OfflineSyncService {
       latitude: installation.latitude,
       longitude: installation.longitude,
       address: installation.notes,
-      installedAt: installation.installedAt,
+      installedAt: installation.installedAt ?? DateTime.now(),
       createdAt: DateTime.now(),
       localPhotoPaths: permanentPhotos,
     );

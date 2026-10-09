@@ -9,8 +9,8 @@ import '../../models/user_model.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/secure_credential_service.dart';
-import '../area_operasional/area_operasional_page.dart';
 import '../login/login_page.dart';
+import '../main_layout/main_layout_page.dart';
 
 class SplashPage extends StatefulWidget {
   final Widget? nextPage;
@@ -56,7 +56,7 @@ class _SplashPageState extends State<SplashPage> {
           }
 
           if (AuthService.currentUser != null) {
-            targetPage = const AreaOperasionalPage();
+            targetPage = const MainLayoutPage();
           }
         }
       } catch (e) {

@@ -8,6 +8,7 @@ import '../../models/project_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/installation_service.dart';
 import '../../services/local_cache_service.dart';
+import '../../services/main_navigation_service.dart';
 import '../../services/offline_sync_service.dart';
 import '../../services/project_service.dart';
 import '../../utils/app_colors.dart';
@@ -24,7 +25,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../widgets/pilih_tanggal.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  final bool isEmbedded;
+  const HistoryPage({super.key, this.isEmbedded = false});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -44,8 +46,13 @@ class _HistoryPageState extends State<HistoryPage> {
   bool _isSortDescending = true;
 
   List<HistoryLampModel> _loadCachedItemsSync(ProjectModel? project, String filter) {
-    if (project == null) return const [];
     final userId = AuthService.currentUser?.idUser ?? 0;
+    if (project == null) {
+      final offlineItems = OfflineSyncService.getQueueSync(
+        userId: userId,
+      ).map((e) => e.toHistoryLampModel()).toList();
+      return offlineItems;
+    }
     final (startDate, endDate) = _getDateRangeForFilter(filter);
     final sDate = startDate?.toIso8601String().split('T').first ?? '';
     final eDate = endDate?.toIso8601String().split('T').first ?? '';
@@ -84,6 +91,13 @@ class _HistoryPageState extends State<HistoryPage> {
 
     _initProjectAndHistory();
     OfflineSyncService().pendingCountNotifier.addListener(_onPendingCountChanged);
+    MainNavigationService.currentTabNotifier.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (MainNavigationService.currentIndex == 1 && mounted) {
+      _loadHistorySilently();
+    }
   }
 
   void _onPendingCountChanged() {
@@ -169,6 +183,32 @@ class _HistoryPageState extends State<HistoryPage> {
       });
     } catch (e) {
       debugPrint('Auto refresh error in HistoryPage: $e');
+      final offlineQueue = await OfflineSyncService().getQueue(
+        userId: userId,
+        projectId: proj.idProject,
+      );
+      final offlineModels =
+          offlineQueue.map((e) => e.toHistoryLampModel()).toList();
+
+      final sDate = startDate?.toIso8601String().split('T').first ?? '';
+      final eDate = endDate?.toIso8601String().split('T').first ?? '';
+      final cachedJson = await LocalCacheService.getHistoryJson(
+        userId: userId,
+        projectId: proj.idProject,
+        start: sDate,
+        end: eDate,
+      );
+      final cachedModels = (cachedJson ?? [])
+          .map((item) =>
+              HistoryLampModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      final combined = [...offlineModels, ...cachedModels];
+      if (mounted && combined.isNotEmpty) {
+        setState(() {
+          _historyItems = combined;
+        });
+      }
     }
   }
 
@@ -298,10 +338,25 @@ class _HistoryPageState extends State<HistoryPage> {
       );
       final offlineModels =
           offlineQueue.map((e) => e.toHistoryLampModel()).toList();
+
+      final sDate = startDate?.toIso8601String().split('T').first ?? '';
+      final eDate = endDate?.toIso8601String().split('T').first ?? '';
+      final cachedJson = await LocalCacheService.getHistoryJson(
+        userId: userId,
+        projectId: proj.idProject,
+        start: sDate,
+        end: eDate,
+      );
+      final cachedModels = (cachedJson ?? [])
+          .map((item) =>
+              HistoryLampModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      final combined = [...offlineModels, ...cachedModels];
       if (mounted) {
         setState(() {
-          if (offlineModels.isNotEmpty && _historyItems.isEmpty) {
-            _historyItems = offlineModels;
+          if (combined.isNotEmpty) {
+            _historyItems = combined;
           }
           _isLoading = false;
         });
@@ -316,6 +371,7 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   void dispose() {
     OfflineSyncService().pendingCountNotifier.removeListener(_onPendingCountChanged);
+    MainNavigationService.currentTabNotifier.removeListener(_onTabChanged);
     _searchController.dispose();
     _searchFocusNode.dispose();
     _scrollController.dispose();
@@ -331,6 +387,12 @@ class _HistoryPageState extends State<HistoryPage> {
     final str = raw.toString().trim();
     if (str.isEmpty || str == '-' || str.toLowerCase() == 'null') return null;
 
+    final dt = DateTime.tryParse(str);
+    if (dt != null) {
+      final local = dt.isUtc ? dt.toLocal() : dt;
+      return DateTime(local.year, local.month, local.day);
+    }
+
     final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(str);
     if (match != null) {
       final y = int.parse(match.group(1)!);
@@ -338,16 +400,15 @@ class _HistoryPageState extends State<HistoryPage> {
       final d = int.parse(match.group(3)!);
       return DateTime(y, m, d);
     }
-
-    final dt = DateTime.tryParse(str);
-    if (dt != null) {
-      final local = dt.toLocal();
-      return DateTime(local.year, local.month, local.day);
-    }
     return null;
   }
 
   bool _matchesDateFilter(HistoryLampModel item, String filter) {
+    // Item offline ("Menunggu Jaringan") selalu ditampilkan agar teknisi tidak mengira datanya hilang
+    if (item.isMenungguJaringan) {
+      return true;
+    }
+
     final (startDate, endDate) = _getDateRangeForFilter(filter);
     if (startDate == null && endDate == null) return true;
 
@@ -529,10 +590,14 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   void _handleNavTap(int index) {
-    if (index == 0) {
-      AppNavigator.pushTabReplacement(context, const AreaOperasionalPage());
-    } else if (index == 2) {
-      AppNavigator.pushTabReplacement(context, const ProfilePage());
+    if (MainNavigationService.hasMainLayout) {
+      MainNavigationService.setIndex(index);
+    } else {
+      if (index == 0) {
+        AppNavigator.pushTabReplacement(context, const AreaOperasionalPage());
+      } else if (index == 2) {
+        AppNavigator.pushTabReplacement(context, const ProfilePage());
+      }
     }
   }
 
@@ -875,10 +940,12 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
         ),
-        bottomNavigationBar: BottomNavbar(
-          currentIndex: 1,
-          onTap: _handleNavTap,
-        ),
+        bottomNavigationBar: widget.isEmbedded
+            ? null
+            : BottomNavbar(
+                currentIndex: 1,
+                onTap: _handleNavTap,
+              ),
       ),
     );
   }
