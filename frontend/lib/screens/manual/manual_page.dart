@@ -297,7 +297,7 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
     if (isProjectClosed) {
       CustomFeedbackMessage.showError(
         context,
-        'Tidak dapat menyimpan data. Project telah Selesai.',
+        'Tidak dapat menyimpan data. Proyek telah Selesai.',
       );
       return;
     }
@@ -305,7 +305,7 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
     final projectId =
         widget.idProject ?? ProjectService.selectedProject?.idProject;
     if (projectId == null || projectId <= 0) {
-      CustomFeedbackMessage.showError(context, 'Project belum dipilih.');
+      CustomFeedbackMessage.showError(context, 'Proyek belum dipilih.');
       return;
     }
 

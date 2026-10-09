@@ -146,17 +146,6 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     }
   }
 
-  void _handleLihatSemua() {
-    debugPrint('Lihat Semua clicked');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Lihat Semua Foto (Aksi UI Sementara)'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
-
   InstallationModel? get _effectiveInstallation =>
       _currentInstallation ?? widget.installation;
 
@@ -315,7 +304,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     if (_isVerified) {
       CustomFeedbackMessage.showError(
         context,
-        'Data telah Terverifikasi. Pengeditan dinonaktifkan (Read-Only).',
+        'Data telah Terverifikasi. Pengeditan dinonaktifkan.',
       );
       return;
     }
@@ -326,7 +315,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     if (isProjectClosed) {
       CustomFeedbackMessage.showError(
         context,
-        'Project telah Selesai. Pengeditan dinonaktifkan (Read-Only).',
+        'Proyek telah Selesai. Pengeditan dinonaktifkan.',
       );
       return;
     }
@@ -367,7 +356,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     if (_isVerified) {
       CustomFeedbackMessage.showError(
         context,
-        'Data telah Terverifikasi. Penghapusan dinonaktifkan (Read-Only).',
+        'Data telah Terverifikasi. Penghapusan dinonaktifkan.',
       );
       return;
     }
@@ -378,7 +367,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
     if (isProjectClosed) {
       CustomFeedbackMessage.showError(
         context,
-        'Project telah Selesai. Penghapusan dinonaktifkan (Read-Only).',
+        'Proyek telah Selesai. Penghapusan dinonaktifkan.',
       );
       return;
     }
@@ -396,7 +385,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
           }
           if (_effectiveId == null) {
             if (mounted) {
-              CustomFeedbackMessage.showError(context, 'ID data tidak valid.');
+              CustomFeedbackMessage.showError(context, 'Data lampu tidak ditemukan.');
             }
             return;
           }
@@ -551,7 +540,6 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
                       // Section Foto Dokumentasi Card
                       FotoDokumentasiCard(
                         photos: _effectivePhotos,
-                        onLihatSemua: _handleLihatSemua,
                       ),
 
                       const SizedBox(height: 20),

@@ -202,7 +202,7 @@ class _RealtimePageState extends State<RealtimePage> {
           });
           CustomFeedbackMessage.showError(
             context,
-            'Izin lokasi ditolak secara permanen.',
+            'Izin lokasi belum aktif. Silakan buka Pengaturan HP untuk mengizinkan akses lokasi.',
           );
         }
         return;
@@ -250,7 +250,7 @@ class _RealtimePageState extends State<RealtimePage> {
     if (isProjectClosed) {
       CustomFeedbackMessage.showError(
         context,
-        'Tidak dapat menyimpan data. Project telah Selesai.',
+        'Tidak dapat menyimpan data. Proyek telah Selesai.',
       );
       return;
     }
@@ -258,7 +258,7 @@ class _RealtimePageState extends State<RealtimePage> {
     final projectId =
         widget.idProject ?? ProjectService.selectedProject?.idProject;
     if (projectId == null || projectId <= 0) {
-      CustomFeedbackMessage.showError(context, 'Project belum dipilih.');
+      CustomFeedbackMessage.showError(context, 'Proyek belum dipilih.');
       return;
     }
 

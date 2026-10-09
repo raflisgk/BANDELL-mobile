@@ -35,7 +35,7 @@ class MetodePendataanPage extends StatelessWidget {
     if (isProjectClosed) {
       CustomFeedback.showError(
         context,
-        'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Realtime dinonaktifkan.',
+        'Proyek "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Realtime dinonaktifkan.',
       );
       return;
     }
@@ -59,7 +59,7 @@ class MetodePendataanPage extends StatelessWidget {
     if (isProjectClosed) {
       CustomFeedback.showError(
         context,
-        'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Manual dinonaktifkan.',
+        'Proyek "${ProjectService.selectedProject?.projectName}" telah Selesai. Pendataan Manual dinonaktifkan.',
       );
       return;
     }
@@ -122,7 +122,7 @@ class MetodePendataanPage extends StatelessWidget {
                               SizedBox(width: 12.w),
                               Expanded(
                                 child: Text(
-                                  'Project ini telah Selesai (Read-Only). Fitur input data Realtime dan Manual dinonaktifkan.',
+                                  'Proyek ini telah Selesai. Fitur input data Realtime dan Manual dinonaktifkan.',
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w500,

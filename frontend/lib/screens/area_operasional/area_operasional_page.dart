@@ -725,7 +725,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             ),
                             const SizedBox(height: 14),
                             const Text(
-                              'Silakan Pilih Project Terlebih Dahulu',
+                              'Silakan Pilih Proyek Terlebih Dahulu',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 15,
@@ -735,7 +735,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                             ),
                             const SizedBox(height: 6),
                             const Text(
-                              'Gunakan menu dropdown di bagian atas layar untuk menentukan project.',
+                              'Gunakan menu dropdown di bagian atas layar untuk menentukan proyek.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 13,
@@ -808,7 +808,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Project "${_selectedProject!.name}" belum memiliki area operasional.',
+                                'Proyek "${_selectedProject!.name}" belum memiliki area operasional.',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 13,

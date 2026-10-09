@@ -231,7 +231,7 @@ class ApiService {
           .timeout(const Duration(seconds: 15));
     } on TimeoutException catch (e) {
       debugPrint('LOGIN TIMEOUT EXCEPTION: $e');
-      throw const ApiException('Koneksi ke server timeout.');
+      throw const ApiException('Koneksi ke server terputus. Silakan coba lagi.');
     } on http.ClientException catch (e) {
       debugPrint('LOGIN CLIENT EXCEPTION: $e');
       throw const ApiException('Koneksi ke server gagal.');
@@ -412,7 +412,7 @@ class ApiService {
           .get(uri, headers: defaultHeaders)
           .timeout(const Duration(milliseconds: 1500));
     } on TimeoutException {
-      throw const ApiException('Koneksi internet lambat / timeout.');
+      throw const ApiException('Koneksi internet tidak stabil. Silakan coba lagi.');
     } catch (_) {
       throw const ApiException('Gagal terhubung ke server.');
     }

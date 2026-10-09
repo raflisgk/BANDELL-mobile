@@ -216,7 +216,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       } else {
         final errorStr = e.toString().toLowerCase();
         if (errorStr.contains('timeout')) {
-          displayMessage = 'Koneksi ke server timeout.';
+          displayMessage = 'Koneksi ke server terputus. Silakan coba lagi.';
         } else if (errorStr.contains('401') ||
             errorStr.contains('email atau password salah') ||
             errorStr.contains('unauthorized')) {

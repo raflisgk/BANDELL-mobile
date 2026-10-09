@@ -134,7 +134,7 @@ class _LampPageState extends State<LampPage> {
     if (isProjectClosed) {
       CustomFeedback.showError(
         context,
-        'Project "${ProjectService.selectedProject?.projectName}" telah Selesai. Penambahan data lampu baru tidak tersedia.',
+        'Proyek "${ProjectService.selectedProject?.projectName}" telah Selesai. Penambahan data lampu baru tidak tersedia.',
       );
       return;
     }
@@ -224,7 +224,7 @@ class _LampPageState extends State<LampPage> {
                               SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Project Selesai (Read-Only): Penambahan data baru tidak tersedia.',
+                                  'Proyek telah Selesai: Penambahan data baru tidak tersedia.',
                                   style: TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w500,
@@ -459,7 +459,7 @@ class _LampPageState extends State<LampPage> {
                                 ),
                                 SizedBox(height: 4),
                                 Text(
-                                  'Data jenis lampu akan muncul setelah terhubung ke API.',
+                                  'Data jenis lampu akan muncul setelah terhubung ke server.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 13,

@@ -7,9 +7,8 @@ import '../../utils/app_colors.dart';
 
 class FotoDokumentasiCard extends StatelessWidget {
   final List<String>? photos;
-  final VoidCallback? onLihatSemua;
 
-  const FotoDokumentasiCard({super.key, this.photos, this.onLihatSemua});
+  const FotoDokumentasiCard({super.key, this.photos});
 
   @override
   Widget build(BuildContext context) {
@@ -47,18 +46,6 @@ class FotoDokumentasiCard extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              if (onLihatSemua != null && displayPhotos.isNotEmpty)
-                GestureDetector(
-                  onTap: onLihatSemua,
-                  child: const Text(
-                    'Lihat Semua',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
             ],
           ),
           const SizedBox(height: 14),

@@ -861,7 +861,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             ),
                             SizedBox(height: 12),
                             Text(
-                              'Pilih Project Terlebih Dahulu',
+                              'Pilih Proyek Terlebih Dahulu',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -914,7 +914,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                       _rangeStartDate != null &&
                                       _rangeEndDate != null
                                   ? 'Tidak ada riwayat dalam rentang ${_rangeStartDate!.day} ${PilihTanggal.monthNames[_rangeStartDate!.month - 1]} ${_rangeStartDate!.year} – ${_rangeEndDate!.day} ${PilihTanggal.monthNames[_rangeEndDate!.month - 1]} ${_rangeEndDate!.year}.'
-                                  : 'Tidak ada riwayat untuk filter "$_selectedFilter" pada project "${_currentProject?.projectName}".',
+                                  : 'Tidak ada riwayat untuk filter "$_selectedFilter" pada proyek "${_currentProject?.projectName}".',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 13,
