@@ -44,7 +44,7 @@ class RealtimeBarcodeSection extends StatelessWidget {
       final Color subtitleColor = isInvalid
           ? AppColors.textSecondary
           : AppColors.barcodeTextDark;
-      final double subtitleSize = isInvalid ? 15.0 : 21.0;
+      final double subtitleSize = isInvalid ? 14.5 : 20.0;
       final FontWeight subtitleWeight = isInvalid
           ? FontWeight.w600
           : FontWeight.w800;
@@ -81,28 +81,39 @@ class RealtimeBarcodeSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    statusTitle,
-                    style: TextStyle(
-                      color: titleColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.3,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      statusTitle,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: titleColor,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    statusSubtitle,
-                    style: TextStyle(
-                      color: subtitleColor,
-                      fontSize: subtitleSize,
-                      fontWeight: subtitleWeight,
-                      letterSpacing: -0.2,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      statusSubtitle,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: subtitleColor,
+                        fontSize: subtitleSize,
+                        fontWeight: subtitleWeight,
+                        letterSpacing: -0.2,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 10),
             ElevatedButton.icon(
               onPressed: onScanBarcode,
               style: ElevatedButton.styleFrom(
@@ -111,8 +122,8 @@ class RealtimeBarcodeSection extends StatelessWidget {
                 elevation: 2,
                 shadowColor: AppColors.shadowMedium,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
+                  horizontal: 10,
+                  vertical: 8,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -120,13 +131,13 @@ class RealtimeBarcodeSection extends StatelessWidget {
               ),
               icon: const Icon(
                 Icons.qr_code_scanner_rounded,
-                size: 18,
+                size: 17,
                 color: AppColors.primary,
               ),
               label: const Text(
                 'Scan Ulang',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary,
                 ),
