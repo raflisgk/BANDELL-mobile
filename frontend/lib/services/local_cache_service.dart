@@ -190,6 +190,21 @@ class LocalCacheService {
     return null;
   }
 
+  static List<dynamic>? getProjectAreasJsonSync(int projectId) {
+    try {
+      final p = _prefs;
+      if (p == null) return null;
+      final raw = p.getString(_areasKey(projectId));
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) return decoded;
+      }
+    } catch (e) {
+      debugPrint('LocalCacheService getProjectAreasJsonSync error: $e');
+    }
+    return null;
+  }
+
   static Future<void> saveSelectedProjectId(int projectId) async {
     try {
       final prefs = await _getPrefs();

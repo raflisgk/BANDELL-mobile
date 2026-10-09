@@ -32,6 +32,22 @@ class ProjectService {
   /// Resolves area name by area ID from current list or Storage HP
   static String? getAreaName(int? projectId, int? areaId) {
     if (areaId == null || areaId <= 0) return null;
+    if (projectId != null && projectId > 0) {
+      final cachedAreas = LocalCacheService.getProjectAreasJsonSync(projectId);
+      if (cachedAreas != null) {
+        for (final item in cachedAreas) {
+          if (item is Map) {
+            final id = item['id_area'] ?? item['id'];
+            if (id == areaId || id.toString() == areaId.toString()) {
+              final name = item['area_name']?.toString() ?? item['name']?.toString();
+              if (name != null && name.trim().isNotEmpty) {
+                return name.trim();
+              }
+            }
+          }
+        }
+      }
+    }
     return null;
   }
 

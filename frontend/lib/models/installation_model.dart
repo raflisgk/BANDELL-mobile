@@ -59,13 +59,6 @@ class InstallationModel {
             ? 'Terverifikasi'
             : verificationStatus;
 
-  String? get id => idInstallation.toString();
-
-  String? get lampId => lampCode;
-
-  String? get areaId => idArea.toString();
-
-  String? get projectId => idProject?.toString();
 
   // ignore: non_constant_identifier_names
   String? get note_by_admin => noteByAdmin;

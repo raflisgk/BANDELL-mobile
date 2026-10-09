@@ -5,19 +5,12 @@ class AppColors {
   static const Color primary = Color(
     0xFF0C5DA5,
   ); // Header TopBar, Splash, Tombol Simpan
-  static const Color primaryDark = Color(0xFF084B83); // Biru Gelap
   static const Color primaryLight = Color(
     0x1A0C5DA5,
   ); // Icon GPS & Foto (Transparan)
-  static const Color background = Colors.white; // Background Umum
   static const Color backgroundWhite = Color(
     0xFFFFFFFF,
   ); // Background Putih Layar
-  static const Color headerTitle = Color(0xFFFFFFFF); // Teks Judul Header
-  static const Color headerSubtitle = Color(
-    0xE6FFFFFF,
-  ); // Teks Sub-judul Header
-  static const Color logoColor = Color(0xFFFFFFFF); // Warna Logo
 
   // --- WARNA TEKS & TIPOGRAFI (Slate Palette) ---
   static const Color textHeading = Color(0xFF1E293B); // Slate 800 - Judul Utama
@@ -39,10 +32,7 @@ class AppColors {
   static const Color textSubtle = Color(
     0xFF94A3B8,
   ); // Slate 400 - Placeholder & Icon Redup
-  static const Color labelColor = Color(0xFF4B5563); // Label Input Form
   static const Color hintColor = Color(0xFF9CA3AF); // Placeholder Kotak Ketik
-  static const Color linkText = Color(0xFF0C5DA5); // Teks Link / Bantuan
-  static const Color buttonText = Color(0xFFFFFFFF); // Teks Tombol Putih
 
   // --- FORM, BORDER, & KOTAK INPUT ---
   static const Color iconColor = Color(0xFF9CA3AF); // Icon Abu-abu Standar
@@ -62,20 +52,11 @@ class AppColors {
   static const Color inputBackground = Color(
     0xFFF8FAFC,
   ); // Background Kotak Ketik
-  static const Color buttonBackground = Color(
-    0xFF0C5DA5,
-  ); // Background Tombol Utama
   static const Color cardBackground = Color(
     0xFFFFFFFF,
   ); // Background Kartu Putih
 
   // --- HALAMAN PROFILE & BADGE ---
-  static const Color profileGradientStart = Color(
-    0xFF0072CE,
-  ); // Gradasi Atas Profile
-  static const Color profileGradientEnd = Color(
-    0xFF265C8C,
-  ); // Gradasi Bawah Profile
   static const Color profileAmbientGlowStart = Color(
     0xFFDCEFFE,
   ); // Ambient Glow Atas
@@ -100,9 +81,6 @@ class AppColors {
   static const Color roleBadgeDotDivider = Color(
     0xFF93C5FD,
   ); // Titik Pemisah di Chip Peran
-  static const Color roleBadgeText = Color(
-    0xFF0C5DA5,
-  ); // Teks & Icon Pill Badge Role
   static const Color avatarCircleBackground = Color(
     0xFFE2EBF8,
   ); // Background Lingkaran Avatar
@@ -127,7 +105,6 @@ class AppColors {
   static const Color tooltipShadowDark = Color(
     0x33000000,
   ); // Bayangan Hitam Tooltip
-  static const Color verifiedBlue = Color(0xFF0072CE); // Centang Biru Verified
 
   // --- STATUS & FEEDBACK (Semantic Colors) ---
   static const Color error = Color(
@@ -144,10 +121,6 @@ class AppColors {
   static const Color success = Color(0xFF10B981); // Popup Centang Sukses
   static const Color successLight = Color(0x1A10B981); // Background Sukses
   static const Color warning = Color(0xFFF59E0B); // Status Menunggu Verifikasi
-  static const Color warningLight = Color(
-    0x1AF59E0B,
-  ); // Background Status Kuning
-  static const Color warningBorder = Color(0xFFFDE68A); // Border Kotak Kuning
 
   // --- STATUS BADGE (Riwayat / Notifikasi / Kartu Lampu) ---
   // Status: Ditolak
@@ -159,27 +132,13 @@ class AppColors {
   // Status: Terverifikasi / Selesai
   static const Color statusTerverifikasiText = Color(0xFF15803D);
   static const Color statusTerverifikasiBg = Color(0xFFDCFCE7);
-  static const Color statusTerverifikasiBorder = Color(0xFFBBF7D0);
-
-  // Status: Tersimpan
-  static const Color statusTersimpanText = Color(0xFF0369A1);
-  static const Color statusTersimpanBg = Color(0xFFE0F2FE);
-  static const Color statusTersimpanBorder = Color(0xFFBAE6FD);
 
   // Status: Menunggu Verifikasi
-  static const Color statusMenungguText = Color(0xFFB45309);
   static const Color statusMenungguBg = Color(0xFFFEF3C7);
-  static const Color statusMenungguBorder = Color(0xFFFDE68A);
 
   // --- HALAMAN RIWAYAT & KARTU PROYEK ---
-  static const Color searchBackground = Color(
-    0xFFF3F4F6,
-  ); // Kotak Search di Riwayat
   static const Color cardPrimary = Color(0xFF0C5DA5); // Kartu Proyek Biru
   static const Color cardTextWhite = Color(0xFFFFFFFF); // Teks di Kartu Proyek
-  static const Color cardTextSubtle = Color(
-    0xE6FFFFFF,
-  ); // Sub-teks di Kartu Proyek
   static const Color cardButtonWhite = Color(
     0xFFFFFFFF,
   ); // Tombol di Kartu Proyek
@@ -203,11 +162,9 @@ class AppColors {
     0xFFFFF7ED,
   ); // Background Kartu Manual
   static const Color manualBorder = Color(0xFFFFEDD5); // Border Kartu Manual
-  static const Color infoBlue = Color(0xFF0C5DA5); // Kotak Info Petunjuk (Biru)
   static const Color infoBackground = Color(
     0xFFEFF6FF,
   ); // Background Kotak Info
-  static const Color infoBorder = Color(0xFFBFDBFE); // Border Kotak Info
 
   // --- HALAMAN SCAN BARCODE (KAMERA) ---
   static const Color scanBackgroundDark = Color(
@@ -225,21 +182,7 @@ class AppColors {
   static const Color loginBlueGradientEnd = Color(
     0xFF094A85,
   ); // Gradasi Biru Gelap Login
-  static const Color loginLinkCyan = Color(
-    0xFF38BDF8,
-  ); // Link Bantuan CS di Login
   static const Color loginErrorRed = Color(0xFFFF6B6B); // Teks Error Login
-
-  // --- HALAMAN SPLASH ---
-  static const Color splashButtonBg = Color(0xFF2878D7); // Tombol Masuk Splash
-
-  // --- BOTTOM NAVBAR ---
-  static const Color navActiveBackground = Color(
-    0xFFEFF6FF,
-  ); // Background Item Tab Aktif
-  static const Color navInactive = Color(
-    0xFF6B7280,
-  ); // Icon / Teks Tab Nonaktif
 
   // --- AREA OPERASIONAL & KARTU UTAMA ---
   static const Color areaCardGradientStart = Color(
@@ -253,15 +196,9 @@ class AppColors {
   static const Color notifUnreadAvatarBg = Color(
     0xFFE2EFFC,
   ); // Background Avatar Notif Belum Dibaca
-  static const Color notifCardBorder = Color(
-    0xFFE8EEF5,
-  ); // Border Kartu Notifikasi
   static const Color notifSubCardBg = Color(
     0xFFE8F2FA,
   ); // Sub-container Notifikasi
-  static const Color dialogPrimaryDark = Color(
-    0xFF00447C,
-  ); // Header Dialog Gelap
 
   // --- RIWAYAT & KOMPONEN BARCODE ---
   static const Color historyCardBackground = Color(
@@ -324,9 +261,6 @@ class AppColors {
     0x29000000,
   ); // Shadow Kuat (16% hitam)
   static const Color whiteOverlay = Color(0x66FFFFFF); // White Alpha 40%
-  static const Color whiteAlpha60 = Color(0x99FFFFFF); // White Alpha 60%
-  static const Color whiteAlpha85 = Color(0xD9FFFFFF); // White Alpha 85%
-  static const Color whiteAlpha90 = Color(0xE6FFFFFF); // White Alpha 90%
 
   // --- SKELETON / SHIMMER LOADING ---
   static const Color skeletonBase = Color(

@@ -1,4 +1,3 @@
-import 'package:intl/intl.dart';
 import '../services/notification_service.dart';
 import 'installation_model.dart';
 
@@ -101,26 +100,6 @@ class NotificationModel {
       return l.trim();
     }
     return '-';
-  }
-
-  String get formattedDate {
-    if (assignedAt == null) return '';
-    try {
-      return DateFormat('dd/MM/yyyy').format(assignedAt!.toLocal());
-    } catch (_) {
-      return assignedAt!.toLocal().toIso8601String().split('T').first;
-    }
-  }
-
-  String get content {
-    final buffer = StringBuffer();
-    if (projectName.isNotEmpty && projectName != '-') {
-      buffer.writeln('Project: $projectName');
-    }
-    if (notes != null && notes!.isNotEmpty && notes != '-') {
-      buffer.writeln('Catatan: $notes');
-    }
-    return buffer.toString().trim();
   }
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
