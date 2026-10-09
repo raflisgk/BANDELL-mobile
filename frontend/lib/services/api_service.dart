@@ -152,7 +152,6 @@ class ApiService {
     );
 
     debugPrint('UPDATE PROFILE STATUS: ${response.statusCode}');
-    debugPrint('UPDATE PROFILE BODY: ${response.body}');
 
     if (response.statusCode == 401) {
       await handleUnauthorized();
@@ -183,7 +182,6 @@ class ApiService {
     );
 
     debugPrint('GET PROFILE STATUS: ${response.statusCode}');
-    debugPrint('GET PROFILE BODY: ${response.body}');
 
     if (response.statusCode == 401) {
       await handleUnauthorized();
@@ -244,7 +242,6 @@ class ApiService {
     }
 
     debugPrint('LOGIN STATUS CODE: ${response.statusCode}');
-    debugPrint('LOGIN BODY: ${response.body}');
 
     Map<String, dynamic>? data;
 
@@ -378,8 +375,6 @@ class ApiService {
 
     debugPrint('DEBUG NOTIFICATION STATUS: ${response.statusCode}');
 
-    debugPrint('DEBUG NOTIFICATION BODY: ${response.body}');
-
     if (response.statusCode == 401) {
       await handleUnauthorized();
       return [];
@@ -418,7 +413,6 @@ class ApiService {
     }
 
     debugPrint('DEBUG PROJECT ASSIGNMENTS STATUS: ${response.statusCode}');
-    debugPrint('DEBUG PROJECT ASSIGNMENTS BODY: ${response.body}');
 
     if (response.statusCode == 401) {
       await handleUnauthorized();
@@ -448,8 +442,6 @@ class ApiService {
       final response = await http.put(uri, headers: defaultHeaders);
 
       debugPrint('MARK NOTIFICATION READ STATUS: ${response.statusCode}');
-
-      debugPrint('MARK NOTIFICATION READ BODY: ${response.body}');
 
       if (response.statusCode == 401) {
         await handleUnauthorized();

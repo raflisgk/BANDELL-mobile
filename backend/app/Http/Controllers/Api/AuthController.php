@@ -37,13 +37,6 @@ class AuthController extends Controller
                     'password' => Hash::make($inputPassword),
                 ]);
             }
-            // 3. Cek jika di DB tersimpan string raw SHA-256
-            elseif ($user->password === hash('sha256', $inputPassword) || $user->password === $inputPassword) {
-                $isPasswordValid = true;
-                DB::table('users')->where('id', $user->id)->update([
-                    'password' => Hash::make($inputPassword),
-                ]);
-            }
         }
 
         // 1. Verifikasi kredensial (user ada & password benar)

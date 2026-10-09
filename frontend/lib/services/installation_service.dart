@@ -131,7 +131,6 @@ class InstallationService {
       final response = await http.Response.fromStream(streamedResponse);
 
       debugPrint('INSTALLATION STATUS: ${response.statusCode}');
-      debugPrint('INSTALLATION RESPONSE: ${response.body}');
 
       if (response.statusCode == 401) {
         await ApiService.handleUnauthorized();

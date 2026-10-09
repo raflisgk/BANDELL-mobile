@@ -30,7 +30,7 @@ class InstallationController extends Controller
             'address' => ['nullable', 'string'],
             'code_panel' => ['nullable', 'string', 'max:12'],
             'installed_at' => ['nullable', 'date'],
-            'photos' => ['nullable', 'array'],
+            'photos' => ['nullable', 'array', 'max:4'],
             'photos.*' => [
                 'image',
                 'mimes:jpg,jpeg,png,webp',
@@ -50,7 +50,22 @@ class InstallationController extends Controller
             ], 422);
         }
 
-        $authUserId = $request->user()?->id ?? $validated['user_id'];
+        $authUser = $request->user();
+        $authUserId = $authUser?->id ?? $validated['user_id'];
+
+        // Pastikan teknisi memang ditugaskan untuk proyek ini
+        if ($authUser && !in_array($authUser->role, ['admin', 'superadmin'])) {
+            $isAssigned = \App\Models\ProjectAssignment::where('user_id', $authUserId)
+                ->where('project_id', $validated['project_id'])
+                ->exists();
+
+            if (!$isAssigned) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak ditugaskan untuk proyek ini.',
+                ], 403);
+            }
+        }
 
         $installation = DB::transaction(function () use ($request, $validated, $authUserId) {
             $installation = Installation::create([
@@ -128,11 +143,6 @@ class InstallationController extends Controller
                 'integer',
                 'exists:projects,id',
             ],
-            'user_id' => [
-                'sometimes',
-                'integer',
-                'exists:users,id',
-            ],
             'lamp_type_id' => [
                 'sometimes',
                 'integer',
@@ -177,6 +187,7 @@ class InstallationController extends Controller
             'photos' => [
                 'nullable',
                 'array',
+                'max:4',
             ],
             'photos.*' => [
                 'image',
@@ -196,16 +207,9 @@ class InstallationController extends Controller
             ->first();
 
         if (!$district) {
-            $district = District::find($districtId);
-            if ($district) {
-                $projectId = $district->project_id;
-            }
-        }
-
-        if (!$district) {
             return response()->json([
                 'success' => false,
-                'message' => 'Area yang dipilih tidak valid.',
+                'message' => 'Area operasional tidak sesuai dengan project.',
             ], 422);
         }
 
@@ -213,8 +217,6 @@ class InstallationController extends Controller
         return DB::transaction(function () use ($installation, $projectId, $districtId, $validated, $request) {
             $installation->update([
                 'project_id' => $projectId,
-                'user_id' => $validated['user_id']
-                    ?? $installation->user_id,
                 'lamp_type_id' => $validated['lamp_type_id']
                     ?? $installation->lamp_type_id,
                 'district_id' => $districtId,
