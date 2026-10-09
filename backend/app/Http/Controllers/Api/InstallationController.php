@@ -298,6 +298,11 @@ class InstallationController extends Controller
             ],
         ]);
 
+        $authUser = $request->user();
+        $targetUserId = ($authUser && !in_array($authUser->role, ['admin', 'superadmin']))
+            ? $authUser->id
+            : ($validated['user_id'] ?? $authUser?->id);
+
         $query = Installation::with([
             'project',
             'user',
@@ -305,7 +310,7 @@ class InstallationController extends Controller
             'lampType',
             'photos',
         ])
-            ->where('user_id', $validated['user_id'])
+            ->where('user_id', $targetUserId)
             ->where('project_id', $validated['project_id']);
 
         if (!empty($validated['district_id'])) {
@@ -357,8 +362,17 @@ class InstallationController extends Controller
         ]);
     }
 
-    public function show(Installation $installation): JsonResponse
+    public function show(Request $request, Installation $installation): JsonResponse
     {
+        // Cegah IDOR: Pastikan hanya pemilik data (atau admin) yang dapat melihat detail data pemasangan ini
+        $authUserId = $request->user()?->id;
+        if ($authUserId && (int) $installation->user_id !== (int) $authUserId && !in_array($request->user()?->role, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak akses untuk melihat data pemasangan ini.',
+            ], 403);
+        }
+
         $installation->load([
             'project',
             'user',

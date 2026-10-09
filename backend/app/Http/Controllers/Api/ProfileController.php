@@ -49,13 +49,13 @@ class ProfileController extends Controller
         if ($user) {
             $validated = $request->validate([
                 'user_id' => ['nullable', 'integer'],
-                'phone_number' => ['nullable', 'string', 'max:20'],
+                'phone_number' => ['nullable', 'string', 'max:13'],
             ]);
             $phoneNumber = $validated['phone_number'] ?? null;
         } else {
             $validated = $request->validate([
                 'user_id' => ['required', 'integer', 'exists:users,id'],
-                'phone_number' => ['nullable', 'string', 'max:20'],
+                'phone_number' => ['nullable', 'string', 'max:13'],
             ]);
             $user = User::findOrFail($validated['user_id']);
             $phoneNumber = $validated['phone_number'] ?? null;

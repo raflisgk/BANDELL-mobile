@@ -24,10 +24,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
          * @var list<string>
          */
         protected $fillable = [
-        'project_id',
-        'name',
-        'status',
-    ];
+            'project_id',
+            'name',
+        ];
 
         /**
          * Get the project that this district belongs to.
