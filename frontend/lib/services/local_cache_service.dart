@@ -238,6 +238,21 @@ class LocalCacheService {
     return null;
   }
 
+  static List<dynamic>? getNotificationsJsonSync(int userId) {
+    try {
+      final p = _prefs;
+      if (p == null) return null;
+      final raw = p.getString(_notificationsKey(userId));
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) return decoded;
+      }
+    } catch (e) {
+      debugPrint('LocalCacheService getNotificationsJsonSync error: $e');
+    }
+    return null;
+  }
+
   static Future<void> saveReadNotificationIds(Set<int> ids) async {
     try {
       final prefs = await _getPrefs();

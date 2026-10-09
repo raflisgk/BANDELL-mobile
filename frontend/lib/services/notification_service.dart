@@ -33,6 +33,27 @@ class NotificationService {
     return true;
   }
 
+  /// Mengambil cache notifikasi secara sinkron (0ms) dari Storage HP
+  static List<NotificationModel> getCachedNotificationsSync([int? userId]) {
+    final targetUserId = userId ?? AuthService.currentUser?.idUser;
+    if (targetUserId == null || targetUserId <= 0) return [];
+
+    final cachedJson = LocalCacheService.getNotificationsJsonSync(targetUserId);
+    if (cachedJson != null && cachedJson.isNotEmpty) {
+      return cachedJson
+          .whereType<Map<String, dynamic>>()
+          .map((json) {
+            final model = NotificationModel.fromJson(json);
+            if (isReadLocally(model.id)) {
+              model.isUnread = false;
+            }
+            return model;
+          })
+          .toList();
+    }
+    return [];
+  }
+
   /// Mengambil daftar notifikasi dari Laravel API atau Storage HP
   Future<List<NotificationModel>> getNotifications({
     int? userId,

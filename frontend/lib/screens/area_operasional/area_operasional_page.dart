@@ -472,35 +472,40 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
       child: Scaffold(
         extendBody: true,
         backgroundColor: AppColors.backgroundWhite,
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-          children: [
-            AppTopBar(
-              selectedValue: _selectedProject?.name,
-              title: (!_isLoadingProjects && _projects.isEmpty)
-                  ? 'Belum Ada Proyek'
-                  : null,
-              isLoading: _isLoadingProjects,
-              dropdownItems: projectNames,
-              onDropdownChanged: _onProjectSelected,
-              showBackButton: false,
-              onNotificationPressed: () async {
-                await AppNavigator.push(context, const NotificationPage());
-                if (mounted) {
-                  _refreshData();
-                }
-              },
-            ),
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+            children: [
+              AppTopBar(
+                selectedValue: _selectedProject?.name,
+                title: (!_isLoadingProjects && _projects.isEmpty)
+                    ? 'Belum Ada Proyek'
+                    : null,
+                isLoading: _isLoadingProjects,
+                dropdownItems: projectNames,
+                onDropdownChanged: _onProjectSelected,
+                showBackButton: false,
+                onNotificationPressed: () async {
+                  await AppNavigator.push(context, const NotificationPage());
+                  if (mounted) {
+                    _refreshData();
+                  }
+                },
+              ),
 
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => _refreshData(forceRefresh: true),
-                color: AppColors.primary,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: ClampingScrollPhysics(),
-                  ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => _refreshData(forceRefresh: true),
+                  color: AppColors.primary,
+                  child: ListView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: ClampingScrollPhysics(),
+                    ),
                   padding: const EdgeInsets.symmetric(horizontal: 28.0),
                   children: [
                     const SizedBox(height: 16),
@@ -867,7 +872,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
                           ),
                     ],
 
-                    const SizedBox(height: 100),
+                    const SizedBox(height: 110),
                   ],
                 ),
               ),
@@ -875,6 +880,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
           ],
         ),
       ),
+    ),
 
       bottomNavigationBar: widget.isEmbedded
           ? null

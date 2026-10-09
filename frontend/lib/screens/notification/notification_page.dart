@@ -29,7 +29,17 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
+    // 1. Muat cache lokal HP segera secara sinkron (0ms, langsung tampil tanpa skeleton shimmer)
+    final cached = NotificationService.getCachedNotificationsSync();
+    if (cached.isNotEmpty) {
+      _notifications = cached;
+      _isLoading = false;
+    } else {
+      _isLoading = true;
+    }
+
+    // 2. Cek pembaruan notifikasi terbaru dari server di latar belakang secara hening
+    _loadNotificationsSilently();
   }
 
   @override
@@ -37,12 +47,7 @@ class _NotificationPageState extends State<NotificationPage> {
     super.dispose();
   }
 
-  Future<void> _loadNotifications() async {
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
-
+  Future<void> _loadNotificationsSilently() async {
     try {
       final list = await NotificationService().getNotifications(
         forceRefresh: true,
@@ -51,19 +56,32 @@ class _NotificationPageState extends State<NotificationPage> {
         setState(() {
           _notifications = list;
           _isLoading = false;
+          _hasError = false;
         });
       }
     } catch (e) {
-      debugPrint('Error loading notifications: $e');
+      debugPrint('Silent load notifications error: $e');
       if (mounted) {
-        setState(() {
-          _hasError = true;
-          _errorMessage =
-              'Gagal memuat notifikasi. Periksa koneksi internet Anda.';
-          _isLoading = false;
-        });
+        // Hanya tampilkan layar error jika benar-benar belum ada data cache sama sekali di HP
+        if (_notifications.isEmpty) {
+          setState(() {
+            _hasError = true;
+            _errorMessage =
+                'Gagal memuat notifikasi. Periksa koneksi internet Anda.';
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
+  }
+
+  Future<void> _loadNotifications() async {
+    // Dipanggil saat pull-to-refresh
+    await _loadNotificationsSilently();
   }
 
   void _handleBack() {

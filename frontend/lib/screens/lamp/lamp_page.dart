@@ -176,26 +176,31 @@ class _LampPageState extends State<LampPage> {
       child: Scaffold(
         extendBody: true,
         backgroundColor: AppColors.backgroundWhite,
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              AppTopBar(
-                title: 'Pilih Jenis Lampu',
-                showDropdown: false,
-                onBackPressed: _handleBack,
-                onNotificationPressed: () async {
-                  await AppNavigator.push(context, const NotificationPage());
-                  if (mounted) {
-                    _loadLampTypes();
-                  }
-                },
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                AppTopBar(
+                  title: 'Pilih Jenis Lampu',
+                  showDropdown: false,
+                  onBackPressed: _handleBack,
+                  onNotificationPressed: () async {
+                    await AppNavigator.push(context, const NotificationPage());
+                    if (mounted) {
+                      _loadLampTypes();
+                    }
+                  },
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 16),
@@ -477,7 +482,7 @@ class _LampPageState extends State<LampPage> {
                           ),
                       ],
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 110),
                     ],
                   ),
                 ),
@@ -485,6 +490,7 @@ class _LampPageState extends State<LampPage> {
             ],
           ),
         ),
+      ),
         bottomNavigationBar: BottomNavbar(
           currentIndex: 0,
           onTap: (index) {

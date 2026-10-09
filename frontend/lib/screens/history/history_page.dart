@@ -615,18 +615,23 @@ class _HistoryPageState extends State<HistoryPage> {
       child: Scaffold(
         extendBody: true,
         backgroundColor: AppColors.backgroundWhite,
-        body: SafeArea(
-          bottom: false,
-          child: RefreshIndicator(
-            onRefresh: () => _loadHistory(forceRefresh: true),
-            color: AppColors.primary,
-            child: CustomScrollView(
-              controller: _scrollController,
-              key: const PageStorageKey<String>('history_custom_scroll_view'),
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: ClampingScrollPhysics(),
-              ),
-              slivers: [
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SafeArea(
+            bottom: false,
+            child: RefreshIndicator(
+              onRefresh: () => _loadHistory(forceRefresh: true),
+              color: AppColors.primary,
+              child: CustomScrollView(
+                controller: _scrollController,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                key: const PageStorageKey<String>('history_custom_scroll_view'),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: ClampingScrollPhysics(),
+                ),
+                slivers: [
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   sliver: SliverToBoxAdapter(
@@ -941,6 +946,7 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
         ),
+      ),
         bottomNavigationBar: widget.isEmbedded
             ? null
             : BottomNavbar(
