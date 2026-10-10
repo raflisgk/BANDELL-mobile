@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -5,11 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../services/api_service.dart';
+import '../../services/offline_sync_service.dart';
+import '../../services/secure_credential_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../main_layout/main_layout_page.dart';
-import '../../services/api_service.dart';
-import '../../services/secure_credential_service.dart';
 
 class LoginPage extends StatefulWidget {
   final bool sessionExpired;
@@ -196,6 +198,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       } else {
         await SecureCredentialService.setSession(isLoggedIn: true);
       }
+
+      unawaited(OfflineSyncService().updatePendingCount());
+      unawaited(OfflineSyncService().syncPendingQueue());
 
       if (!mounted) return;
 

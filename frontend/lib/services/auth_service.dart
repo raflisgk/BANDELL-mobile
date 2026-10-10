@@ -12,16 +12,13 @@ class AuthService {
   static UserModel? currentUser;
 
   Future<void> logout() async {
-    final uid = currentUser?.idUser;
     await ApiService.logout();
     currentUser = null;
     ProjectService.clearCache();
     InstallationService.clearCache();
     LampTypeService.clearCache();
     NotificationService.clearCache();
-    if (uid != null && uid > 0) {
-      await OfflineSyncService().clearQueue(userId: uid);
-    }
+    OfflineSyncService().pendingCountNotifier.value = 0;
   }
 
   Future<UserModel?> getProfile() async {
