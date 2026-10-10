@@ -5,18 +5,23 @@ import 'api_service.dart';
 import 'installation_service.dart';
 import 'lamp_type_service.dart';
 import 'notification_service.dart';
+import 'offline_sync_service.dart';
 import 'project_service.dart';
 
 class AuthService {
   static UserModel? currentUser;
 
   Future<void> logout() async {
+    final uid = currentUser?.idUser;
     await ApiService.logout();
     currentUser = null;
     ProjectService.clearCache();
     InstallationService.clearCache();
     LampTypeService.clearCache();
     NotificationService.clearCache();
+    if (uid != null && uid > 0) {
+      await OfflineSyncService().clearQueue(userId: uid);
+    }
   }
 
   Future<UserModel?> getProfile() async {
@@ -50,6 +55,9 @@ class AuthService {
       }
     } catch (e) {
       debugPrint('Error getProfile: $e');
+      if (e is ApiException && e.statusCode == 401) {
+        rethrow;
+      }
     }
     return currentUser;
   }

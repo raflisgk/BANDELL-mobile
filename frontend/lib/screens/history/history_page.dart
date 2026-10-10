@@ -196,6 +196,7 @@ class _HistoryPageState extends State<HistoryPage> {
       final cachedJson = await LocalCacheService.getHistoryJson(
         userId: userId,
         projectId: proj.idProject,
+        filter: _selectedFilter,
         start: sDate,
         end: eDate,
       );
@@ -345,6 +346,7 @@ class _HistoryPageState extends State<HistoryPage> {
       final cachedJson = await LocalCacheService.getHistoryJson(
         userId: userId,
         projectId: proj.idProject,
+        filter: _selectedFilter,
         start: sDate,
         end: eDate,
       );

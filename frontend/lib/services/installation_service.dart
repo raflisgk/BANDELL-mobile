@@ -141,7 +141,10 @@ class InstallationService {
       try {
         responseData = jsonDecode(response.body) as Map<String, dynamic>;
       } catch (_) {
-        throw Exception('Response server tidak valid.');
+        throw ApiException(
+          'Response server tidak valid (${response.statusCode}).',
+          statusCode: response.statusCode,
+        );
       }
 
       if (response.statusCode == 201 && responseData['success'] == true) {
@@ -154,16 +157,21 @@ class InstallationService {
         return installation;
       }
 
-      throw Exception(
+      throw ApiException(
         _extractErrorMessage(responseData, 'Gagal menyimpan data pemasangan.'),
+        statusCode: response.statusCode,
       );
     } catch (e) {
       debugPrint('createInstallation error caught: $e');
-      if (e is ApiException && (e.statusCode == 401 || e.statusCode == 422)) {
+      if (e is ApiException) {
         rethrow;
       }
-      if (!bypassOfflineQueue) {
-        debugPrint('Koneksi atau server bermasalah ($e). Menyimpan ke ANTRIAN STORAGE HP...');
+      if (!bypassOfflineQueue &&
+          (e is SocketException ||
+              e is TimeoutException ||
+              e is http.ClientException ||
+              e is IOException)) {
+        debugPrint('Koneksi bermasalah ($e). Menyimpan ke ANTRIAN STORAGE HP...');
         try {
           final item =
               await OfflineSyncService().enqueueInstallation(installation);

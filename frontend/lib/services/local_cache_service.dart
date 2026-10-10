@@ -19,17 +19,24 @@ class LocalCacheService {
   // ==========================================
   // RIWAYAT (HISTORY) CACHE
   // ==========================================
+  static String _sanitizeFilter(String filter) {
+    return filter.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '_');
+  }
+
   static String _historyKey(
     int userId,
     int projectId,
+    String filter,
     String start,
     String end,
   ) {
-    return 'cache_history_${userId}_${projectId}_${start}_$end';
+    final sf = _sanitizeFilter(filter);
+    return 'cache_history_${userId}_${projectId}_${sf}_${start}_$end';
   }
 
-  static String _latestHistoryKey(int userId, int projectId) {
-    return 'cache_history_latest_${userId}_$projectId';
+  static String _latestHistoryKey(int userId, int projectId, String filter) {
+    final sf = _sanitizeFilter(filter);
+    return 'cache_history_latest_${userId}_${projectId}_$sf';
   }
 
   static Future<void> saveHistoryJson({
@@ -42,10 +49,10 @@ class LocalCacheService {
   }) async {
     try {
       final prefs = await _getPrefs();
-      final key = _historyKey(userId, projectId, start, end);
+      final key = _historyKey(userId, projectId, filter, start, end);
       final jsonStr = jsonEncode(data);
       await prefs.setString(key, jsonStr);
-      await prefs.setString(_latestHistoryKey(userId, projectId), jsonStr);
+      await prefs.setString(_latestHistoryKey(userId, projectId, filter), jsonStr);
     } catch (e) {
       debugPrint('LocalCacheService saveHistory error: $e');
     }
@@ -60,9 +67,11 @@ class LocalCacheService {
   }) {
     if (_prefs == null) return null;
     try {
-      final key = _historyKey(userId, projectId, start, end);
+      final key = _historyKey(userId, projectId, filter, start, end);
       String? raw = _prefs!.getString(key);
-      raw ??= _prefs!.getString(_latestHistoryKey(userId, projectId));
+      if (raw == null && (start.isEmpty && end.isEmpty)) {
+        raw = _prefs!.getString(_latestHistoryKey(userId, projectId, filter));
+      }
       if (raw != null && raw.isNotEmpty) {
         final decoded = jsonDecode(raw);
         if (decoded is List) return decoded;
@@ -82,9 +91,11 @@ class LocalCacheService {
   }) async {
     try {
       final prefs = await _getPrefs();
-      final key = _historyKey(userId, projectId, start, end);
+      final key = _historyKey(userId, projectId, filter, start, end);
       String? raw = prefs.getString(key);
-      raw ??= prefs.getString(_latestHistoryKey(userId, projectId));
+      if (raw == null && (start.isEmpty && end.isEmpty)) {
+        raw = prefs.getString(_latestHistoryKey(userId, projectId, filter));
+      }
       if (raw != null && raw.isNotEmpty) {
         final decoded = jsonDecode(raw);
         if (decoded is List) return decoded;

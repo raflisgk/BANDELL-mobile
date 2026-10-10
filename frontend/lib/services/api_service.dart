@@ -9,6 +9,7 @@ import '../models/user_model.dart';
 import '../screens/login/login_page.dart';
 import '../utils/page_transitions.dart';
 import 'auth_service.dart';
+import 'offline_sync_service.dart';
 import 'secure_credential_service.dart';
 
 /// Clean custom exception class that shields the UI from raw system errors
@@ -119,9 +120,13 @@ class ApiService {
 
     try {
       debugPrint('Sesi login telah berakhir atau token tidak valid (401). Auto-logout...');
+      final uid = AuthService.currentUser?.idUser;
       setAuthToken(null);
       await SecureCredentialService.setSession(isLoggedIn: false);
       AuthService.currentUser = null;
+      if (uid != null && uid > 0) {
+        await OfflineSyncService().clearQueue(userId: uid);
+      }
 
       final nav = AppNavigator.navigatorKey.currentState;
       if (nav != null) {

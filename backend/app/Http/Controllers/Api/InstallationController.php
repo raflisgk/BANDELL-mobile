@@ -213,6 +213,20 @@ class InstallationController extends Controller
             ], 422);
         }
 
+        // Pastikan teknisi memang ditugaskan untuk proyek ini
+        if ($authUser && !in_array($authUser->role, ['admin', 'superadmin'])) {
+            $isAssigned = \App\Models\ProjectAssignment::where('user_id', $authUserId)
+                ->where('project_id', $projectId)
+                ->exists();
+
+            if (!$isAssigned) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak ditugaskan untuk proyek ini.',
+                ], 403);
+            }
+        }
+
         // Transaksi atomik: memastikan pembaruan data dan berkas foto tersimpan secara konsisten
         return DB::transaction(function () use ($installation, $projectId, $districtId, $validated, $request) {
             $installation->update([

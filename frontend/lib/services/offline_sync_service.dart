@@ -175,6 +175,7 @@ class OfflineSyncService {
   static const String _keyOfflineQueue = 'offline_upload_queue';
   final ValueNotifier<int> pendingCountNotifier = ValueNotifier<int>(0);
   final ValueNotifier<bool> isSyncingNotifier = ValueNotifier<bool>(false);
+  bool _isSyncing = false;
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   Timer? _periodicTimer;
@@ -225,8 +226,7 @@ class OfflineSyncService {
           .toList();
 
       if (userId != null && userId > 0) {
-        items =
-            items.where((i) => i.userId == userId || i.userId == 0).toList();
+        items = items.where((i) => i.userId == userId).toList();
       }
       if (projectId != null && projectId > 0) {
         items = items
@@ -257,8 +257,7 @@ class OfflineSyncService {
           .toList();
 
       if (userId != null && userId > 0) {
-        items =
-            items.where((i) => i.userId == userId || i.userId == 0).toList();
+        items = items.where((i) => i.userId == userId).toList();
       }
       if (projectId != null && projectId > 0) {
         items = items
@@ -274,7 +273,12 @@ class OfflineSyncService {
   }
 
   Future<void> updatePendingCount() async {
-    final queue = await getQueue();
+    final currentUserId = AuthService.currentUser?.idUser;
+    if (currentUserId == null || currentUserId <= 0) {
+      pendingCountNotifier.value = 0;
+      return;
+    }
+    final queue = await getQueue(userId: currentUserId);
     pendingCountNotifier.value = queue.length;
   }
 
@@ -368,43 +372,92 @@ class OfflineSyncService {
     }
   }
 
+  /// Hapus antrean offline dan bersihkan file foto lokal dari storage HP
+  Future<void> clearQueue({int? userId}) async {
+    try {
+      final prefs = await _getPrefs();
+      final allItems = await getQueue();
+      final toRemove = (userId != null && userId > 0)
+          ? allItems.where((i) => i.userId == userId).toList()
+          : allItems;
+      final remaining = (userId != null && userId > 0)
+          ? allItems.where((i) => i.userId != userId).toList()
+          : <OfflineInstallationItem>[];
+
+      for (final item in toRemove) {
+        for (final p in item.localPhotoPaths) {
+          try {
+            final f = File(p);
+            if (await f.exists()) {
+              await f.delete();
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (remaining.isEmpty) {
+        await prefs.remove(_keyOfflineQueue);
+      } else {
+        final jsonStr = jsonEncode(remaining.map((e) => e.toJson()).toList());
+        await prefs.setString(_keyOfflineQueue, jsonStr);
+      }
+      await updatePendingCount();
+    } catch (e) {
+      debugPrint('OfflineSyncService clearQueue error: $e');
+    }
+  }
+
   /// Jalankan proses sinkronisasi antrean ke server backend
   Future<int> syncPendingQueue() async {
-    if (isSyncingNotifier.value) return 0;
-
-    final results = await Connectivity().checkConnectivity();
-    final isOnline = results.any((r) => r != ConnectivityResult.none);
-    if (!isOnline) {
-      debugPrint('OfflineSync: Device is offline. Skipping sync.');
-      return 0;
-    }
-
-    final queue = await getQueue();
-    if (queue.isEmpty) return 0;
-
+    // Synchronous atomic lock untuk mencegah race condition dari connectivity event dan periodic timer
+    if (_isSyncing || isSyncingNotifier.value) return 0;
+    _isSyncing = true;
     isSyncingNotifier.value = true;
-    int successCount = 0;
 
-    debugPrint('STARTING OFFLINE SYNC for ${queue.length} items...');
-
-    for (final item in List<OfflineInstallationItem>.from(queue)) {
-      try {
-        final model = item.toInstallationModel();
-        await InstallationService()
-            .createInstallation(model, bypassOfflineQueue: true);
-
-        // Sukses diunggah ke backend -> hapus dari storage HP
-        await removeQueueItem(item.localId);
-        successCount++;
-        debugPrint('OFFLINE SYNC SUCCESS for: ${item.lampCode}');
-      } catch (e) {
-        debugPrint('OFFLINE SYNC FAILED for ${item.lampCode}: $e');
-        break;
+    try {
+      final currentUserId = AuthService.currentUser?.idUser;
+      if (currentUserId == null || currentUserId <= 0) {
+        return 0;
       }
-    }
 
-    isSyncingNotifier.value = false;
-    await updatePendingCount();
-    return successCount;
+      final results = await Connectivity().checkConnectivity();
+      final isOnline = results.any((r) => r != ConnectivityResult.none);
+      if (!isOnline) {
+        debugPrint('OfflineSync: Device is offline. Skipping sync.');
+        return 0;
+      }
+
+      final queue = await getQueue(userId: currentUserId);
+      if (queue.isEmpty) return 0;
+
+      int successCount = 0;
+      debugPrint(
+        'STARTING OFFLINE SYNC for ${queue.length} items of user $currentUserId...',
+      );
+
+      for (final item in List<OfflineInstallationItem>.from(queue)) {
+        if (item.userId != currentUserId) continue;
+
+        try {
+          final model = item.toInstallationModel();
+          await InstallationService()
+              .createInstallation(model, bypassOfflineQueue: true);
+
+          // Sukses diunggah ke backend -> hapus dari storage HP
+          await removeQueueItem(item.localId);
+          successCount++;
+          debugPrint('OFFLINE SYNC SUCCESS for: ${item.lampCode}');
+        } catch (e) {
+          debugPrint('OFFLINE SYNC FAILED for ${item.lampCode}: $e');
+          break;
+        }
+      }
+
+      return successCount;
+    } finally {
+      _isSyncing = false;
+      isSyncingNotifier.value = false;
+      await updatePendingCount();
+    }
   }
 }
