@@ -50,14 +50,8 @@ class LampuHeaderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: AppColors.cardFloatingShadow,
       ),
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -105,7 +99,7 @@ class LampuHeaderCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 14),
-          const Divider(color: AppColors.border, height: 1),
+          const Divider(color: AppColors.borderLight, height: 1),
           const SizedBox(height: 12),
 
           Row(
@@ -182,28 +176,26 @@ class LokasiCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: AppColors.cardFloatingShadow,
       ),
       padding: const EdgeInsets.all(16.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(
-              Icons.location_on_outlined,
-              color: AppColors.textSubtle,
-              size: 18,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: AppColors.softBlueBackground,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.location_on_rounded,
+              color: AppColors.primary,
+              size: 20,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,15 +266,9 @@ class InformasiLampuCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowSubtle,
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight, width: 1),
+        boxShadow: AppColors.cardFloatingShadow,
       ),
       child: Column(
         children: [
@@ -513,14 +499,8 @@ class BarcodeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: AppColors.cardFloatingShadow,
       ),
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -646,17 +626,11 @@ class InformasiRecordCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.borderLight,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
+        boxShadow: AppColors.cardFloatingShadow,
       ),
       child: Column(
         children: [

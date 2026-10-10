@@ -14,20 +14,24 @@ class HistoryLampCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool hasPhotos = !item.fotoCount.toLowerCase().contains('belum');
+    final bool isDitolak = item.isDitolak;
+    final bool isMenungguJaringan = item.isMenungguJaringan ||
+        item.status.trim().toLowerCase().contains('menunggu jaringan');
+
+    Color borderColor = AppColors.borderLight;
+    if (isDitolak) {
+      borderColor = AppColors.statusDitolakBorder;
+    } else if (isMenungguJaringan) {
+      borderColor = const Color(0xFFFDBA74);
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.historyCardBackground,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowFaint,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: borderColor, width: isDitolak ? 1.2 : 1.0),
+        boxShadow: AppColors.cardFloatingShadow,
       ),
       child: Material(
         color: Colors.transparent,
@@ -82,19 +86,26 @@ class HistoryLampCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Lokasi & Koordinat Row (Baris 1: Icon + Nama District, Baris 2: Latitude, Longitude)
+                // Lokasi & Koordinat Row dengan Wadah Ikon
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
-                      child: Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: AppColors.textSubtle,
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(
+                        color: AppColors.softBlueBackground,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.location_on_rounded,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,7 +118,7 @@ class HistoryLampCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 2),
                           Text(
                             _getCoordinates(),
                             style: const TextStyle(
@@ -132,42 +143,68 @@ class HistoryLampCard extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // Bottom Row: Foto & Waktu
+                // Bottom Row: Foto Badge & Waktu + Chevron Interaktif
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Foto info
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.camera_alt_outlined,
-                          size: 15,
-                          color: hasPhotos
-                              ? AppColors.accentBlue
-                              : AppColors.manualOrange,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          item.fotoCount,
-                          style: TextStyle(
+                    // Foto info pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: hasPhotos
+                            ? AppColors.softBlueBackground
+                            : const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.camera_alt_outlined,
+                            size: 13,
                             color: hasPhotos
-                                ? AppColors.accentBlue
+                                ? AppColors.primary
                                 : AppColors.manualOrange,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            item.fotoCount,
+                            style: TextStyle(
+                              color: hasPhotos
+                                  ? AppColors.primary
+                                  : AppColors.manualOrange,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
-                    // Waktu info (HANYA gunakan created_at sesuai aturan)
-                    Text(
-                      _formatWaktu(item.createdAt ?? item.installation?.createdAt),
-                      style: const TextStyle(
-                        color: AppColors.textSubtle,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w400,
-                      ),
+                    // Waktu info & Chevron
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatWaktu(
+                            item.createdAt ?? item.installation?.createdAt,
+                          ),
+                          style: const TextStyle(
+                            color: AppColors.textSubtle,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          size: 16,
+                          color: AppColors.textSubtle,
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -89,7 +89,7 @@ class MetodePendataanPage extends StatelessWidget {
         statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.backgroundWhite,
+        backgroundColor: AppColors.scaffoldBackground,
         body: SafeArea(
           child: Column(
             children: [

@@ -493,7 +493,7 @@ class _ManualPageState extends State<ManualPage> with TickerProviderStateMixin {
         statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.backgroundWhite,
+        backgroundColor: AppColors.scaffoldBackground,
         body: SafeArea(
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),

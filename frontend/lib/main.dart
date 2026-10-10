@@ -101,6 +101,38 @@ class MyApp extends StatelessWidget {
           scrollBehavior: const AppScrollBehavior(),
           theme: ThemeData(
             useMaterial3: true,
+            scaffoldBackgroundColor: AppColors.scaffoldBackground,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primary,
+              primary: AppColors.primary,
+              surface: Colors.white,
+              error: AppColors.error,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: IconThemeData(color: AppColors.textPrimary),
+              titleTextStyle: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            cardTheme: CardThemeData(
+              color: Colors.white,
+              elevation: 0,
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: AppColors.borderLight, width: 1),
+              ),
+            ),
+            dividerTheme: const DividerThemeData(
+              color: AppColors.divider,
+              thickness: 1,
+              space: 1,
+            ),
             pageTransitionsTheme: const PageTransitionsTheme(
               builders: {
                 TargetPlatform.android: FastPageTransitionsBuilder(),

@@ -175,7 +175,7 @@ class _LampPageState extends State<LampPage> {
       ),
       child: Scaffold(
         extendBody: true,
-        backgroundColor: AppColors.backgroundWhite,
+        backgroundColor: AppColors.scaffoldBackground,
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusScope.of(context).unfocus(),
@@ -331,12 +331,19 @@ class _LampPageState extends State<LampPage> {
                         Container(
                           height: 44,
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceSubtle,
-                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppColors.border,
+                              color: AppColors.borderLight,
                               width: 1,
                             ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: AppColors.shadowFaint,
+                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
                           ),
                           child: TextField(
                             controller: _searchController,

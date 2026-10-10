@@ -425,7 +425,7 @@ class _DetailLampuPageState extends State<DetailLampuPage> {
         statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.backgroundWhite,
+        backgroundColor: AppColors.scaffoldBackground,
         body: SafeArea(
           child: Column(
             children: [

@@ -8,9 +8,12 @@ class AppColors {
   static const Color primaryLight = Color(
     0x1A0C5DA5,
   ); // Icon GPS & Foto (Transparan)
+  static const Color scaffoldBackground = Color(
+    0xFFF4F7FB,
+  ); // Canvas Abu-Biru Muda Profesional (Latar Belakang Layar)
   static const Color backgroundWhite = Color(
     0xFFFFFFFF,
-  ); // Background Putih Layar
+  ); // Background Putih Konten/Kartu
 
   // --- WARNA TEKS & TIPOGRAFI (Slate Palette) ---
   static const Color textHeading = Color(0xFF1E293B); // Slate 800 - Judul Utama
@@ -261,6 +264,22 @@ class AppColors {
     0x29000000,
   ); // Shadow Kuat (16% hitam)
   static const Color whiteOverlay = Color(0x66FFFFFF); // White Alpha 40%
+
+  /// Bayangan mengambang tegas & jelas (ambient menyebar sekeliling + key shadow kedalaman)
+  static const List<BoxShadow> cardFloatingShadow = [
+    BoxShadow(
+      color: Color(0x180F172A), // ~9.5% slate - ambient menyebar sekeliling
+      blurRadius: 14,
+      spreadRadius: 1,
+      offset: Offset(0, 4),
+    ),
+    BoxShadow(
+      color: Color(0x120F172A), // ~7% slate - penegas elevasi
+      blurRadius: 6,
+      spreadRadius: 0,
+      offset: Offset(0, 2),
+    ),
+  ];
 
   // --- SKELETON / SHIMMER LOADING ---
   static const Color skeletonBase = Color(

@@ -526,7 +526,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: Scaffold(
         extendBody: true,
-        backgroundColor: AppColors.inputBackground,
+        backgroundColor: AppColors.scaffoldBackground,
         body: Stack(
           children: [
             // 1. Ambient Glow Transparan Lembut Mengalir Sampai ke Status Bar

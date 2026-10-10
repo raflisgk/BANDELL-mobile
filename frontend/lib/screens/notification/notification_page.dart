@@ -157,12 +157,12 @@ class _NotificationPageState extends State<NotificationPage> {
         statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.inputBackground,
+        backgroundColor: AppColors.scaffoldBackground,
         body: Column(
         children: [
           // 1. Header Sesuai Warna Layar
           Container(
-            color: AppColors.inputBackground,
+            color: AppColors.scaffoldBackground,
             child: SafeArea(
               bottom: false,
               child: Container(

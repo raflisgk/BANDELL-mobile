@@ -21,14 +21,8 @@ class FotoDokumentasiCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: AppColors.cardFloatingShadow,
       ),
       padding: const EdgeInsets.all(16.0),
       child: Column(

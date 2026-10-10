@@ -391,9 +391,16 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
         height: 44,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: AppColors.inputBackground,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.borderMedium, width: 1),
+          border: Border.all(color: AppColors.borderLight, width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadowFaint,
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
         child: Row(
           children: const [
@@ -409,9 +416,16 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
     }
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.inputBackground,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderMedium, width: 1),
+        border: Border.all(color: AppColors.borderLight, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadowFaint,
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
       child: TextField(
         controller: _searchController,
@@ -471,7 +485,7 @@ class _AreaOperasionalPageState extends State<AreaOperasionalPage> {
       ),
       child: Scaffold(
         extendBody: true,
-        backgroundColor: AppColors.backgroundWhite,
+        backgroundColor: AppColors.scaffoldBackground,
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusScope.of(context).unfocus(),

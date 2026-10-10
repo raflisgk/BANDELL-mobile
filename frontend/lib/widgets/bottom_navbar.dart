@@ -20,15 +20,15 @@ class BottomNavbar extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(28.r),
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+            border: Border.all(color: AppColors.borderLight, width: 1.0),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
+                color: AppColors.shadowLight,
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.06),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 2),
               ),
@@ -45,15 +45,15 @@ class BottomNavbar extends StatelessWidget {
               haptic: true,
               tabBorderRadius: 20.r,
               gap: 8.w,
-              color: const Color(0xFF64748B),
+              color: AppColors.textMuted,
               activeColor: AppColors.primary,
               iconSize: 22.r,
-              tabBackgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              tabBackgroundColor: AppColors.primary.withValues(alpha: 0.10),
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
               textStyle: TextStyle(
-                color: const Color(0xFF0F172A),
+                color: AppColors.primary,
                 fontSize: 11.5.sp,
                 fontWeight: FontWeight.w700,
               ),
