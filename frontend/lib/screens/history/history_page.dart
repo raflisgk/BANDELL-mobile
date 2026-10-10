@@ -47,7 +47,9 @@ class _HistoryPageState extends State<HistoryPage> {
 
   List<HistoryLampModel> _loadCachedItemsSync(ProjectModel? project, String filter) {
     final userId = AuthService.currentUser?.idUser ?? 0;
-    if (project == null) {
+    final effectiveProjectId =
+        project?.idProject ?? LocalCacheService.getSelectedProjectIdSync();
+    if (effectiveProjectId == null || effectiveProjectId == 0) {
       final offlineItems = OfflineSyncService.getQueueSync(
         userId: userId,
       ).map((e) => e.toHistoryLampModel()).toList();
@@ -59,14 +61,14 @@ class _HistoryPageState extends State<HistoryPage> {
 
     final syncJson = LocalCacheService.getHistoryJsonSync(
       userId: userId,
-      projectId: project.idProject,
+      projectId: effectiveProjectId,
       filter: filter,
       start: sDate,
       end: eDate,
     );
     final offlineItems = OfflineSyncService.getQueueSync(
       userId: userId,
-      projectId: project.idProject,
+      projectId: effectiveProjectId,
     ).map((e) => e.toHistoryLampModel()).toList();
 
     final cached = (syncJson ?? [])
@@ -75,6 +77,29 @@ class _HistoryPageState extends State<HistoryPage> {
         .toList();
 
     return [...offlineItems, ...cached];
+  }
+
+  int get _skeletonCount {
+    if (_filteredItems.isNotEmpty) {
+      return _filteredItems.length;
+    }
+    if (_historyItems.isNotEmpty) {
+      return _historyItems.length;
+    }
+    final proj = _currentProject;
+    final cached = _loadCachedItemsSync(proj, _selectedFilter);
+    if (cached.isNotEmpty) {
+      return cached.length;
+    }
+    final userId = AuthService.currentUser?.idUser ?? 0;
+    final pId = proj?.idProject ??
+        LocalCacheService.getSelectedProjectIdSync() ??
+        0;
+    final savedCount = LocalCacheService.getHistoryCountSync(userId, pId);
+    if (savedCount != null && savedCount > 0) {
+      return savedCount;
+    }
+    return 1;
   }
 
   @override
@@ -87,7 +112,7 @@ class _HistoryPageState extends State<HistoryPage> {
       _historyItems = cached;
       _isLoading = false;
     } else {
-      _isLoading = proj == null;
+      _isLoading = true;
     }
 
     _initProjectAndHistory();
@@ -158,6 +183,12 @@ class _HistoryPageState extends State<HistoryPage> {
     final proj = _currentProject;
     if (proj == null) return;
 
+    if (_historyItems.isEmpty && mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
     final (startDate, endDate) = _getDateRangeForFilter(_selectedFilter);
     final userId = AuthService.currentUser?.idUser ?? 0;
 
@@ -177,10 +208,16 @@ class _HistoryPageState extends State<HistoryPage> {
       final offlineModels =
           offlineQueue.map((e) => e.toHistoryLampModel()).toList();
       final combined = [...offlineModels, ...history];
+      LocalCacheService.saveHistoryCountSync(
+        userId,
+        proj.idProject,
+        combined.length,
+      );
 
       if (!mounted) return;
       setState(() {
         _historyItems = combined;
+        _isLoading = false;
       });
     } catch (e) {
       debugPrint('Auto refresh error in HistoryPage: $e');
@@ -206,9 +243,12 @@ class _HistoryPageState extends State<HistoryPage> {
           .toList();
 
       final combined = [...offlineModels, ...cachedModels];
-      if (mounted && combined.isNotEmpty) {
+      if (mounted) {
         setState(() {
-          _historyItems = combined;
+          if (combined.isNotEmpty) {
+            _historyItems = combined;
+          }
+          _isLoading = false;
         });
       }
     }
@@ -325,6 +365,11 @@ class _HistoryPageState extends State<HistoryPage> {
       final offlineModels =
           offlineQueue.map((e) => e.toHistoryLampModel()).toList();
       final combined = [...offlineModels, ...history];
+      LocalCacheService.saveHistoryCountSync(
+        userId,
+        proj.idProject,
+        combined.length,
+      );
 
       if (mounted) {
         setState(() {
@@ -806,7 +851,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               ],
                             ),
                             Text(
-                              '${filtered.length} Instalasi',
+                              '${_isLoading ? _skeletonCount : filtered.length} Instalasi',
                               style: const TextStyle(
                                 color: AppColors.textSubtle,
                                 fontSize: 12.5,
@@ -828,25 +873,11 @@ class _HistoryPageState extends State<HistoryPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     sliver: Skeletonizer.sliver(
                       enabled: true,
+                      ignoreContainers: true,
                       child: SliverList.builder(
-                        itemCount: 4,
+                        itemCount: _skeletonCount,
                         itemBuilder: (context, index) {
-                          return const HistoryLampCard(
-                            item: HistoryLampModel(
-                              userId: 0,
-                              projectId: 0,
-                              kode: 'LCU-12345678',
-                              jenis: 'PJU Solar Cell 100W',
-                              status: 'Menunggu Verifikasi',
-                              isVerified: false,
-                              lokasi: 'Jl. Jenderal Sudirman No. 123, Jakarta',
-                              koordinat: '-6.2088, 106.8456',
-                              fotoCount: '3 Foto Lampu',
-                              waktu: '2026-09-29 10:00:00',
-                              panelCode: 'PNL-01',
-                              districtName: 'Kecamatan Gambir',
-                            ),
-                          );
+                          return const HistoryLampSkeletonCard();
                         },
                       ),
                     ),

@@ -235,6 +235,21 @@ class LocalCacheService {
     return null;
   }
 
+  static int? getSelectedProjectIdSync() {
+    return _prefs?.getInt(_keySelectedProjectId);
+  }
+
+  static String _historyCountKey(int userId, int projectId) =>
+      'cache_history_count_${userId}_$projectId';
+
+  static void saveHistoryCountSync(int userId, int projectId, int count) {
+    _prefs?.setInt(_historyCountKey(userId, projectId), count);
+  }
+
+  static int? getHistoryCountSync(int userId, int projectId) {
+    return _prefs?.getInt(_historyCountKey(userId, projectId));
+  }
+
   // ==========================================
   // NOTIFICATIONS CACHE
   // ==========================================

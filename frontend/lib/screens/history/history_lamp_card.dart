@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../models/history_lamp_model.dart';
 import '../../services/project_service.dart';
@@ -373,5 +374,95 @@ class HistoryLampCard extends StatelessWidget {
       return item.koordinat.trim();
     }
     return '-';
+  }
+}
+
+/// Kartu Skeleton untuk HistoryLampCard yang bentuk dan ukurannya persis sama
+class HistoryLampSkeletonCard extends StatelessWidget {
+  const HistoryLampSkeletonCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight, width: 1.0),
+        boxShadow: AppColors.cardFloatingShadow,
+      ),
+      padding: const EdgeInsets.all(14.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Kode & Status Badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Bone.text(width: 140, fontSize: 16),
+                    const SizedBox(height: 4),
+                    Bone.text(width: 100, fontSize: 12.5),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Bone(width: 125, height: 26, uniRadius: 13),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Lokasi & Koordinat Row dengan Wadah Ikon
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Bone.circle(size: 28),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Bone.text(width: 130, fontSize: 13),
+                    SizedBox(height: 4),
+                    Bone.text(width: 160, fontSize: 12),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          const Divider(
+            color: AppColors.divider,
+            height: 1,
+            thickness: 1,
+          ),
+
+          const SizedBox(height: 10),
+
+          // Bottom Row: Foto Badge & Waktu + Chevron
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Bone(width: 95, height: 24, uniRadius: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Bone.text(width: 100, fontSize: 11.5),
+                  SizedBox(width: 4),
+                  Bone.icon(size: 16),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
